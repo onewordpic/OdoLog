@@ -47,6 +47,12 @@ function Dashboard() {
     enabled: authed !== null,
   });
 
+  const recent = useQuery({
+    queryKey: ["recent-refuels", authed],
+    queryFn: () => listRecentRefuels(8),
+    enabled: authed !== null,
+  });
+
   async function signOut() {
     await qc.cancelQueries();
     qc.clear();
@@ -56,7 +62,7 @@ function Dashboard() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 md:px-6">
-      <header className="mb-8 flex items-center justify-between">
+      <header className="mb-8 flex items-center justify-between animate-fade-in-up">
         <div className="flex items-center gap-2">
           <div className="glass flex h-9 w-9 items-center justify-center rounded-xl">
             <Fuel className="h-4 w-4 text-primary" />
@@ -64,9 +70,10 @@ function Dashboard() {
           <span className="text-lg font-medium tracking-tight">Fuelogue</span>
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <Link
             to="/app/settings"
-            className="glass flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/60"
+            className="glass glass-hover press flex h-9 w-9 items-center justify-center rounded-full"
             aria-label="Settings"
           >
             <Settings className="h-4 w-4" />
@@ -74,7 +81,7 @@ function Dashboard() {
           {authed ? (
             <button
               onClick={signOut}
-              className="glass flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/60"
+              className="glass glass-hover press flex h-9 w-9 items-center justify-center rounded-full"
               aria-label="Sign out"
             >
               <LogOut className="h-4 w-4" />
@@ -82,7 +89,7 @@ function Dashboard() {
           ) : (
             <Link
               to="/auth"
-              className="glass flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-medium hover:bg-white/60"
+              className="glass glass-hover press flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-medium"
               aria-label="Sign in"
             >
               <LogIn className="h-3.5 w-3.5" /> Sign in
@@ -92,7 +99,7 @@ function Dashboard() {
       </header>
 
       {authed === false && (
-        <div className="glass-subtle mb-6 rounded-2xl px-4 py-3 text-xs text-muted-foreground">
+        <div className="glass-subtle mb-6 rounded-2xl px-4 py-3 text-xs text-muted-foreground animate-fade-in">
           You're using Fuelogue as a guest — data stays in this browser only.{" "}
           <Link to="/auth" className="font-medium text-primary hover:underline">
             Sign in
@@ -102,9 +109,19 @@ function Dashboard() {
       )}
 
       <section className="grid grid-cols-3 gap-3">
-        <Stat label="Total spent" value={`₹${(stats.data?.spend ?? 0).toFixed(0)}`} />
-        <Stat label="Litres" value={(stats.data?.litres ?? 0).toFixed(1)} />
-        <Stat label="Refuels" value={`${stats.data?.count ?? 0}`} />
+        {[
+          { label: "Total spent", value: `₹${(stats.data?.spend ?? 0).toFixed(0)}` },
+          { label: "Litres", value: (stats.data?.litres ?? 0).toFixed(1) },
+          { label: "Refuels", value: `${stats.data?.count ?? 0}` },
+        ].map((s, i) => (
+          <div
+            key={s.label}
+            className="stagger"
+            style={{ animationDelay: `${i * 60}ms` }}
+          >
+            <Stat label={s.label} value={s.value} />
+          </div>
+        ))}
       </section>
 
       <section className="mt-8">
@@ -114,7 +131,7 @@ function Dashboard() {
           </h2>
           <button
             onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1 rounded-full bg-foreground px-3 py-1.5 text-xs font-medium text-background hover:opacity-90"
+            className="press flex items-center gap-1 rounded-full bg-foreground px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90"
           >
             <Plus className="h-3.5 w-3.5" /> Add vehicle
           </button>
@@ -126,16 +143,17 @@ function Dashboard() {
           </div>
         ) : vehicles.data && vehicles.data.length > 0 ? (
           <div className="space-y-2">
-            {vehicles.data.map((v) => (
+            {vehicles.data.map((v, i) => (
               <Link
                 key={v.id}
                 to="/app/vehicle/$id"
                 params={{ id: v.id }}
-                className="glass flex items-center justify-between rounded-2xl p-4 transition hover:bg-white/60"
+                className="glass glass-hover hover-lift press stagger flex items-center justify-between rounded-2xl p-4"
+                style={{ animationDelay: `${i * 50}ms` }}
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                    <Car className="h-5 w-5 text-primary" />
+                    <VehicleIcon icon={v.icon} className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <div className="font-medium">{v.name}</div>
@@ -149,14 +167,14 @@ function Dashboard() {
             ))}
           </div>
         ) : (
-          <div className="glass flex flex-col items-center justify-center rounded-2xl px-6 py-12 text-center">
+          <div className="glass flex flex-col items-center justify-center rounded-2xl px-6 py-12 text-center animate-scale-in">
             <Car className="h-8 w-8 text-muted-foreground" />
             <p className="mt-3 text-sm text-muted-foreground">
               No vehicles yet. Add your first one to start logging refuels.
             </p>
             <button
               onClick={() => setShowAdd(true)}
-              className="mt-4 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+              className="press mt-4 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
             >
               Add vehicle
             </button>
@@ -164,14 +182,67 @@ function Dashboard() {
         )}
       </section>
 
+      {recent.data && recent.data.length > 0 && (
+        <section className="mt-8 animate-fade-in">
+          <div className="mb-3 flex items-center gap-2">
+            <History className="h-3.5 w-3.5 text-muted-foreground" />
+            <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+              Recent fuel history
+            </h2>
+          </div>
+          <div className="glass divide-y divide-border/40 rounded-2xl overflow-hidden">
+            {recent.data.map((r, i) => (
+              <Link
+                key={r.id}
+                to="/app/vehicle/$id"
+                params={{ id: r.vehicle_id }}
+                className="stagger flex items-center justify-between px-4 py-3 transition hover:bg-foreground/5"
+                style={{ animationDelay: `${i * 40}ms` }}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                    <VehicleIcon
+                      icon={r.vehicle_icon}
+                      className="h-4 w-4 text-primary"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium">
+                      {r.vehicle_name}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {formatShortDate(r.refuel_date)} ·{" "}
+                      {Number(r.litres).toFixed(2)} L
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-medium">
+                    ₹{Number(r.amount_inr).toFixed(0)}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    @ ₹{Number(r.rate_per_litre).toFixed(2)}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {showAdd && <AddVehicleModal onClose={() => setShowAdd(false)} />}
     </main>
   );
 }
 
+function formatShortDate(s: string) {
+  const d = new Date(s + "T00:00:00");
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+}
+
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="glass rounded-2xl p-4">
+    <div className="glass hover-lift rounded-2xl p-4">
       <div className="text-xs uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
