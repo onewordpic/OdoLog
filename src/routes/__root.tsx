@@ -117,6 +117,10 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
+    initThemeFromStorage();
+  }, []);
+
+  useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (
         event !== "SIGNED_IN" &&
