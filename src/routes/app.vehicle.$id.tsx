@@ -65,6 +65,7 @@ function VehiclePage() {
       toast.success("Refuel deleted");
       qc.invalidateQueries({ queryKey: ["refuels", id] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      qc.invalidateQueries({ queryKey: ["recent-refuels"] });
     },
     onError: (e) => toast.error(e.message),
   });
@@ -438,6 +439,7 @@ function AddRefuelModal({
       toast.success("Refuel logged");
       qc.invalidateQueries({ queryKey: ["refuels", vehicle.id] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      qc.invalidateQueries({ queryKey: ["recent-refuels"] });
       onClose();
     },
     onError: (e) => toast.error(e.message),
