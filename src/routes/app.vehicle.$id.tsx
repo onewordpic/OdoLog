@@ -81,11 +81,11 @@ function VehiclePage() {
   const summary = useMemo(() => computeSummary(refuels.data ?? []), [refuels.data]);
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 md:px-6">
+    <main className="mx-auto max-w-3xl px-4 py-8 md:px-6 animate-fade-in">
       <header className="mb-6 flex items-center justify-between">
         <Link
           to="/app"
-          className="glass flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/60"
+          className="glass glass-hover press flex h-9 w-9 items-center justify-center rounded-full"
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
@@ -94,19 +94,27 @@ function VehiclePage() {
             if (confirm("Delete this vehicle and all its refuels?"))
               delVehicle.mutate();
           }}
-          className="text-xs text-muted-foreground hover:text-destructive"
+          className="text-xs text-muted-foreground transition-colors hover:text-destructive"
         >
           Delete vehicle
         </button>
       </header>
 
-      <div className="mb-6">
-        <h1 className="text-3xl font-light tracking-tight">
-          {vehicle.data?.name ?? "…"}
-        </h1>
-        <p className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">
-          {vehicle.data?.fuel_type}
-        </p>
+      <div className="mb-6 flex items-center gap-4 animate-fade-in-up">
+        {vehicle.data && (
+          <VehicleIconEditor
+            vehicleId={vehicle.data.id}
+            current={vehicle.data.icon}
+          />
+        )}
+        <div>
+          <h1 className="text-3xl font-light tracking-tight">
+            {vehicle.data?.name ?? "…"}
+          </h1>
+          <p className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">
+            {vehicle.data?.fuel_type}
+          </p>
+        </div>
       </div>
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
