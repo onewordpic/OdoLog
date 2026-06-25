@@ -223,7 +223,9 @@ function VehiclePage() {
           </div>
         ) : refuels.data && refuels.data.length > 0 ? (
           <div className="space-y-2">
-            {refuels.data.map((r) => (
+            {refuels.data.map((r) => {
+              const seg = summary.segmentById.get(r.id);
+              return (
               <div
                 key={r.id}
                 className="glass flex items-center justify-between rounded-2xl p-4"
@@ -243,10 +245,20 @@ function VehiclePage() {
                       </span>
                     )}
                   </div>
-                  <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     <span>{formatDate(r.refuel_date)}</span>
                     {r.odo_km != null && (
                       <span>· {Number(r.odo_km).toFixed(0)} km</span>
+                    )}
+                    {seg && (
+                      <>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
+                          ₹{seg.cpk.toFixed(2)}/km
+                        </span>
+                        <span className="text-[11px]">
+                          {seg.kmpl.toFixed(1)} km/l · {seg.km.toFixed(0)} km on ₹{seg.spend.toFixed(0)}
+                        </span>
+                      </>
                     )}
                   </div>
                 </div>
@@ -260,7 +272,8 @@ function VehiclePage() {
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="glass flex flex-col items-center justify-center rounded-2xl px-6 py-12 text-center">
