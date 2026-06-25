@@ -152,6 +152,18 @@ function AuthPage() {
             </button>
           </p>
         </div>
+
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          Or{" "}
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/app" })}
+            className="font-medium text-foreground hover:underline"
+          >
+            continue as guest
+          </button>{" "}
+          — data stays in this browser.
+        </p>
       </div>
     </main>
   );
