@@ -175,10 +175,32 @@ function VehiclePage() {
                 <Line
                   type="monotone"
                   dataKey="kmpl"
+                  name="km/l"
                   stroke="oklch(0.5 0.18 250)"
                   strokeWidth={2}
                   dot={{ r: 3, fill: "oklch(0.5 0.18 250)" }}
                 />
+                <Line
+                  type="monotone"
+                  dataKey="cpk"
+                  name="₹/km"
+                  stroke="oklch(0.65 0.18 30)"
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: "oklch(0.65 0.18 30)" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-2 flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2 w-2 rounded-full" style={{ background: "oklch(0.5 0.18 250)" }} />
+              km/l
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2 w-2 rounded-full" style={{ background: "oklch(0.65 0.18 30)" }} />
+              ₹/km
+            </span>
+          </div>
               </LineChart>
             </ResponsiveContainer>
           </div>
