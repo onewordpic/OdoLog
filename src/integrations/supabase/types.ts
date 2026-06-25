@@ -92,6 +92,7 @@ export type Database = {
         Row: {
           created_at: string
           fuel_type: Database["public"]["Enums"]["fuel_type"]
+          icon: string
           id: string
           name: string
           user_id: string
@@ -99,6 +100,7 @@ export type Database = {
         Insert: {
           created_at?: string
           fuel_type?: Database["public"]["Enums"]["fuel_type"]
+          icon?: string
           id?: string
           name: string
           user_id: string
@@ -106,6 +108,7 @@ export type Database = {
         Update: {
           created_at?: string
           fuel_type?: Database["public"]["Enums"]["fuel_type"]
+          icon?: string
           id?: string
           name?: string
           user_id?: string
