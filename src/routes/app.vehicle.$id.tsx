@@ -175,12 +175,31 @@ function VehiclePage() {
                 <Line
                   type="monotone"
                   dataKey="kmpl"
+                  name="km/l"
                   stroke="oklch(0.5 0.18 250)"
                   strokeWidth={2}
                   dot={{ r: 3, fill: "oklch(0.5 0.18 250)" }}
                 />
+                <Line
+                  type="monotone"
+                  dataKey="cpk"
+                  name="₹/km"
+                  stroke="oklch(0.65 0.18 30)"
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: "oklch(0.65 0.18 30)" }}
+                />
               </LineChart>
             </ResponsiveContainer>
+          </div>
+          <div className="mt-2 flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2 w-2 rounded-full" style={{ background: "oklch(0.5 0.18 250)" }} />
+              km/l
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2 w-2 rounded-full" style={{ background: "oklch(0.65 0.18 30)" }} />
+              ₹/km
+            </span>
           </div>
         </section>
       )}
@@ -204,7 +223,9 @@ function VehiclePage() {
           </div>
         ) : refuels.data && refuels.data.length > 0 ? (
           <div className="space-y-2">
-            {refuels.data.map((r) => (
+            {refuels.data.map((r) => {
+              const seg = summary.segmentById.get(r.id);
+              return (
               <div
                 key={r.id}
                 className="glass flex items-center justify-between rounded-2xl p-4"
@@ -224,10 +245,20 @@ function VehiclePage() {
                       </span>
                     )}
                   </div>
-                  <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     <span>{formatDate(r.refuel_date)}</span>
                     {r.odo_km != null && (
                       <span>· {Number(r.odo_km).toFixed(0)} km</span>
+                    )}
+                    {seg && (
+                      <>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
+                          ₹{seg.cpk.toFixed(2)}/km
+                        </span>
+                        <span className="text-[11px]">
+                          {seg.kmpl.toFixed(1)} km/l · {seg.km.toFixed(0)} km on ₹{seg.spend.toFixed(0)}
+                        </span>
+                      </>
                     )}
                   </div>
                 </div>
@@ -241,7 +272,8 @@ function VehiclePage() {
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="glass flex flex-col items-center justify-center rounded-2xl px-6 py-12 text-center">
@@ -612,8 +644,19 @@ function formatDate(s: string) {
   });
 }
 
+type Segment = {
+  refuelId: string;
+  date: string;
+  km: number;
+  litres: number;
+  spend: number;
+  kmpl: number;
+  cpk: number;
+};
+
 function computeSummary(refuels: Refuel[]) {
   const totalLitres = refuels.reduce((s, r) => s + Number(r.litres), 0);
+  const totalSpend = refuels.reduce((s, r) => s + Number(r.amount_inr), 0);
   const asc = [...refuels].sort((a, b) =>
     a.refuel_date.localeCompare(b.refuel_date),
   );
@@ -626,7 +669,7 @@ function computeSummary(refuels: Refuel[]) {
       Number(fullsWithOdo[0].odo_km);
   }
 
-  const segments: { date: string; kmpl: number; cpk: number }[] = [];
+  const segments: Segment[] = [];
   for (let i = 1; i < fullsWithOdo.length; i++) {
     const prev = fullsWithOdo[i - 1];
     const cur = fullsWithOdo[i];
@@ -642,29 +685,35 @@ function computeSummary(refuels: Refuel[]) {
     }
     if (litresUsed <= 0) continue;
     segments.push({
+      refuelId: cur.id,
       date: new Date(cur.refuel_date + "T00:00:00").toLocaleDateString("en-IN", {
         day: "numeric",
         month: "short",
       }),
+      km,
+      litres: litresUsed,
+      spend,
       kmpl: km / litresUsed,
       cpk: spend / km,
     });
   }
 
-  const avgKmpl =
-    segments.length > 0
-      ? segments.reduce((s, x) => s + x.kmpl, 0) / segments.length
-      : null;
-  const avgCpk =
-    segments.length > 0
-      ? segments.reduce((s, x) => s + x.cpk, 0) / segments.length
-      : null;
+  // Weighted overall cost/km and mileage based on totals across segments
+  const totalSegKm = segments.reduce((s, x) => s + x.km, 0);
+  const totalSegLitres = segments.reduce((s, x) => s + x.litres, 0);
+  const totalSegSpend = segments.reduce((s, x) => s + x.spend, 0);
+  const kmPerL = totalSegLitres > 0 ? totalSegKm / totalSegLitres : null;
+  const costPerKm = totalSegKm > 0 ? totalSegSpend / totalSegKm : null;
+
+  const segmentById = new Map(segments.map((s) => [s.refuelId, s]));
 
   return {
     totalLitres,
+    totalSpend,
     totalKm,
-    kmPerL: avgKmpl,
-    costPerKm: avgCpk,
+    kmPerL,
+    costPerKm,
     chart: segments,
+    segmentById,
   };
 }
