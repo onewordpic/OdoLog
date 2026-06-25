@@ -612,8 +612,19 @@ function formatDate(s: string) {
   });
 }
 
+type Segment = {
+  refuelId: string;
+  date: string;
+  km: number;
+  litres: number;
+  spend: number;
+  kmpl: number;
+  cpk: number;
+};
+
 function computeSummary(refuels: Refuel[]) {
   const totalLitres = refuels.reduce((s, r) => s + Number(r.litres), 0);
+  const totalSpend = refuels.reduce((s, r) => s + Number(r.amount_inr), 0);
   const asc = [...refuels].sort((a, b) =>
     a.refuel_date.localeCompare(b.refuel_date),
   );
@@ -626,7 +637,7 @@ function computeSummary(refuels: Refuel[]) {
       Number(fullsWithOdo[0].odo_km);
   }
 
-  const segments: { date: string; kmpl: number; cpk: number }[] = [];
+  const segments: Segment[] = [];
   for (let i = 1; i < fullsWithOdo.length; i++) {
     const prev = fullsWithOdo[i - 1];
     const cur = fullsWithOdo[i];
@@ -642,29 +653,35 @@ function computeSummary(refuels: Refuel[]) {
     }
     if (litresUsed <= 0) continue;
     segments.push({
+      refuelId: cur.id,
       date: new Date(cur.refuel_date + "T00:00:00").toLocaleDateString("en-IN", {
         day: "numeric",
         month: "short",
       }),
+      km,
+      litres: litresUsed,
+      spend,
       kmpl: km / litresUsed,
       cpk: spend / km,
     });
   }
 
-  const avgKmpl =
-    segments.length > 0
-      ? segments.reduce((s, x) => s + x.kmpl, 0) / segments.length
-      : null;
-  const avgCpk =
-    segments.length > 0
-      ? segments.reduce((s, x) => s + x.cpk, 0) / segments.length
-      : null;
+  // Weighted overall cost/km and mileage based on totals across segments
+  const totalSegKm = segments.reduce((s, x) => s + x.km, 0);
+  const totalSegLitres = segments.reduce((s, x) => s + x.litres, 0);
+  const totalSegSpend = segments.reduce((s, x) => s + x.spend, 0);
+  const kmPerL = totalSegLitres > 0 ? totalSegKm / totalSegLitres : null;
+  const costPerKm = totalSegKm > 0 ? totalSegSpend / totalSegKm : null;
+
+  const segmentById = new Map(segments.map((s) => [s.refuelId, s]));
 
   return {
     totalLitres,
+    totalSpend,
     totalKm,
-    kmPerL: avgKmpl,
-    costPerKm: avgCpk,
+    kmPerL,
+    costPerKm,
     chart: segments,
+    segmentById,
   };
 }
