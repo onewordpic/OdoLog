@@ -201,9 +201,6 @@ function VehiclePage() {
               ₹/km
             </span>
           </div>
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
         </section>
       )}
 
