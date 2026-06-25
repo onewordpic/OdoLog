@@ -1,0 +1,1 @@
+ALTER TABLE public.vehicles ADD COLUMN IF NOT EXISTS icon text NOT NULL DEFAULT 'car';
