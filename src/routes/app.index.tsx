@@ -255,9 +255,11 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const [fuelType, setFuelType] = useState<"petrol" | "diesel">("petrol");
+  const [icon, setIcon] = useState<VIcon>("car");
 
   const mut = useMutation({
-    mutationFn: () => addVehicle({ name: name.trim(), fuel_type: fuelType }),
+    mutationFn: () =>
+      addVehicle({ name: name.trim(), fuel_type: fuelType, icon }),
     onSuccess: () => {
       toast.success("Vehicle added");
       qc.invalidateQueries({ queryKey: ["vehicles"] });
@@ -276,12 +278,12 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/20 backdrop-blur-sm md:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center animate-fade-in"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="glass w-full max-w-md rounded-t-3xl p-6 md:rounded-3xl"
+        className="glass w-full max-w-md rounded-t-3xl p-6 md:rounded-3xl animate-slide-up"
       >
         <h3 className="text-lg font-medium">Add vehicle</h3>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -311,6 +313,32 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
 
           <div>
             <span className="text-xs font-medium text-muted-foreground">
+              Vehicle type
+            </span>
+            <div className="mt-1 grid grid-cols-3 gap-2">
+              {VEHICLE_ICONS.map((opt) => {
+                const active = icon === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setIcon(opt.id)}
+                    className={`press flex flex-col items-center gap-1 rounded-xl px-3 py-3 text-xs font-medium transition ${
+                      active
+                        ? "bg-primary text-primary-foreground"
+                        : "glass-subtle glass-hover"
+                    }`}
+                  >
+                    <VehicleIcon icon={opt.id} className="h-5 w-5" />
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <span className="text-xs font-medium text-muted-foreground">
               Fuel type
             </span>
             <div className="mt-1 grid grid-cols-2 gap-2">
@@ -319,10 +347,10 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
                   key={f}
                   type="button"
                   onClick={() => setFuelType(f)}
-                  className={`rounded-xl px-4 py-3 text-sm font-medium capitalize transition ${
+                  className={`press rounded-xl px-4 py-3 text-sm font-medium capitalize transition ${
                     fuelType === f
                       ? "bg-primary text-primary-foreground"
-                      : "glass-subtle hover:bg-white/60"
+                      : "glass-subtle glass-hover"
                   }`}
                 >
                   {f}
@@ -335,14 +363,14 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-xl glass-subtle py-3 text-sm font-medium hover:bg-white/60"
+              className="press flex-1 rounded-xl glass-subtle glass-hover py-3 text-sm font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={mut.isPending || !name.trim()}
-              className="flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-primary-foreground disabled:opacity-60"
+              className="press flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-primary-foreground disabled:opacity-60"
             >
               {mut.isPending ? "Adding…" : "Add vehicle"}
             </button>
