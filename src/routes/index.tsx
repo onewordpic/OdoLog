@@ -1,17 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Fuel, Gauge, LineChart } from "lucide-react";
+import { useAuthed } from "@/lib/use-authed";
 
 export const Route = createFileRoute("/")({
   component: Landing,
 });
 
 function Landing() {
-  const [authed, setAuthed] = useState(false);
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
-  }, []);
+  const authed = useAuthed();
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-6 py-10">
@@ -22,12 +18,22 @@ function Landing() {
           </div>
           <span className="text-lg font-medium tracking-tight">Fuelogue</span>
         </div>
-        <Link
-          to={authed ? "/app" : "/auth"}
-          className="rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90"
-        >
-          {authed ? "Open dashboard" : "Sign in"}
-        </Link>
+        <div className="flex items-center gap-2">
+          {!authed && (
+            <Link
+              to="/auth"
+              className="rounded-full glass px-4 py-2 text-sm font-medium hover:bg-white/60"
+            >
+              Sign in
+            </Link>
+          )}
+          <Link
+            to="/app"
+            className="rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90"
+          >
+            Open app
+          </Link>
+        </div>
       </header>
 
       <section className="mt-24 max-w-2xl">
@@ -41,14 +47,28 @@ function Landing() {
           derives litres, and turns your odometer readings into a clear cost per
           kilometre.
         </p>
-        <div className="mt-8 flex gap-3">
+        <div className="mt-8 flex flex-wrap gap-3">
           <Link
-            to={authed ? "/app" : "/auth"}
+            to="/app"
             className="rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:opacity-90"
           >
-            {authed ? "Open dashboard" : "Get started — free"}
+            {authed ? "Open dashboard" : "Start tracking — no sign-up"}
           </Link>
+          {!authed && (
+            <Link
+              to="/auth"
+              className="rounded-full glass px-6 py-3 text-sm font-medium hover:bg-white/60"
+            >
+              Sign in to sync
+            </Link>
+          )}
         </div>
+        {!authed && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Guest mode keeps everything in this browser. Sign in anytime to
+            sync across devices.
+          </p>
+        )}
       </section>
 
       <section className="mt-24 grid gap-4 md:grid-cols-3">
