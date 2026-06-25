@@ -14,6 +14,8 @@ import {
   Gauge,
   Wallet,
   Droplet,
+  Pencil,
+  Check,
 } from "lucide-react";
 import {
   LineChart,
@@ -29,10 +31,13 @@ import {
   addRefuel,
   deleteRefuel,
   deleteVehicle,
+  updateVehicle,
   getProfile,
   type Refuel,
   type Vehicle,
+  type VehicleIcon as VIcon,
 } from "@/lib/data-store";
+import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
 
 export const Route = createFileRoute("/app/vehicle/$id")({
   component: VehiclePage,
