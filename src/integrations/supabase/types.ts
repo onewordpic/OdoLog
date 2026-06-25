@@ -14,7 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          default_city: string | null
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_city?: string | null
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_city?: string | null
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      refuels: {
+        Row: {
+          amount_inr: number
+          created_at: string
+          full_tank: boolean
+          id: string
+          litres: number
+          notes: string | null
+          odo_km: number | null
+          rate_per_litre: number
+          refuel_date: string
+          user_id: string
+          vehicle_id: string
+        }
+        Insert: {
+          amount_inr: number
+          created_at?: string
+          full_tank?: boolean
+          id?: string
+          litres: number
+          notes?: string | null
+          odo_km?: number | null
+          rate_per_litre: number
+          refuel_date?: string
+          user_id: string
+          vehicle_id: string
+        }
+        Update: {
+          amount_inr?: number
+          created_at?: string
+          full_tank?: boolean
+          id?: string
+          litres?: number
+          notes?: string | null
+          odo_km?: number | null
+          rate_per_litre?: number
+          refuel_date?: string
+          user_id?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refuels_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          created_at: string
+          fuel_type: Database["public"]["Enums"]["fuel_type"]
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fuel_type?: Database["public"]["Enums"]["fuel_type"]
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fuel_type?: Database["public"]["Enums"]["fuel_type"]
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +120,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      fuel_type: "petrol" | "diesel"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +247,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      fuel_type: ["petrol", "diesel"],
+    },
   },
 } as const
