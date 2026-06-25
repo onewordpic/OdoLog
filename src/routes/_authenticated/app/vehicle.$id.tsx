@@ -1,0 +1,632 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
+import { fetchFuelPrice } from "@/lib/fuel-price.functions";
+import { toast } from "sonner";
+import {
+  ArrowLeft,
+  Plus,
+  Loader2,
+  Trash2,
+  RefreshCcw,
+  TrendingUp,
+  Gauge,
+  Wallet,
+  Droplet,
+} from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+
+export const Route = createFileRoute("/_authenticated/app/vehicle/$id")({
+  component: VehiclePage,
+});
+
+type Vehicle = {
+  id: string;
+  name: string;
+  fuel_type: "petrol" | "diesel";
+};
+
+type Refuel = {
+  id: string;
+  refuel_date: string;
+  amount_inr: number;
+  rate_per_litre: number;
+  litres: number;
+  odo_km: number | null;
+  full_tank: boolean;
+  notes: string | null;
+};
+
+function VehiclePage() {
+  const { id } = Route.useParams();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [showAdd, setShowAdd] = useState(false);
+
+  const vehicle = useQuery({
+    queryKey: ["vehicle", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vehicles")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+      return data as Vehicle;
+    },
+  });
+
+  const refuels = useQuery({
+    queryKey: ["refuels", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("refuels")
+        .select("*")
+        .eq("vehicle_id", id)
+        .order("refuel_date", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as Refuel[];
+    },
+  });
+
+  const del = useMutation({
+    mutationFn: async (rid: string) => {
+      const { error } = await supabase.from("refuels").delete().eq("id", rid);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Refuel deleted");
+      qc.invalidateQueries({ queryKey: ["refuels", id] });
+      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const delVehicle = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("vehicles").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Vehicle deleted");
+      qc.invalidateQueries({ queryKey: ["vehicles"] });
+      navigate({ to: "/app" });
+    },
+  });
+
+  const summary = useMemo(() => computeSummary(refuels.data ?? []), [refuels.data]);
+
+  return (
+    <main className="mx-auto max-w-3xl px-4 py-8 md:px-6">
+      <header className="mb-6 flex items-center justify-between">
+        <Link
+          to="/app"
+          className="glass flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/60"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
+        <button
+          onClick={() => {
+            if (confirm("Delete this vehicle and all its refuels?"))
+              delVehicle.mutate();
+          }}
+          className="text-xs text-muted-foreground hover:text-destructive"
+        >
+          Delete vehicle
+        </button>
+      </header>
+
+      <div className="mb-6">
+        <h1 className="text-3xl font-light tracking-tight">
+          {vehicle.data?.name ?? "…"}
+        </h1>
+        <p className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">
+          {vehicle.data?.fuel_type}
+        </p>
+      </div>
+
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <Stat
+          icon={Wallet}
+          label="Cost / km"
+          value={summary.costPerKm != null ? `₹${summary.costPerKm.toFixed(2)}` : "—"}
+        />
+        <Stat
+          icon={TrendingUp}
+          label="Mileage"
+          value={summary.kmPerL != null ? `${summary.kmPerL.toFixed(1)} km/l` : "—"}
+        />
+        <Stat
+          icon={Droplet}
+          label="Litres"
+          value={summary.totalLitres.toFixed(1)}
+        />
+        <Stat
+          icon={Gauge}
+          label="Distance"
+          value={summary.totalKm != null ? `${summary.totalKm.toFixed(0)} km` : "—"}
+        />
+      </section>
+
+      {summary.chart.length >= 2 && (
+        <section className="glass mt-6 rounded-2xl p-4">
+          <div className="mb-2 px-2 text-xs uppercase tracking-wider text-muted-foreground">
+            Mileage trend (km/l)
+          </div>
+          <div className="h-44">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={summary.chart}>
+                <XAxis
+                  dataKey="date"
+                  stroke="oklch(0.5 0.02 250)"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="oklch(0.5 0.02 250)"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  width={30}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "rgba(255,255,255,0.9)",
+                    border: "1px solid rgba(255,255,255,0.6)",
+                    borderRadius: 12,
+                    backdropFilter: "blur(10px)",
+                    fontSize: 12,
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="kmpl"
+                  stroke="oklch(0.5 0.18 250)"
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: "oklch(0.5 0.18 250)" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      )}
+
+      <section className="mt-6">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+            Refuel log
+          </h2>
+          <button
+            onClick={() => setShowAdd(true)}
+            className="flex items-center gap-1 rounded-full bg-foreground px-3 py-1.5 text-xs font-medium text-background hover:opacity-90"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add refuel
+          </button>
+        </div>
+
+        {refuels.isLoading ? (
+          <div className="glass flex h-24 items-center justify-center rounded-2xl">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          </div>
+        ) : refuels.data && refuels.data.length > 0 ? (
+          <div className="space-y-2">
+            {refuels.data.map((r) => (
+              <div
+                key={r.id}
+                className="glass flex items-center justify-between rounded-2xl p-4"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">
+                      ₹{Number(r.amount_inr).toFixed(0)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      · {Number(r.litres).toFixed(2)} L @ ₹
+                      {Number(r.rate_per_litre).toFixed(2)}
+                    </span>
+                    {!r.full_tank && (
+                      <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-medium uppercase text-accent-foreground">
+                        Partial
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                    <span>{formatDate(r.refuel_date)}</span>
+                    {r.odo_km != null && (
+                      <span>· {Number(r.odo_km).toFixed(0)} km</span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    if (confirm("Delete this refuel?")) del.mutate(r.id);
+                  }}
+                  className="ml-3 text-muted-foreground hover:text-destructive"
+                  aria-label="Delete"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="glass flex flex-col items-center justify-center rounded-2xl px-6 py-12 text-center">
+            <Droplet className="h-8 w-8 text-muted-foreground" />
+            <p className="mt-3 text-sm text-muted-foreground">
+              No refuels yet. Log your first one.
+            </p>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="mt-4 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+            >
+              Add refuel
+            </button>
+          </div>
+        )}
+      </section>
+
+      {showAdd && vehicle.data && (
+        <AddRefuelModal
+          vehicle={vehicle.data}
+          onClose={() => setShowAdd(false)}
+        />
+      )}
+    </main>
+  );
+}
+
+function Stat({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="glass rounded-2xl p-4">
+      <Icon className="h-4 w-4 text-primary" />
+      <div className="mt-2 text-xs uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-0.5 text-lg font-light tracking-tight">{value}</div>
+    </div>
+  );
+}
+
+function AddRefuelModal({
+  vehicle,
+  onClose,
+}: {
+  vehicle: Vehicle;
+  onClose: () => void;
+}) {
+  const qc = useQueryClient();
+  const fetchPrice = useServerFn(fetchFuelPrice);
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [date, setDate] = useState(today);
+  const [amount, setAmount] = useState("");
+  const [rate, setRate] = useState("");
+  const [odo, setOdo] = useState("");
+  const [fullTank, setFullTank] = useState(true);
+  const [fetchingRate, setFetchingRate] = useState(false);
+  const [city, setCity] = useState("");
+
+  useEffect(() => {
+    supabase
+      .from("profiles")
+      .select("default_city")
+      .single()
+      .then(({ data }) => {
+        if (data?.default_city) setCity(data.default_city);
+      });
+  }, []);
+
+  // Auto-fetch rate on open if today's date
+  useEffect(() => {
+    if (!city) return;
+    if (date !== today) return;
+    if (rate) return;
+    void doFetchRate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [city]);
+
+  async function doFetchRate() {
+    if (!city) {
+      toast.error("Set a default city in Settings first");
+      return;
+    }
+    setFetchingRate(true);
+    try {
+      const r = await fetchPrice({
+        data: { city, fuelType: vehicle.fuel_type },
+      });
+      if (r.ok) {
+        setRate(r.price.toFixed(2));
+        toast.success(`Today's rate: ₹${r.price.toFixed(2)} in ${city}`);
+      } else {
+        toast.error(`Couldn't fetch rate: ${r.error}. Enter manually.`);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Fetch failed");
+    } finally {
+      setFetchingRate(false);
+    }
+  }
+
+  const amountN = parseFloat(amount);
+  const rateN = parseFloat(rate);
+  const litres =
+    !isNaN(amountN) && !isNaN(rateN) && rateN > 0 ? amountN / rateN : null;
+
+  const mut = useMutation({
+    mutationFn: async () => {
+      if (!litres) throw new Error("Enter amount and rate");
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) throw new Error("Not signed in");
+      const { error } = await supabase.from("refuels").insert({
+        user_id: u.user.id,
+        vehicle_id: vehicle.id,
+        refuel_date: date,
+        amount_inr: amountN,
+        rate_per_litre: rateN,
+        litres: Number(litres.toFixed(3)),
+        odo_km: odo ? parseFloat(odo) : null,
+        full_tank: fullTank,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Refuel logged");
+      qc.invalidateQueries({ queryKey: ["refuels", vehicle.id] });
+      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      onClose();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  useEffect(() => {
+    function esc(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/20 backdrop-blur-sm md:items-center"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="glass max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl p-6 md:rounded-3xl"
+      >
+        <h3 className="text-lg font-medium">New refuel</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {vehicle.name} · {vehicle.fuel_type}
+        </p>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            mut.mutate();
+          }}
+          className="mt-5 space-y-4"
+        >
+          <NumField
+            label="Amount (₹)"
+            value={amount}
+            onChange={setAmount}
+            placeholder="500"
+            step="any"
+            required
+            autoFocus
+          />
+
+          <div>
+            <div className="flex items-end justify-between">
+              <span className="text-xs font-medium text-muted-foreground">
+                Rate (₹ / litre)
+              </span>
+              <button
+                type="button"
+                onClick={doFetchRate}
+                disabled={fetchingRate}
+                className="flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50"
+              >
+                {fetchingRate ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <RefreshCcw className="h-3 w-3" />
+                )}
+                Fetch today's rate{city ? ` (${city})` : ""}
+              </button>
+            </div>
+            <input
+              type="number"
+              step="any"
+              value={rate}
+              onChange={(e) => setRate(e.target.value)}
+              placeholder="104.50"
+              required
+              className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
+            />
+          </div>
+
+          {litres != null && (
+            <div className="glass-subtle rounded-xl p-3 text-center text-sm">
+              ≈ <span className="font-medium">{litres.toFixed(2)} L</span>
+            </div>
+          )}
+
+          <NumField
+            label="Odometer (km)"
+            value={odo}
+            onChange={setOdo}
+            placeholder="optional, but improves accuracy"
+            step="any"
+          />
+
+          <div>
+            <span className="text-xs font-medium text-muted-foreground">
+              Date
+            </span>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              max={today}
+              className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
+            />
+          </div>
+
+          <label className="flex items-center justify-between rounded-xl glass-subtle px-4 py-3">
+            <div>
+              <div className="text-sm font-medium">Full tank</div>
+              <div className="text-xs text-muted-foreground">
+                Required for accurate mileage
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={fullTank}
+              onChange={(e) => setFullTank(e.target.checked)}
+              className="h-5 w-5 accent-primary"
+            />
+          </label>
+
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-xl glass-subtle py-3 text-sm font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={mut.isPending || !litres}
+              className="flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-primary-foreground disabled:opacity-60"
+            >
+              {mut.isPending ? "Saving…" : "Save refuel"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function NumField({
+  label,
+  value,
+  onChange,
+  ...rest
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value">) {
+  return (
+    <label className="block">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <input
+        {...rest}
+        type="number"
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
+      />
+    </label>
+  );
+}
+
+function formatDate(s: string) {
+  const d = new Date(s + "T00:00:00");
+  return d.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+/**
+ * Compute mileage and cost/km between consecutive full-tank refuels with odo.
+ */
+function computeSummary(refuels: Refuel[]) {
+  const totalLitres = refuels.reduce((s, r) => s + Number(r.litres), 0);
+
+  // Sort oldest first for sequence math.
+  const asc = [...refuels].sort((a, b) =>
+    a.refuel_date.localeCompare(b.refuel_date),
+  );
+
+  const fullsWithOdo = asc.filter((r) => r.full_tank && r.odo_km != null);
+
+  let totalKm: number | null = null;
+  if (fullsWithOdo.length >= 2) {
+    totalKm =
+      Number(fullsWithOdo[fullsWithOdo.length - 1].odo_km) -
+      Number(fullsWithOdo[0].odo_km);
+  }
+
+  // Per-segment km/l + cost/km between consecutive full tanks.
+  const segments: { date: string; kmpl: number; cpk: number }[] = [];
+  for (let i = 1; i < fullsWithOdo.length; i++) {
+    const prev = fullsWithOdo[i - 1];
+    const cur = fullsWithOdo[i];
+    const km = Number(cur.odo_km) - Number(prev.odo_km);
+    if (km <= 0) continue;
+    // Sum all refuels (full + partial) strictly after prev and up to & including cur.
+    let litresUsed = 0;
+    let spend = 0;
+    for (const r of asc) {
+      if (r.refuel_date > prev.refuel_date && r.refuel_date <= cur.refuel_date) {
+        // exclude the prev fill itself, include current
+        litresUsed += Number(r.litres);
+        spend += Number(r.amount_inr);
+      }
+    }
+    if (litresUsed <= 0) continue;
+    segments.push({
+      date: new Date(cur.refuel_date + "T00:00:00").toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+      }),
+      kmpl: km / litresUsed,
+      cpk: spend / km,
+    });
+  }
+
+  const avgKmpl =
+    segments.length > 0
+      ? segments.reduce((s, x) => s + x.kmpl, 0) / segments.length
+      : null;
+  const avgCpk =
+    segments.length > 0
+      ? segments.reduce((s, x) => s + x.cpk, 0) / segments.length
+      : null;
+
+  return {
+    totalLitres,
+    totalKm,
+    kmPerL: avgKmpl,
+    costPerKm: avgCpk,
+    chart: segments,
+  };
+}
