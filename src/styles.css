@@ -31,6 +31,28 @@
   --color-ring: var(--ring);
   --color-glass: var(--glass);
   --color-glass-border: var(--glass-border);
+
+  --animate-fade-in: fade-in 0.4s ease-out;
+  --animate-fade-in-up: fade-in-up 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-scale-in: scale-in 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-slide-up: slide-up 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 }
 
 :root {
@@ -56,6 +78,7 @@
   --ring: oklch(0.5 0.18 250);
   --glass: oklch(1 0 0 / 0.45);
   --glass-border: oklch(1 0 0 / 0.6);
+  --glass-hover: oklch(1 0 0 / 0.7);
 
   --gradient-bg: radial-gradient(
       circle at 15% 10%,
@@ -78,6 +101,51 @@
     inset 0 1px 0 0 oklch(1 0 0 / 0.6);
 }
 
+.dark {
+  --background: oklch(0.16 0.02 260);
+  --foreground: oklch(0.96 0.01 250);
+  --card: oklch(0.22 0.02 260 / 0.55);
+  --card-foreground: oklch(0.96 0.01 250);
+  --popover: oklch(0.2 0.02 260);
+  --popover-foreground: oklch(0.96 0.01 250);
+  --primary: oklch(0.72 0.18 250);
+  --primary-foreground: oklch(0.15 0.03 260);
+  --secondary: oklch(0.28 0.03 260);
+  --secondary-foreground: oklch(0.95 0.01 250);
+  --muted: oklch(0.28 0.02 260 / 0.6);
+  --muted-foreground: oklch(0.7 0.02 250);
+  --accent: oklch(0.7 0.15 200);
+  --accent-foreground: oklch(0.15 0.02 250);
+  --destructive: oklch(0.65 0.22 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.4 0.02 260 / 0.4);
+  --input: oklch(0.3 0.02 260 / 0.5);
+  --ring: oklch(0.72 0.18 250);
+  --glass: oklch(0.3 0.03 260 / 0.45);
+  --glass-border: oklch(0.5 0.03 260 / 0.4);
+  --glass-hover: oklch(0.35 0.03 260 / 0.6);
+
+  --gradient-bg: radial-gradient(
+      circle at 15% 10%,
+      oklch(0.35 0.18 260 / 0.55),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 85% 20%,
+      oklch(0.32 0.18 320 / 0.45),
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 60% 95%,
+      oklch(0.3 0.16 200 / 0.5),
+      transparent 55%
+    ),
+    linear-gradient(180deg, oklch(0.14 0.02 260), oklch(0.1 0.02 260));
+
+  --shadow-glass: 0 8px 32px 0 oklch(0 0 0 / 0.35),
+    inset 0 1px 0 0 oklch(1 0 0 / 0.08);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
@@ -85,12 +153,19 @@
   html, body {
     min-height: 100vh;
   }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
   body {
     color: var(--color-foreground);
     background: var(--gradient-bg);
     background-attachment: fixed;
     font-feature-settings: "ss01", "cv11";
     -webkit-font-smoothing: antialiased;
+    transition: background 0.4s ease, color 0.3s ease;
   }
 }
 
@@ -99,24 +174,53 @@
   backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-glass);
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 @utility glass-subtle {
-  background: oklch(1 0 0 / 0.3);
+  background: color-mix(in oklab, var(--glass) 60%, transparent);
   backdrop-filter: blur(14px) saturate(140%);
-  border: 1px solid oklch(1 0 0 / 0.4);
+  border: 1px solid color-mix(in oklab, var(--glass-border) 65%, transparent);
+  transition: background 0.2s ease;
 }
 
 @utility glass-input {
-  background: oklch(1 0 0 / 0.55);
+  background: var(--input);
   backdrop-filter: blur(10px);
-  border: 1px solid oklch(0.9 0.01 250 / 0.6);
+  border: 1px solid var(--border);
   transition: border-color 0.2s, background 0.2s;
+  color: var(--color-foreground);
 }
 @utility glass-input-focus {
   &:focus, &:focus-visible {
     outline: none;
     border-color: var(--ring);
-    background: oklch(1 0 0 / 0.75);
+    background: color-mix(in oklab, var(--input) 80%, white);
   }
+}
+
+@utility glass-hover {
+  &:hover {
+    background: var(--glass-hover);
+  }
+}
+
+@utility hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 36px 0 oklch(0.4 0.1 250 / 0.18),
+      inset 0 1px 0 0 oklch(1 0 0 / 0.6);
+  }
+}
+
+@utility press {
+  transition: transform 0.1s ease;
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+@utility stagger {
+  animation: fade-in-up 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }

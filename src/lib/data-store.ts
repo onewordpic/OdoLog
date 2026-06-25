@@ -3,10 +3,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+export type VehicleIcon = "car" | "bike" | "scooter";
+
 export type Vehicle = {
   id: string;
   name: string;
   fuel_type: "petrol" | "diesel";
+  icon: VehicleIcon;
   created_at: string;
 };
 
@@ -59,6 +62,10 @@ function uid() {
   );
 }
 
+function normIcon(v: unknown): VehicleIcon {
+  return v === "bike" || v === "scooter" ? v : "car";
+}
+
 // ---------- Vehicles ----------
 
 export async function listVehicles(): Promise<Vehicle[]> {
@@ -69,9 +76,12 @@ export async function listVehicles(): Promise<Vehicle[]> {
       .select("*")
       .order("created_at", { ascending: true });
     if (error) throw error;
-    return data as Vehicle[];
+    return (data as any[]).map((v) => ({ ...v, icon: normIcon(v.icon) })) as Vehicle[];
   }
-  const all = lsRead<Vehicle[]>(LS_VEHICLES, []);
+  const all = lsRead<Vehicle[]>(LS_VEHICLES, []).map((v) => ({
+    ...v,
+    icon: normIcon((v as any).icon),
+  }));
   return [...all].sort((a, b) => a.created_at.localeCompare(b.created_at));
 }
 
@@ -84,37 +94,58 @@ export async function getVehicle(id: string): Promise<Vehicle> {
       .eq("id", id)
       .single();
     if (error) throw error;
-    return data as Vehicle;
+    return { ...(data as any), icon: normIcon((data as any).icon) } as Vehicle;
   }
   const v = lsRead<Vehicle[]>(LS_VEHICLES, []).find((v) => v.id === id);
   if (!v) throw new Error("Vehicle not found");
-  return v;
+  return { ...v, icon: normIcon((v as any).icon) };
 }
 
 export async function addVehicle(input: {
   name: string;
   fuel_type: "petrol" | "diesel";
+  icon?: VehicleIcon;
 }): Promise<Vehicle> {
+  const icon = normIcon(input.icon);
   const userId = await getUserId();
   if (userId) {
     const { data, error } = await supabase
       .from("vehicles")
-      .insert({ name: input.name, fuel_type: input.fuel_type, user_id: userId })
+      .insert({ name: input.name, fuel_type: input.fuel_type, icon, user_id: userId } as any)
       .select()
       .single();
     if (error) throw error;
-    return data as Vehicle;
+    return { ...(data as any), icon: normIcon((data as any).icon) } as Vehicle;
   }
   const v: Vehicle = {
     id: uid(),
     name: input.name,
     fuel_type: input.fuel_type,
+    icon,
     created_at: new Date().toISOString(),
   };
   const all = lsRead<Vehicle[]>(LS_VEHICLES, []);
   all.push(v);
   lsWrite(LS_VEHICLES, all);
   return v;
+}
+
+export async function updateVehicle(
+  id: string,
+  patch: { name?: string; icon?: VehicleIcon; fuel_type?: "petrol" | "diesel" },
+): Promise<void> {
+  const userId = await getUserId();
+  if (userId) {
+    const { error } = await supabase
+      .from("vehicles")
+      .update(patch as any)
+      .eq("id", id);
+    if (error) throw error;
+    return;
+  }
+  const all = lsRead<Vehicle[]>(LS_VEHICLES, []);
+  const next = all.map((v) => (v.id === id ? { ...v, ...patch } : v));
+  lsWrite(LS_VEHICLES, next);
 }
 
 export async function deleteVehicle(id: string): Promise<void> {
@@ -154,6 +185,51 @@ export async function listRefuels(vehicleId: string): Promise<Refuel[]> {
       const d = b.refuel_date.localeCompare(a.refuel_date);
       return d !== 0 ? d : b.created_at.localeCompare(a.created_at);
     });
+}
+
+export async function listRecentRefuels(limit = 10): Promise<
+  (Refuel & { vehicle_name: string; vehicle_icon: VehicleIcon })[]
+> {
+  const userId = await getUserId();
+  let refuels: Refuel[] = [];
+  let vehicles: Vehicle[] = [];
+
+  if (userId) {
+    const [r, v] = await Promise.all([
+      supabase
+        .from("refuels")
+        .select("*")
+        .order("refuel_date", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(limit),
+      supabase.from("vehicles").select("*"),
+    ]);
+    if (r.error) throw r.error;
+    if (v.error) throw v.error;
+    refuels = r.data as Refuel[];
+    vehicles = (v.data as any[]).map((x) => ({ ...x, icon: normIcon(x.icon) })) as Vehicle[];
+  } else {
+    refuels = lsRead<Refuel[]>(LS_REFUELS, [])
+      .sort((a, b) => {
+        const d = b.refuel_date.localeCompare(a.refuel_date);
+        return d !== 0 ? d : b.created_at.localeCompare(a.created_at);
+      })
+      .slice(0, limit);
+    vehicles = lsRead<Vehicle[]>(LS_VEHICLES, []).map((v) => ({
+      ...v,
+      icon: normIcon((v as any).icon),
+    }));
+  }
+
+  const byId = new Map(vehicles.map((v) => [v.id, v]));
+  return refuels.map((r) => {
+    const v = byId.get(r.vehicle_id);
+    return {
+      ...r,
+      vehicle_name: v?.name ?? "Unknown",
+      vehicle_icon: v?.icon ?? "car",
+    };
+  });
 }
 
 export async function addRefuel(input: {
