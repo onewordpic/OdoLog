@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { getProfile, saveProfile } from "@/lib/data-store";
 
-export const Route = createFileRoute("/_authenticated/app/settings")({
+export const Route = createFileRoute("/app/settings")({
   component: SettingsPage,
 });
 
@@ -28,39 +28,21 @@ function SettingsPage() {
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const [city, setCity] = useState("delhi");
-  const [loading, setLoading] = useState(true);
+
+  const profile = useQuery({ queryKey: ["profile"], queryFn: getProfile });
 
   useEffect(() => {
-    supabase
-      .from("profiles")
-      .select("display_name, default_city")
-      .single()
-      .then(({ data }) => {
-        if (data) {
-          setName(data.display_name ?? "");
-          setCity(data.default_city ?? "delhi");
-        }
-        setLoading(false);
-      });
-  }, []);
+    if (profile.data) {
+      setName(profile.data.display_name ?? "");
+      setCity(profile.data.default_city ?? "delhi");
+    }
+  }, [profile.data]);
 
   const save = useMutation({
-    mutationFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) throw new Error("Not signed in");
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          display_name: name.trim(),
-          default_city: city.toLowerCase(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", u.user.id);
-      if (error) throw error;
-    },
+    mutationFn: () => saveProfile({ display_name: name, default_city: city }),
     onSuccess: () => {
       toast.success("Saved");
-      qc.invalidateQueries();
+      qc.invalidateQueries({ queryKey: ["profile"] });
     },
     onError: (e) => toast.error(e.message),
   });
@@ -77,7 +59,7 @@ function SettingsPage() {
         <h1 className="text-2xl font-light tracking-tight">Settings</h1>
       </header>
 
-      {loading ? (
+      {profile.isLoading ? (
         <div className="glass flex h-24 items-center justify-center rounded-2xl">
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         </div>
