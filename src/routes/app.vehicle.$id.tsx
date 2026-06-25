@@ -278,13 +278,84 @@ function Stat({
   value: string;
 }) {
   return (
-    <div className="glass rounded-2xl p-4">
+    <div className="glass hover-lift rounded-2xl p-4">
       <Icon className="h-4 w-4 text-primary" />
       <div className="mt-2 text-xs uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
       <div className="mt-0.5 text-lg font-light tracking-tight">{value}</div>
     </div>
+  );
+}
+
+function VehicleIconEditor({
+  vehicleId,
+  current,
+}: {
+  vehicleId: string;
+  current: VIcon;
+}) {
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState(false);
+
+  const mut = useMutation({
+    mutationFn: (icon: VIcon) => updateVehicle(vehicleId, { icon }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["vehicle", vehicleId] });
+      qc.invalidateQueries({ queryKey: ["vehicles"] });
+      qc.invalidateQueries({ queryKey: ["recent-refuels"] });
+      setEditing(false);
+      toast.success("Icon updated");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  if (editing) {
+    return (
+      <div className="glass animate-scale-in flex items-center gap-1 rounded-2xl p-1.5">
+        {VEHICLE_ICONS.map((opt) => {
+          const active = current === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              disabled={mut.isPending}
+              onClick={() => mut.mutate(opt.id)}
+              aria-label={opt.label}
+              className={`press flex h-10 w-10 items-center justify-center rounded-xl transition ${
+                active
+                  ? "bg-primary text-primary-foreground"
+                  : "glass-hover text-foreground"
+              }`}
+            >
+              <VehicleIcon icon={opt.id} className="h-5 w-5" />
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          onClick={() => setEditing(false)}
+          aria-label="Done"
+          className="press flex h-10 w-10 items-center justify-center rounded-xl glass-hover"
+        >
+          <Check className="h-4 w-4" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setEditing(true)}
+      aria-label="Change vehicle icon"
+      className="glass press hover-lift group relative flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10"
+    >
+      <VehicleIcon icon={current} className="h-7 w-7 text-primary" />
+      <span className="glass absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full opacity-0 transition-opacity group-hover:opacity-100">
+        <Pencil className="h-3 w-3" />
+      </span>
+    </button>
   );
 }
 
