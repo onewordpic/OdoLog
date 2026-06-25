@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
 import { fetchFuelPrice } from "@/lib/fuel-price.functions";
 import { toast } from "sonner";
 import {
@@ -24,27 +23,20 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import {
+  getVehicle,
+  listRefuels,
+  addRefuel,
+  deleteRefuel,
+  deleteVehicle,
+  getProfile,
+  type Refuel,
+  type Vehicle,
+} from "@/lib/data-store";
 
-export const Route = createFileRoute("/_authenticated/app/vehicle/$id")({
+export const Route = createFileRoute("/app/vehicle/$id")({
   component: VehiclePage,
 });
-
-type Vehicle = {
-  id: string;
-  name: string;
-  fuel_type: "petrol" | "diesel";
-};
-
-type Refuel = {
-  id: string;
-  refuel_date: string;
-  amount_inr: number;
-  rate_per_litre: number;
-  litres: number;
-  odo_km: number | null;
-  full_tank: boolean;
-  notes: string | null;
-};
 
 function VehiclePage() {
   const { id } = Route.useParams();
@@ -54,36 +46,16 @@ function VehiclePage() {
 
   const vehicle = useQuery({
     queryKey: ["vehicle", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("vehicles")
-        .select("*")
-        .eq("id", id)
-        .single();
-      if (error) throw error;
-      return data as Vehicle;
-    },
+    queryFn: () => getVehicle(id),
   });
 
   const refuels = useQuery({
     queryKey: ["refuels", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("refuels")
-        .select("*")
-        .eq("vehicle_id", id)
-        .order("refuel_date", { ascending: false })
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as Refuel[];
-    },
+    queryFn: () => listRefuels(id),
   });
 
   const del = useMutation({
-    mutationFn: async (rid: string) => {
-      const { error } = await supabase.from("refuels").delete().eq("id", rid);
-      if (error) throw error;
-    },
+    mutationFn: (rid: string) => deleteRefuel(rid),
     onSuccess: () => {
       toast.success("Refuel deleted");
       qc.invalidateQueries({ queryKey: ["refuels", id] });
@@ -93,10 +65,7 @@ function VehiclePage() {
   });
 
   const delVehicle = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("vehicles").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: () => deleteVehicle(id),
     onSuccess: () => {
       toast.success("Vehicle deleted");
       qc.invalidateQueries({ queryKey: ["vehicles"] });
@@ -326,13 +295,9 @@ function AddRefuelModal({
   const [city, setCity] = useState("");
 
   useEffect(() => {
-    supabase
-      .from("profiles")
-      .select("default_city")
-      .single()
-      .then(({ data }) => {
-        if (data?.default_city) setCity(data.default_city);
-      });
+    getProfile().then((p) => {
+      if (p.default_city) setCity(p.default_city);
+    });
   }, []);
 
   // Auto-fetch rate on open if today's date
@@ -375,10 +340,7 @@ function AddRefuelModal({
   const mut = useMutation({
     mutationFn: async () => {
       if (!litres) throw new Error("Enter amount and rate");
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) throw new Error("Not signed in");
-      const { error } = await supabase.from("refuels").insert({
-        user_id: u.user.id,
+      await addRefuel({
         vehicle_id: vehicle.id,
         refuel_date: date,
         amount_inr: amountN,
@@ -387,7 +349,6 @@ function AddRefuelModal({
         odo_km: odo ? parseFloat(odo) : null,
         full_tank: fullTank,
       });
-      if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Refuel logged");
@@ -565,17 +526,11 @@ function formatDate(s: string) {
   });
 }
 
-/**
- * Compute mileage and cost/km between consecutive full-tank refuels with odo.
- */
 function computeSummary(refuels: Refuel[]) {
   const totalLitres = refuels.reduce((s, r) => s + Number(r.litres), 0);
-
-  // Sort oldest first for sequence math.
   const asc = [...refuels].sort((a, b) =>
     a.refuel_date.localeCompare(b.refuel_date),
   );
-
   const fullsWithOdo = asc.filter((r) => r.full_tank && r.odo_km != null);
 
   let totalKm: number | null = null;
@@ -585,19 +540,16 @@ function computeSummary(refuels: Refuel[]) {
       Number(fullsWithOdo[0].odo_km);
   }
 
-  // Per-segment km/l + cost/km between consecutive full tanks.
   const segments: { date: string; kmpl: number; cpk: number }[] = [];
   for (let i = 1; i < fullsWithOdo.length; i++) {
     const prev = fullsWithOdo[i - 1];
     const cur = fullsWithOdo[i];
     const km = Number(cur.odo_km) - Number(prev.odo_km);
     if (km <= 0) continue;
-    // Sum all refuels (full + partial) strictly after prev and up to & including cur.
     let litresUsed = 0;
     let spend = 0;
     for (const r of asc) {
       if (r.refuel_date > prev.refuel_date && r.refuel_date <= cur.refuel_date) {
-        // exclude the prev fill itself, include current
         litresUsed += Number(r.litres);
         spend += Number(r.amount_inr);
       }

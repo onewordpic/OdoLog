@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,59 +7,46 @@ import {
   Fuel,
   Plus,
   LogOut,
+  LogIn,
   Car,
   ChevronRight,
   Loader2,
   Settings,
 } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
+import {
+  listVehicles,
+  addVehicle,
+  dashboardStats,
+} from "@/lib/data-store";
+import { useAuthed } from "@/lib/use-authed";
 
-export const Route = createFileRoute("/_authenticated/app/")({
+export const Route = createFileRoute("/app/")({
   component: Dashboard,
 });
-
-type Vehicle = {
-  id: string;
-  name: string;
-  fuel_type: "petrol" | "diesel";
-  created_at: string;
-};
 
 function Dashboard() {
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const authed = useAuthed();
   const [showAdd, setShowAdd] = useState(false);
 
   const vehicles = useQuery({
-    queryKey: ["vehicles"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("vehicles")
-        .select("*")
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      return data as Vehicle[];
-    },
+    queryKey: ["vehicles", authed],
+    queryFn: listVehicles,
+    enabled: authed !== null,
   });
 
   const stats = useQuery({
-    queryKey: ["dashboard-stats"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("refuels")
-        .select("amount_inr, litres, refuel_date");
-      if (error) throw error;
-      const total = data.reduce((s, r) => s + Number(r.amount_inr), 0);
-      const litres = data.reduce((s, r) => s + Number(r.litres), 0);
-      return { spend: total, litres, count: data.length };
-    },
+    queryKey: ["dashboard-stats", authed],
+    queryFn: dashboardStats,
+    enabled: authed !== null,
   });
 
   async function signOut() {
     await qc.cancelQueries();
     qc.clear();
     await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
+    navigate({ to: "/app" });
   }
 
   return (
@@ -79,15 +66,35 @@ function Dashboard() {
           >
             <Settings className="h-4 w-4" />
           </Link>
-          <button
-            onClick={signOut}
-            className="glass flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/60"
-            aria-label="Sign out"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
+          {authed ? (
+            <button
+              onClick={signOut}
+              className="glass flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/60"
+              aria-label="Sign out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          ) : (
+            <Link
+              to="/auth"
+              className="glass flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-medium hover:bg-white/60"
+              aria-label="Sign in"
+            >
+              <LogIn className="h-3.5 w-3.5" /> Sign in
+            </Link>
+          )}
         </div>
       </header>
+
+      {authed === false && (
+        <div className="glass-subtle mb-6 rounded-2xl px-4 py-3 text-xs text-muted-foreground">
+          You're using Fuelogue as a guest — data stays in this browser only.{" "}
+          <Link to="/auth" className="font-medium text-primary hover:underline">
+            Sign in
+          </Link>{" "}
+          to sync across devices.
+        </div>
+      )}
 
       <section className="grid grid-cols-3 gap-3">
         <Stat label="Total spent" value={`₹${(stats.data?.spend ?? 0).toFixed(0)}`} />
@@ -174,14 +181,7 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
   const [fuelType, setFuelType] = useState<"petrol" | "diesel">("petrol");
 
   const mut = useMutation({
-    mutationFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) throw new Error("Not signed in");
-      const { error } = await supabase
-        .from("vehicles")
-        .insert({ name: name.trim(), fuel_type: fuelType, user_id: u.user.id });
-      if (error) throw error;
-    },
+    mutationFn: () => addVehicle({ name: name.trim(), fuel_type: fuelType }),
     onSuccess: () => {
       toast.success("Vehicle added");
       qc.invalidateQueries({ queryKey: ["vehicles"] });
