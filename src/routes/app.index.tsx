@@ -12,13 +12,18 @@ import {
   ChevronRight,
   Loader2,
   Settings,
+  History,
 } from "lucide-react";
 import {
   listVehicles,
   addVehicle,
   dashboardStats,
+  listRecentRefuels,
+  type VehicleIcon as VIcon,
 } from "@/lib/data-store";
 import { useAuthed } from "@/lib/use-authed";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
 
 export const Route = createFileRoute("/app/")({
   component: Dashboard,
