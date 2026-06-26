@@ -150,95 +150,128 @@ function VehiclePage() {
       </div>
 
 
-      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat
-          icon={Wallet}
-          label="Cost / km"
-          value={summary.costPerKm != null ? `₹${summary.costPerKm.toFixed(2)}` : "—"}
-          hint={summary.basis?.label}
-        />
-        <Stat
-          icon={TrendingUp}
-          label="Mileage"
-          value={summary.kmPerL != null ? `${summary.kmPerL.toFixed(1)} km/l` : "—"}
-          hint={summary.basis?.label}
-        />
-        <Stat
-          icon={Droplet}
-          label="Litres"
-          value={summary.totalLitres.toFixed(1)}
-        />
-        <Stat
-          icon={Gauge}
-          label="Distance"
-          value={summary.totalKm != null ? `${summary.totalKm.toFixed(0)} km` : "—"}
-        />
-      </section>
-
-      {vehicle.data && (() => {
-        const claimed = claimedMileage(vehicle.data.name, vehicle.data.make);
-        if (claimed == null) return null;
-        const actual = summary.kmPerL;
-        const diff = actual != null ? actual - claimed : null;
-        const pct = actual != null ? ((actual - claimed) / claimed) * 100 : null;
-        return (
-          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl glass-subtle px-4 py-3 text-xs animate-fade-in">
-            <span className="font-medium text-foreground">Company-claimed mileage:</span>
-            <span className="rounded-full bg-foreground/10 px-2 py-0.5 font-semibold tabular-nums">
-              {claimed.toFixed(1)} km/l
-            </span>
-            {actual != null && diff != null && pct != null && (
-              <span
-                className={`rounded-full px-2 py-0.5 font-medium ${
-                  diff >= 0
-                    ? "bg-primary/15 text-primary"
-                    : "bg-destructive/15 text-destructive"
-                }`}
-              >
-                You: {actual.toFixed(1)} km/l ({diff >= 0 ? "+" : ""}
-                {pct.toFixed(0)}%)
-              </span>
-            )}
-            <span className="text-muted-foreground">· ARAI / brand figure</span>
-          </div>
-        );
-      })()}
-
-      {summary.basis && (summary.costPerKm != null || summary.kmPerL != null) && (
-        <div className="mt-3 glass-subtle rounded-2xl px-4 py-3 text-xs text-muted-foreground animate-fade-in">
-          <span className="font-medium text-foreground">
-            {summary.basis.source === "segments" ? "Based on " : "Estimated from "}
-            {summary.basis.label.toLowerCase()}:
-          </span>{" "}
-          {summary.basis.detail}
-        </div>
-      )}
-
-      {(summary.costPerKm == null || summary.kmPerL == null) && summary.missing.length > 0 && (
-        <div className="mt-3 glass rounded-2xl px-4 py-3 animate-fade-in">
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            <div className="text-xs">
-              <div className="font-medium text-foreground">
-                {summary.costPerKm == null && summary.kmPerL == null
-                  ? "Cost/km and Mileage need a bit more data"
-                  : summary.costPerKm == null
-                    ? "Cost/km needs a bit more data"
-                    : "Mileage needs a bit more data"}
-              </div>
-              <ul className="mt-1.5 space-y-1 text-muted-foreground">
-                {summary.missing.map((m, i) => (
-                  <li key={i}>• {m}</li>
-                ))}
-              </ul>
+      {ageReminder && (
+        <div className="glass mt-1 mb-4 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 animate-fade-in">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+          <div className="min-w-0 text-xs">
+            <div className="text-sm font-medium text-foreground">
+              Fitness / RC renewal coming up
             </div>
+            <p className="mt-0.5 text-muted-foreground">
+              This vehicle is {ageReminder.age} years old. In India, private
+              vehicles need a fitness test / re-registration at the 15-year mark
+              {ageReminder.yearsLeft === 0
+                ? " — that's this year. Book a slot at your RTO."
+                : ` — about ${ageReminder.yearsLeft} ${ageReminder.yearsLeft === 1 ? "year" : "years"} left. Plan ahead.`}
+            </p>
           </div>
         </div>
       )}
 
-      <TrendChart summary={summary} refuels={refuels.data ?? []} />
+      {isEV ? (
+        <div className="glass rounded-2xl p-5 text-sm animate-fade-in">
+          <div className="flex items-center gap-2 font-medium">
+            <span className="text-lg">⚡️</span> Electric vehicle
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Fuel tracking is disabled for EVs. Use the maintenance log below to
+            track services, brake pads, tyres and battery checks.
+          </p>
+        </div>
+      ) : (
+        <>
+          <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <Stat
+              icon={Wallet}
+              label="Cost / km"
+              value={summary.costPerKm != null ? `₹${summary.costPerKm.toFixed(2)}` : "—"}
+              hint={summary.basis?.label}
+            />
+            <Stat
+              icon={TrendingUp}
+              label="Mileage"
+              value={summary.kmPerL != null ? `${summary.kmPerL.toFixed(1)} km/l` : "—"}
+              hint={summary.basis?.label}
+            />
+            <Stat
+              icon={Droplet}
+              label="Litres"
+              value={summary.totalLitres.toFixed(1)}
+            />
+            <Stat
+              icon={Gauge}
+              label="Distance"
+              value={summary.totalKm != null ? `${summary.totalKm.toFixed(0)} km` : "—"}
+            />
+          </section>
 
-      <MaintenanceSection vehicleId={id} latestOdo={summary.latestOdo} />
+          {vehicle.data && (() => {
+            const claimed = claimedMileage(vehicle.data.name, vehicle.data.make);
+            if (claimed == null) return null;
+            const actual = summary.kmPerL;
+            const diff = actual != null ? actual - claimed : null;
+            const pct = actual != null ? ((actual - claimed) / claimed) * 100 : null;
+            return (
+              <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl glass-subtle px-4 py-3 text-xs animate-fade-in">
+                <span className="font-medium text-foreground">Company-claimed mileage:</span>
+                <span className="rounded-full bg-foreground/10 px-2 py-0.5 font-semibold tabular-nums">
+                  {claimed.toFixed(1)} km/l
+                </span>
+                {actual != null && diff != null && pct != null && (
+                  <span
+                    className={`rounded-full px-2 py-0.5 font-medium ${
+                      diff >= 0
+                        ? "bg-primary/15 text-primary"
+                        : "bg-destructive/15 text-destructive"
+                    }`}
+                  >
+                    You: {actual.toFixed(1)} km/l ({diff >= 0 ? "+" : ""}
+                    {pct.toFixed(0)}%)
+                  </span>
+                )}
+                <span className="text-muted-foreground">· ARAI / brand figure</span>
+              </div>
+            );
+          })()}
+
+          {summary.basis && (summary.costPerKm != null || summary.kmPerL != null) && (
+            <div className="mt-3 glass-subtle rounded-2xl px-4 py-3 text-xs text-muted-foreground animate-fade-in">
+              <span className="font-medium text-foreground">
+                {summary.basis.source === "segments" ? "Based on " : "Estimated from "}
+                {summary.basis.label.toLowerCase()}:
+              </span>{" "}
+              {summary.basis.detail}
+            </div>
+          )}
+
+          {(summary.costPerKm == null || summary.kmPerL == null) && summary.missing.length > 0 && (
+            <div className="mt-3 glass rounded-2xl px-4 py-3 animate-fade-in">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <div className="text-xs">
+                  <div className="font-medium text-foreground">
+                    {summary.costPerKm == null && summary.kmPerL == null
+                      ? "Cost/km and Mileage need a bit more data"
+                      : summary.costPerKm == null
+                        ? "Cost/km needs a bit more data"
+                        : "Mileage needs a bit more data"}
+                  </div>
+                  <ul className="mt-1.5 space-y-1 text-muted-foreground">
+                    {summary.missing.map((m, i) => (
+                      <li key={i}>• {m}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <TrendChart summary={summary} refuels={refuels.data ?? []} />
+        </>
+      )}
+
+      <MaintenanceSection vehicleId={id} latestOdo={summary.latestOdo} isEV={!!isEV} />
+
 
 
       <section className="mt-6">
