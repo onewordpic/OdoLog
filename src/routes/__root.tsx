@@ -96,9 +96,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "OdoLog — Track fuel & cost per km" },
-      { name: "twitter:description", content: "OdoLog tracks vehicle fuel consumption, calculating litres from INR spent, odometer readings, and daily fuel rates." },
+      { name: "twitter:description", content: "Track your fuel consumption, log maintenance log and a lot more." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7650fee0-1176-4445-9fa6-16a034751866/id-preview-c0a707d1--21669def-ed77-42ec-a79e-6632364c7423.lovable.app-1782468456641.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7650fee0-1176-4445-9fa6-16a034751866/id-preview-c0a707d1--21669def-ed77-42ec-a79e-6632364c7423.lovable.app-1782468456641.png" },
+      { name: "description", content: "Track your fuel consumption, log maintenance log and a lot more." },
+      { property: "og:description", content: "Track your fuel consumption, log maintenance log and a lot more." },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
