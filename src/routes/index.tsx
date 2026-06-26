@@ -64,11 +64,7 @@ function Landing() {
             Made for Indian fuel prices
           </div>
           <h1 className="mt-5 text-5xl font-light leading-[1.02] tracking-tight md:text-6xl">
-            Know what
-            <br />
-            <span className="font-medium italic">every kilometre</span>
-            <br />
-            actually costs.
+            Know what <span className="font-medium italic">every kilometre</span> actually costs.
           </h1>
           <p className="mt-6 max-w-md text-base text-muted-foreground">
             Type the rupees you spent. OdoLog pulls today's rate, derives
