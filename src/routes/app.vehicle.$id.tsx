@@ -311,12 +311,14 @@ function VehiclePage() {
       {showAdd && vehicle.data && (
         <AddRefuelModal
           vehicle={vehicle.data}
+          existingRefuels={refuels.data ?? []}
           onClose={() => setShowAdd(false)}
         />
       )}
       {editing && vehicle.data && (
         <AddRefuelModal
           vehicle={vehicle.data}
+          existingRefuels={refuels.data ?? []}
           editing={editing}
           onClose={() => setEditing(null)}
         />
@@ -583,10 +585,12 @@ function EditVehicleModal({
 
 function AddRefuelModal({
   vehicle,
+  existingRefuels,
   onClose,
   editing,
 }: {
   vehicle: Vehicle;
+  existingRefuels: Refuel[];
   onClose: () => void;
   editing?: Refuel | null;
 }) {
@@ -603,6 +607,21 @@ function AddRefuelModal({
   );
   const [fetchingRate, setFetchingRate] = useState(false);
   const [city, setCity] = useState("");
+
+  // Highest odo reading among other refuels (exclude the entry being edited).
+  const lastOdo = useMemo(() => {
+    const others = existingRefuels.filter(
+      (r) => r.id !== editing?.id && r.odo_km != null,
+    );
+    if (others.length === 0) return null;
+    return others.reduce((m, r) => Math.max(m, Number(r.odo_km)), 0);
+  }, [existingRefuels, editing?.id]);
+
+  const odoN = odo ? parseFloat(odo) : null;
+  const odoError =
+    odoN != null && lastOdo != null && odoN <= lastOdo
+      ? `Odometer must be greater than the last reading (${lastOdo.toFixed(0)} km).`
+      : null;
 
   useEffect(() => {
     getProfile().then((p) => {
@@ -651,6 +670,7 @@ function AddRefuelModal({
   const mut = useMutation({
     mutationFn: async () => {
       if (!litres) throw new Error("Enter amount and rate");
+      if (odoError) throw new Error(odoError);
       const payload = {
         refuel_date: date,
         amount_inr: amountN,
@@ -751,13 +771,29 @@ function AddRefuelModal({
             </div>
           )}
 
-          <NumField
-            label="Odometer (km)"
-            value={odo}
-            onChange={setOdo}
-            placeholder="optional, but improves accuracy"
-            step="any"
-          />
+          <div>
+            <NumField
+              label="Odometer (km)"
+              value={odo}
+              onChange={setOdo}
+              placeholder={
+                lastOdo != null
+                  ? `must be > ${lastOdo.toFixed(0)} km`
+                  : "optional, but improves accuracy"
+              }
+              step="any"
+            />
+            {lastOdo != null && (
+              <p className="mt-1 px-1 text-[11px] text-muted-foreground">
+                Last reading: <span className="font-medium tabular-nums text-foreground">{lastOdo.toFixed(0)} km</span>
+              </p>
+            )}
+            {odoError && (
+              <p className="mt-1 px-1 text-[11px] font-medium text-destructive">
+                {odoError}
+              </p>
+            )}
+          </div>
 
           <div>
             <span className="text-xs font-medium text-muted-foreground">
@@ -797,7 +833,7 @@ function AddRefuelModal({
             </button>
             <button
               type="submit"
-              disabled={mut.isPending || !litres}
+              disabled={mut.isPending || !litres || !!odoError}
               className="flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-primary-foreground disabled:opacity-60"
             >
               {mut.isPending ? "Saving…" : editing ? "Save changes" : "Save refuel"}
