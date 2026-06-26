@@ -939,13 +939,7 @@ function computeSummary(refuels: Refuel[]) {
   for (let i = 1; i < withOdo.length; i++) {
     const prev = withOdo[i - 1];
     const cur = withOdo[i];
-    const segment = makeSegment(
-      prev,
-      cur,
-      asc.filter(
-        (r) => r.orderIndex >= prev.orderIndex && r.orderIndex < cur.orderIndex,
-      ),
-    );
+    const segment = makeSegment(prev, cur, fuelBetween(asc, prev, cur));
     if (segment) odoSegments.push(segment);
   }
 
@@ -997,29 +991,11 @@ function computeSummary(refuels: Refuel[]) {
       missing.push("A later odometer reading that is higher than the previous one.");
     }
     // Fuel at the first odo reading drives the first odo-span estimate.
-    const firstOdoIndex = withOdo[0]?.orderIndex ?? -1;
-    const secondOdoIndex = withOdo[1]?.orderIndex ?? firstOdoIndex;
     const fuelFromFirstSpan =
-      withOdo.length >= 1
-        ? asc
-            .filter(
-              (r) =>
-                r.orderIndex >= firstOdoIndex && r.orderIndex < secondOdoIndex,
-            )
-            .reduce(
-              (sum, r) => ({
-                litres: sum.litres + litresFromRefuel(r),
-                spend: sum.spend + validNumber(r.amount_inr),
-              }),
-              { litres: 0, spend: 0 },
-            )
-        : 0;
-    if (
-      withOdo.length >= 2 &&
-      (typeof fuelFromFirstSpan === "number" ||
-        fuelFromFirstSpan.litres <= 0 ||
-        fuelFromFirstSpan.spend <= 0)
-    ) {
+      withOdo.length >= 2
+        ? summarizeFuel(fuelBetween(asc, withOdo[0], withOdo[1]))
+        : null;
+    if (fuelFromFirstSpan && (fuelFromFirstSpan.litres <= 0 || fuelFromFirstSpan.spend <= 0)) {
       missing.push("First ₹ spend and fuel rate — the app uses the fuel bought at the first odo reading for the next odo span.");
     }
     const missingRate = asc.some(
