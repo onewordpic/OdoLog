@@ -320,6 +320,30 @@ export async function addRefuel(input: {
   lsWrite(LS_REFUELS, all);
 }
 
+export async function updateRefuel(
+  id: string,
+  patch: {
+    refuel_date: string;
+    amount_inr: number;
+    rate_per_litre: number;
+    litres: number;
+    odo_km: number | null;
+    full_tank: boolean;
+  },
+): Promise<void> {
+  const userId = await getUserId();
+  if (userId) {
+    const { error } = await supabase.from("refuels").update(patch).eq("id", id);
+    if (error) throw error;
+    return;
+  }
+  const all = lsRead<Refuel[]>(LS_REFUELS, []);
+  const idx = all.findIndex((r) => r.id === id);
+  if (idx === -1) throw new Error("Refuel not found");
+  all[idx] = { ...all[idx], ...patch };
+  lsWrite(LS_REFUELS, all);
+}
+
 export async function deleteRefuel(id: string): Promise<void> {
   const userId = await getUserId();
   if (userId) {
