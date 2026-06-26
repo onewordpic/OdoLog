@@ -567,7 +567,7 @@ function AddRefuelModal({
   const [amount, setAmount] = useState("");
   const [rate, setRate] = useState("");
   const [odo, setOdo] = useState("");
-  const [fullTank, setFullTank] = useState(true);
+  const [fullTank, setFullTank] = useState(vehicle.fuel_type === "cng");
   const [fetchingRate, setFetchingRate] = useState(false);
   const [city, setCity] = useState("");
 
