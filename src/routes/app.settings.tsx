@@ -150,6 +150,27 @@ function SettingsPage() {
     toast.success("Local data cleared");
   }
 
+  async function handleDeleteAll() {
+    // Two confirmations: this is irreversible and wipes cloud + local data.
+    const first = confirm(
+      authed
+        ? "Delete ALL your data? This permanently removes every vehicle, refuel and maintenance log from your account and this browser. This cannot be undone."
+        : "Delete ALL your data? This permanently removes every vehicle, refuel and maintenance log stored in this browser. This cannot be undone.",
+    );
+    if (!first) return;
+    const second = confirm("Are you absolutely sure? There is no recovery.");
+    if (!second) return;
+    try {
+      await clearAllData();
+      setPrefs(DEFAULT_PREFS);
+      clearLocalData();
+      qc.invalidateQueries();
+      toast.success("All data deleted");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to delete");
+    }
+  }
+
   async function handleSignOut() {
     await supabase.auth.signOut();
     toast.success("Signed out");
