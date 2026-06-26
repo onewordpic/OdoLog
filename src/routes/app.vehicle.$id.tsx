@@ -603,6 +603,10 @@ function computeSummary(refuels: Refuel[]) {
     a.refuel_date.localeCompare(b.refuel_date),
   );
   const fullsWithOdo = asc.filter((r) => r.full_tank && r.odo_km != null);
+  const latestOdo = asc
+    .map((r) => (r.odo_km != null ? Number(r.odo_km) : null))
+    .filter((n): n is number => n != null)
+    .reduce((max, n) => (n > max ? n : max), 0) || null;
 
   let totalKm: number | null = null;
   if (fullsWithOdo.length >= 2) {
