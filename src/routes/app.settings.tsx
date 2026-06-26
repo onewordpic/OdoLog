@@ -88,7 +88,11 @@ function SettingsPage() {
 
   useEffect(() => {
     setPrefs(getPrefs());
+    setAccent(getAccent());
+    setGradient(getGradient());
   }, []);
+  const [accent, setAccent] = useState<Accent>("mint");
+  const [gradient, setGradient] = useState<Gradient>("aurora");
 
   const saveProf = useMutation({
     mutationFn: () => saveProfile({ display_name: name, default_city: city }),
