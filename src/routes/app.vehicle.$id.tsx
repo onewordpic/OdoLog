@@ -51,6 +51,7 @@ import {
 import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
 import { VehicleAvatar } from "@/components/vehicle-avatar";
 import { searchCatalog, claimedMileage, type CatalogEntry } from "@/lib/vehicle-catalog";
+import { getPrefs, PREFS_EVENT, type Prefs } from "@/lib/prefs";
 
 
 export const Route = createFileRoute("/app/vehicle/$id")({
