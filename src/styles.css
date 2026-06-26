@@ -38,6 +38,14 @@
   --color-glass: var(--glass);
   --color-glass-border: var(--glass-border);
 
+  --color-mint: var(--mint);
+  --color-sand: var(--sand);
+  --color-ink: var(--ink);
+  --color-mint-accent: var(--mint-accent);
+
+  --font-display: "Syne", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
   --animate-fade-in: fade-in 0.4s ease-out;
   --animate-fade-in-up: fade-in-up 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
   --animate-scale-in: scale-in 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
