@@ -583,19 +583,19 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
             <span className="text-xs font-medium text-muted-foreground">
               Fuel type
             </span>
-            <div className="mt-1 grid grid-cols-2 gap-2">
+            <div className="mt-1 grid grid-cols-3 gap-2">
               {(["petrol", "diesel", "cng"] as const).map((f) => (
                 <button
                   key={f}
                   type="button"
                   onClick={() => setFuelType(f)}
-                  className={`press rounded-xl px-4 py-3 text-sm font-medium capitalize transition ${
+                  className={`press rounded-xl px-3 py-3 text-sm font-medium uppercase tracking-wide transition ${
                     fuelType === f
                       ? "bg-primary text-primary-foreground"
                       : "glass-subtle glass-hover"
                   }`}
                 >
-                  {f}
+                  {f === "cng" ? "CNG" : f}
                 </button>
               ))}
             </div>
