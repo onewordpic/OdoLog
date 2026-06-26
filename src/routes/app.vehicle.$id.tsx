@@ -857,6 +857,31 @@ function summarizeFuel(refuels: OrderedRefuel[]) {
   );
 }
 
+function hasFuelData(r: Refuel) {
+  return validNumber(r.amount_inr) > 0 && litresFromRefuel(r) > 0;
+}
+
+function fuelBetween(
+  asc: OrderedRefuel[],
+  prev: OrderedRefuel,
+  cur: OrderedRefuel,
+) {
+  const between = asc.filter(
+    (r) => r.orderIndex > prev.orderIndex && r.orderIndex < cur.orderIndex,
+  );
+  if (between.some(hasFuelData)) return between;
+
+  // Most users enter the fuel spend and odo at the same stop. In that case,
+  // the fuel bought at the starting odo reading powers the distance until the
+  // next logged odo reading, so use the previous row as the estimate basis.
+  if (hasFuelData(prev)) return [prev];
+
+  // If the starting row was odo-only, use the ending refuel as a practical
+  // fallback instead of hiding mileage/cost forever.
+  if (hasFuelData(cur)) return [cur];
+  return between;
+}
+
 function makeSegment(
   prev: OrderedRefuel,
   cur: OrderedRefuel,
