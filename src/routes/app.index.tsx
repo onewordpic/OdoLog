@@ -610,7 +610,7 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
               Fuel type
             </span>
             <div className="mt-1 grid grid-cols-3 gap-2">
-              {(["petrol", "diesel", "cng"] as const).map((f) => (
+              {fuelOptionsFor(icon).map((f) => (
                 <button
                   key={f}
                   type="button"
@@ -625,6 +625,11 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
                 </button>
               ))}
             </div>
+            {icon === "bike" && (
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                Bikes are petrol-only in OdoLog.
+              </p>
+            )}
           </div>
 
           <button
