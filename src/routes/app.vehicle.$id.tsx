@@ -46,6 +46,9 @@ import {
   type VehicleIcon as VIcon,
 } from "@/lib/data-store";
 import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
+import { VehicleAvatar } from "@/components/vehicle-avatar";
+import { searchCatalog, type CatalogEntry } from "@/lib/vehicle-catalog";
+
 
 export const Route = createFileRoute("/app/vehicle/$id")({
   component: VehiclePage,
@@ -279,76 +282,234 @@ function Stat({
   );
 }
 
-function VehicleIconEditor({
-  vehicleId,
-  current,
+function VehicleHeaderEditor({ vehicle }: { vehicle: Vehicle }) {
+  const [editing, setEditing] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        aria-label="Edit vehicle details"
+        className="press hover-lift group relative shrink-0"
+      >
+        <VehicleAvatar vehicle={vehicle} size={68} rounded="rounded-2xl" />
+        <span className="glass absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full opacity-0 transition-opacity group-hover:opacity-100">
+          <Pencil className="h-3 w-3" />
+        </span>
+      </button>
+      {editing && (
+        <EditVehicleModal
+          vehicle={vehicle}
+          onClose={() => setEditing(false)}
+        />
+      )}
+    </>
+  );
+}
+
+function EditVehicleModal({
+  vehicle,
+  onClose,
 }: {
-  vehicleId: string;
-  current: VIcon;
+  vehicle: Vehicle;
+  onClose: () => void;
 }) {
   const qc = useQueryClient();
-  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(vehicle.name);
+  const [icon, setIcon] = useState<VIcon>(vehicle.icon);
+  const [make, setMake] = useState(vehicle.make ?? "");
+  const [year, setYear] = useState(
+    vehicle.model_year != null ? String(vehicle.model_year) : "",
+  );
+  const [reg, setReg] = useState(vehicle.reg_number ?? "");
+  const [imageUrl, setImageUrl] = useState(vehicle.image_url ?? "");
+
+  const suggestions = useMemo<CatalogEntry[]>(
+    () => (name.trim().length >= 1 ? searchCatalog(name, 4) : []),
+    [name],
+  );
 
   const mut = useMutation({
-    mutationFn: (icon: VIcon) => updateVehicle(vehicleId, { icon }),
+    mutationFn: () =>
+      updateVehicle(vehicle.id, {
+        name: name.trim() || vehicle.name,
+        icon,
+        make: make.trim() || null,
+        model_year: year ? Number(year) : null,
+        reg_number: reg.trim() ? reg.trim().toUpperCase() : null,
+        image_url: imageUrl.trim() || null,
+      }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["vehicle", vehicleId] });
+      toast.success("Vehicle updated");
+      qc.invalidateQueries({ queryKey: ["vehicle", vehicle.id] });
       qc.invalidateQueries({ queryKey: ["vehicles"] });
       qc.invalidateQueries({ queryKey: ["recent-refuels"] });
-      setEditing(false);
-      toast.success("Icon updated");
+      onClose();
     },
     onError: (e) => toast.error(e.message),
   });
 
-  if (editing) {
-    return (
-      <div className="glass animate-scale-in flex items-center gap-1 rounded-2xl p-1.5">
-        {VEHICLE_ICONS.map((opt) => {
-          const active = current === opt.id;
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              disabled={mut.isPending}
-              onClick={() => mut.mutate(opt.id)}
-              aria-label={opt.label}
-              className={`press flex h-10 w-10 items-center justify-center rounded-xl transition ${
-                active
-                  ? "bg-primary text-primary-foreground"
-                  : "glass-hover text-foreground"
-              }`}
-            >
-              <VehicleIcon icon={opt.id} className="h-5 w-5" />
-            </button>
-          );
-        })}
-        <button
-          type="button"
-          onClick={() => setEditing(false)}
-          aria-label="Done"
-          className="press flex h-10 w-10 items-center justify-center rounded-xl glass-hover"
-        >
-          <Check className="h-4 w-4" />
-        </button>
-      </div>
-    );
+  useEffect(() => {
+    function esc(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [onClose]);
+
+  function applySuggestion(s: CatalogEntry) {
+    setName(s.model);
+    setMake(s.make);
+    setIcon(s.type);
+    if (s.image) setImageUrl(s.image);
   }
 
+  const currentYear = new Date().getFullYear();
+
   return (
-    <button
-      type="button"
-      onClick={() => setEditing(true)}
-      aria-label="Change vehicle icon"
-      className="glass press hover-lift group relative flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10"
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center animate-fade-in"
+      onClick={onClose}
     >
-      <VehicleIcon icon={current} className="h-7 w-7 text-primary" />
-      <span className="glass absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full opacity-0 transition-opacity group-hover:opacity-100">
-        <Pencil className="h-3 w-3" />
-      </span>
-    </button>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="glass max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl p-6 md:rounded-3xl animate-slide-up"
+      >
+        <div className="flex items-center gap-3">
+          <VehicleAvatar
+            vehicle={{ icon, make: make || null, image_url: imageUrl || null, name }}
+            size={56}
+          />
+          <div>
+            <h3 className="text-lg font-medium">Edit vehicle</h3>
+            <p className="text-xs text-muted-foreground">
+              Make, model, registration & photo.
+            </p>
+          </div>
+        </div>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            mut.mutate();
+          }}
+          className="mt-5 space-y-4"
+        >
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">Model</span>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={60}
+              required
+              className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-2.5 text-sm"
+            />
+            {suggestions.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {suggestions.map((s) => (
+                  <button
+                    key={`${s.make}-${s.model}`}
+                    type="button"
+                    onClick={() => applySuggestion(s)}
+                    className="press rounded-full glass-subtle px-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+                  >
+                    {s.make} {s.model}
+                  </button>
+                ))}
+              </div>
+            )}
+          </label>
+
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">Make</span>
+            <input
+              value={make}
+              onChange={(e) => setMake(e.target.value)}
+              maxLength={40}
+              className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-2.5 text-sm"
+            />
+          </label>
+
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="text-xs font-medium text-muted-foreground">Year</span>
+              <input
+                type="number"
+                min={1950}
+                max={currentYear + 1}
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-2.5 text-sm"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium text-muted-foreground">Reg. no.</span>
+              <input
+                value={reg}
+                onChange={(e) => setReg(e.target.value.toUpperCase())}
+                maxLength={20}
+                className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-2.5 text-sm uppercase"
+              />
+            </label>
+          </div>
+
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">Photo URL</span>
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://…"
+              className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-2.5 text-sm"
+            />
+          </label>
+
+          <div>
+            <span className="text-xs font-medium text-muted-foreground">Type</span>
+            <div className="mt-1 grid grid-cols-3 gap-2">
+              {VEHICLE_ICONS.map((opt) => {
+                const active = icon === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setIcon(opt.id)}
+                    className={`press flex flex-col items-center gap-1 rounded-xl px-3 py-2.5 text-xs font-medium transition ${
+                      active
+                        ? "bg-primary text-primary-foreground"
+                        : "glass-subtle glass-hover"
+                    }`}
+                  >
+                    <VehicleIcon icon={opt.id} className="h-5 w-5" />
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="press flex-1 rounded-xl glass-subtle py-3 text-sm font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={mut.isPending}
+              className="press flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-primary-foreground disabled:opacity-60"
+            >
+              {mut.isPending ? "Saving…" : "Save"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
+
 
 function AddRefuelModal({
   vehicle,
