@@ -16,6 +16,9 @@ import {
   Droplet,
   Pencil,
   Check,
+  Wrench,
+  AlertTriangle,
+  BellRing,
 } from "lucide-react";
 import {
   LineChart,
@@ -24,6 +27,7 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  CartesianGrid,
 } from "recharts";
 import {
   getVehicle,
@@ -33,8 +37,12 @@ import {
   deleteVehicle,
   updateVehicle,
   getProfile,
+  listMaintenance,
+  addMaintenance,
+  deleteMaintenance,
   type Refuel,
   type Vehicle,
+  type MaintenanceLog,
   type VehicleIcon as VIcon,
 } from "@/lib/data-store";
 import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
@@ -141,68 +149,10 @@ function VehiclePage() {
         />
       </section>
 
-      {summary.chart.length >= 2 && (
-        <section className="glass mt-6 rounded-2xl p-4">
-          <div className="mb-2 px-2 text-xs uppercase tracking-wider text-muted-foreground">
-            Mileage trend (km/l)
-          </div>
-          <div className="h-44">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={summary.chart}>
-                <XAxis
-                  dataKey="date"
-                  stroke="oklch(0.5 0.02 250)"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  stroke="oklch(0.5 0.02 250)"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                  width={30}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: "rgba(255,255,255,0.9)",
-                    border: "1px solid rgba(255,255,255,0.6)",
-                    borderRadius: 12,
-                    backdropFilter: "blur(10px)",
-                    fontSize: 12,
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="kmpl"
-                  name="km/l"
-                  stroke="oklch(0.5 0.18 250)"
-                  strokeWidth={2}
-                  dot={{ r: 3, fill: "oklch(0.5 0.18 250)" }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="cpk"
-                  name="₹/km"
-                  stroke="oklch(0.65 0.18 30)"
-                  strokeWidth={2}
-                  dot={{ r: 3, fill: "oklch(0.65 0.18 30)" }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-2 flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block h-2 w-2 rounded-full" style={{ background: "oklch(0.5 0.18 250)" }} />
-              km/l
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block h-2 w-2 rounded-full" style={{ background: "oklch(0.65 0.18 30)" }} />
-              ₹/km
-            </span>
-          </div>
-        </section>
-      )}
+      <TrendChart summary={summary} refuels={refuels.data ?? []} />
+
+      <MaintenanceSection vehicleId={id} latestOdo={summary.latestOdo} />
+
 
       <section className="mt-6">
         <div className="mb-3 flex items-center justify-between">
@@ -661,6 +611,10 @@ function computeSummary(refuels: Refuel[]) {
     a.refuel_date.localeCompare(b.refuel_date),
   );
   const fullsWithOdo = asc.filter((r) => r.full_tank && r.odo_km != null);
+  const latestOdo = asc
+    .map((r) => (r.odo_km != null ? Number(r.odo_km) : null))
+    .filter((n): n is number => n != null)
+    .reduce((max, n) => (n > max ? n : max), 0) || null;
 
   let totalKm: number | null = null;
   if (fullsWithOdo.length >= 2) {
@@ -715,5 +669,454 @@ function computeSummary(refuels: Refuel[]) {
     costPerKm,
     chart: segments,
     segmentById,
+    latestOdo,
   };
 }
+
+// ---------- Interactive trend chart ----------
+
+type Metric = "kmpl" | "cpk" | "spend" | "litres";
+
+const METRICS: { id: Metric; label: string; color: string; unit: string }[] = [
+  { id: "kmpl", label: "Mileage", color: "oklch(0.55 0.18 250)", unit: "km/l" },
+  { id: "cpk", label: "Cost / km", color: "oklch(0.65 0.18 30)", unit: "₹/km" },
+  { id: "spend", label: "Spend", color: "oklch(0.6 0.15 150)", unit: "₹" },
+  { id: "litres", label: "Litres", color: "oklch(0.6 0.15 60)", unit: "L" },
+];
+
+function TrendChart({
+  summary,
+  refuels,
+}: {
+  summary: ReturnType<typeof computeSummary>;
+  refuels: Refuel[];
+}) {
+  const [metric, setMetric] = useState<Metric>("kmpl");
+
+  const data = useMemo(() => {
+    if (metric === "kmpl" || metric === "cpk") {
+      return summary.chart.map((s) => ({ date: s.date, value: s[metric] }));
+    }
+    const asc = [...refuels].sort((a, b) =>
+      a.refuel_date.localeCompare(b.refuel_date),
+    );
+    return asc.map((r) => ({
+      date: new Date(r.refuel_date + "T00:00:00").toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+      }),
+      value:
+        metric === "spend" ? Number(r.amount_inr) : Number(r.litres),
+    }));
+  }, [metric, summary.chart, refuels]);
+
+  if (data.length < 2) return null;
+  const cfg = METRICS.find((m) => m.id === metric)!;
+
+  return (
+    <section className="glass mt-6 rounded-2xl p-4 animate-fade-in-up">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
+        <div className="text-xs uppercase tracking-wider text-muted-foreground">
+          Trend
+        </div>
+        <div className="glass-subtle flex rounded-full p-1 text-[11px]">
+          {METRICS.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => setMetric(m.id)}
+              className={`press rounded-full px-3 py-1 transition ${
+                metric === m.id
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="h-52">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.7 0.02 250 / 0.2)" />
+            <XAxis
+              dataKey="date"
+              stroke="oklch(0.5 0.02 250)"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+            />
+            <YAxis
+              stroke="oklch(0.5 0.02 250)"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              width={36}
+            />
+            <Tooltip
+              contentStyle={{
+                background: "var(--background)",
+                border: "1px solid var(--border)",
+                borderRadius: 12,
+                fontSize: 12,
+              }}
+              formatter={(v: number) => [
+                metric === "spend" || metric === "cpk"
+                  ? `${cfg.unit === "₹" ? "₹" : ""}${v.toFixed(2)}${cfg.unit !== "₹" ? ` ${cfg.unit}` : ""}`
+                  : `${v.toFixed(2)} ${cfg.unit}`,
+                cfg.label,
+              ]}
+            />
+            <Line
+              type="monotone"
+              dataKey="value"
+              name={cfg.label}
+              stroke={cfg.color}
+              strokeWidth={2.5}
+              dot={{ r: 3, fill: cfg.color }}
+              activeDot={{ r: 5 }}
+              isAnimationActive
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </section>
+  );
+}
+
+// ---------- Maintenance log ----------
+
+function MaintenanceSection({
+  vehicleId,
+  latestOdo,
+}: {
+  vehicleId: string;
+  latestOdo: number | null;
+}) {
+  const qc = useQueryClient();
+  const [showAdd, setShowAdd] = useState(false);
+
+  const logs = useQuery({
+    queryKey: ["maintenance", vehicleId],
+    queryFn: () => listMaintenance(vehicleId),
+  });
+
+  const del = useMutation({
+    mutationFn: (id: string) => deleteMaintenance(id),
+    onSuccess: () => {
+      toast.success("Service log deleted");
+      qc.invalidateQueries({ queryKey: ["maintenance", vehicleId] });
+    },
+  });
+
+  const today = new Date().toISOString().slice(0, 10);
+  const dueItems = (logs.data ?? []).filter((m) => {
+    const dueByDate = m.next_service_date && m.next_service_date <= today;
+    const dueByOdo =
+      m.next_service_odo_km != null &&
+      latestOdo != null &&
+      latestOdo >= Number(m.next_service_odo_km);
+    return dueByDate || dueByOdo;
+  });
+
+  return (
+    <section className="mt-8 animate-fade-in-up">
+      {dueItems.length > 0 && (
+        <div className="glass mb-4 flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
+          <BellRing className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-medium text-destructive">
+              Service due
+            </div>
+            <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+              {dueItems.map((m) => (
+                <li key={m.id} className="truncate">
+                  · {m.service_type}
+                  {m.next_service_date && ` — by ${formatDate(m.next_service_date)}`}
+                  {m.next_service_odo_km != null &&
+                    ` — at ${Number(m.next_service_odo_km).toFixed(0)} km`}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          Maintenance
+        </h2>
+        <button
+          onClick={() => setShowAdd(true)}
+          className="flex items-center gap-1 rounded-full glass-subtle px-3 py-1.5 text-xs font-medium hover:bg-foreground/5"
+        >
+          <Plus className="h-3.5 w-3.5" /> Log service
+        </button>
+      </div>
+
+      {logs.isLoading ? (
+        <div className="glass flex h-20 items-center justify-center rounded-2xl">
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        </div>
+      ) : logs.data && logs.data.length > 0 ? (
+        <div className="space-y-2">
+          {logs.data.map((m) => {
+            const isDue = dueItems.some((d) => d.id === m.id);
+            return (
+              <div
+                key={m.id}
+                className="glass flex items-center justify-between rounded-2xl p-4"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <Wrench className="h-3.5 w-3.5 text-primary" />
+                    <span className="font-medium truncate">{m.service_type}</span>
+                    {m.cost_inr != null && (
+                      <span className="text-xs text-muted-foreground">
+                        · ₹{Number(m.cost_inr).toFixed(0)}
+                      </span>
+                    )}
+                    {isDue && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-medium uppercase text-destructive">
+                        <AlertTriangle className="h-3 w-3" /> Due
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                    <span>{formatDate(m.service_date)}</span>
+                    {m.odo_km != null && (
+                      <span>· {Number(m.odo_km).toFixed(0)} km</span>
+                    )}
+                    {m.next_service_date && (
+                      <span>· next by {formatDate(m.next_service_date)}</span>
+                    )}
+                    {m.next_service_odo_km != null && (
+                      <span>· next at {Number(m.next_service_odo_km).toFixed(0)} km</span>
+                    )}
+                  </div>
+                  {m.notes && (
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {m.notes}
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => {
+                    if (confirm("Delete this service log?")) del.mutate(m.id);
+                  }}
+                  className="ml-3 text-muted-foreground hover:text-destructive"
+                  aria-label="Delete"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="glass flex flex-col items-center justify-center rounded-2xl px-6 py-10 text-center">
+          <Wrench className="h-7 w-7 text-muted-foreground" />
+          <p className="mt-3 text-sm text-muted-foreground">
+            No service logs yet. Optional, but handy for reminders.
+          </p>
+        </div>
+      )}
+
+      {showAdd && (
+        <AddMaintenanceModal
+          vehicleId={vehicleId}
+          latestOdo={latestOdo}
+          onClose={() => setShowAdd(false)}
+        />
+      )}
+    </section>
+  );
+}
+
+function AddMaintenanceModal({
+  vehicleId,
+  latestOdo,
+  onClose,
+}: {
+  vehicleId: string;
+  latestOdo: number | null;
+  onClose: () => void;
+}) {
+  const qc = useQueryClient();
+  const today = new Date().toISOString().slice(0, 10);
+  const [date, setDate] = useState(today);
+  const [type, setType] = useState("");
+  const [odo, setOdo] = useState(latestOdo != null ? String(Math.round(latestOdo)) : "");
+  const [cost, setCost] = useState("");
+  const [notes, setNotes] = useState("");
+  const [nextOdo, setNextOdo] = useState("");
+  const [nextDate, setNextDate] = useState("");
+
+  const mut = useMutation({
+    mutationFn: async () => {
+      if (!type.trim()) throw new Error("Enter a service type");
+      await addMaintenance({
+        vehicle_id: vehicleId,
+        service_date: date,
+        service_type: type.trim(),
+        odo_km: odo ? parseFloat(odo) : null,
+        cost_inr: cost ? parseFloat(cost) : null,
+        notes: notes.trim() || null,
+        next_service_odo_km: nextOdo ? parseFloat(nextOdo) : null,
+        next_service_date: nextDate || null,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Service logged");
+      qc.invalidateQueries({ queryKey: ["maintenance", vehicleId] });
+      onClose();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  useEffect(() => {
+    function esc(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [onClose]);
+
+  const presets = ["Oil change", "Tyre rotation", "Brake pads", "Air filter", "General service"];
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/20 backdrop-blur-sm md:items-center"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="glass max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl p-6 md:rounded-3xl"
+      >
+        <h3 className="text-lg font-medium">Log service</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Optional reminders by date or odometer.
+        </p>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            mut.mutate();
+          }}
+          className="mt-5 space-y-4"
+        >
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">
+              Service type
+            </span>
+            <input
+              type="text"
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              placeholder="e.g. Oil change"
+              required
+              autoFocus
+              className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
+            />
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {presets.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setType(p)}
+                  className="press rounded-full glass-subtle px-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </label>
+
+          <div className="grid grid-cols-2 gap-3">
+            <NumField
+              label="Odometer (km)"
+              value={odo}
+              onChange={setOdo}
+              placeholder="optional"
+              step="any"
+            />
+            <NumField
+              label="Cost (₹)"
+              value={cost}
+              onChange={setCost}
+              placeholder="optional"
+              step="any"
+            />
+          </div>
+
+          <div>
+            <span className="text-xs font-medium text-muted-foreground">Date</span>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              max={today}
+              className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
+            />
+          </div>
+
+          <div className="rounded-xl glass-subtle p-3">
+            <div className="text-xs font-medium text-muted-foreground">
+              Remind me at (optional)
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-3">
+              <NumField
+                label="Next odo (km)"
+                value={nextOdo}
+                onChange={setNextOdo}
+                placeholder="e.g. 45000"
+                step="any"
+              />
+              <div>
+                <span className="text-xs font-medium text-muted-foreground">
+                  Next date
+                </span>
+                <input
+                  type="date"
+                  value={nextDate}
+                  onChange={(e) => setNextDate(e.target.value)}
+                  className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-3 text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">Notes</span>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
+            />
+          </label>
+
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-xl glass-subtle py-3 text-sm font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={mut.isPending}
+              className="flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-primary-foreground disabled:opacity-60"
+            >
+              {mut.isPending ? "Saving…" : "Save"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+
