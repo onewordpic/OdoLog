@@ -560,7 +560,7 @@ type FuelChoice = "petrol" | "diesel" | "cng" | "electric";
 function fuelOptionsFor(icon: VIcon): FuelChoice[] {
   if (icon === "bike") return ["petrol"];
   if (icon === "scooter") return ["petrol", "electric"];
-  return ["petrol", "diesel", "cng"];
+  return ["petrol", "diesel", "cng", "electric"];
 }
 
 function AddVehicleModal({ onClose }: { onClose: () => void }) {
