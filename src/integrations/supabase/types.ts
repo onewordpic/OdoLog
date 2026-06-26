@@ -151,9 +151,13 @@ export type Database = {
           icon: string
           id: string
           image_url: string | null
+          insurance_expiry: string | null
           make: string | null
           model_year: number | null
           name: string
+          puc_expiry: string | null
+          purchase_date: string | null
+          purchase_price_inr: number | null
           reg_number: string | null
           user_id: string
         }
@@ -163,9 +167,13 @@ export type Database = {
           icon?: string
           id?: string
           image_url?: string | null
+          insurance_expiry?: string | null
           make?: string | null
           model_year?: number | null
           name: string
+          puc_expiry?: string | null
+          purchase_date?: string | null
+          purchase_price_inr?: number | null
           reg_number?: string | null
           user_id: string
         }
@@ -175,9 +183,13 @@ export type Database = {
           icon?: string
           id?: string
           image_url?: string | null
+          insurance_expiry?: string | null
           make?: string | null
           model_year?: number | null
           name?: string
+          puc_expiry?: string | null
+          purchase_date?: string | null
+          purchase_price_inr?: number | null
           reg_number?: string | null
           user_id?: string
         }

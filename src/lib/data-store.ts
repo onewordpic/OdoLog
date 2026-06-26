@@ -14,6 +14,10 @@ export type Vehicle = {
   model_year: number | null;
   reg_number: string | null;
   image_url: string | null;
+  insurance_expiry: string | null;
+  puc_expiry: string | null;
+  purchase_date: string | null;
+  purchase_price_inr: number | null;
   created_at: string;
 };
 
@@ -142,6 +146,10 @@ export async function addVehicle(input: {
   model_year?: number | null;
   reg_number?: string | null;
   image_url?: string | null;
+  insurance_expiry?: string | null;
+  puc_expiry?: string | null;
+  purchase_date?: string | null;
+  purchase_price_inr?: number | null;
 }): Promise<Vehicle> {
   const icon = normIcon(input.icon);
   const extras = {
@@ -149,6 +157,10 @@ export async function addVehicle(input: {
     model_year: input.model_year ?? null,
     reg_number: input.reg_number ?? null,
     image_url: input.image_url ?? null,
+    insurance_expiry: input.insurance_expiry ?? null,
+    puc_expiry: input.puc_expiry ?? null,
+    purchase_date: input.purchase_date ?? null,
+    purchase_price_inr: input.purchase_price_inr ?? null,
   };
   const userId = await getUserId();
   if (userId) {
@@ -190,6 +202,10 @@ export async function updateVehicle(
     model_year?: number | null;
     reg_number?: string | null;
     image_url?: string | null;
+    insurance_expiry?: string | null;
+    puc_expiry?: string | null;
+    purchase_date?: string | null;
+    purchase_price_inr?: number | null;
   },
 ): Promise<void> {
   const userId = await getUserId();

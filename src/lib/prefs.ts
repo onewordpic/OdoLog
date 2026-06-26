@@ -8,6 +8,8 @@ export type Prefs = {
   serviceAlertsEnabled: boolean;
   reminderLeadKm: number; // warn this many km before next-service odo
   reminderLeadDays: number; // warn this many days before next-service date
+  // Depreciation
+  showDepreciation: boolean;
 };
 
 const KEY = "odolog.prefs";
@@ -20,6 +22,7 @@ export const DEFAULT_PREFS: Prefs = {
   serviceAlertsEnabled: true,
   reminderLeadKm: 300,
   reminderLeadDays: 7,
+  showDepreciation: true,
 };
 
 export function getPrefs(): Prefs {

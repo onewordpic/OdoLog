@@ -15,10 +15,12 @@ import {
   Wallet,
   Droplet,
   Pencil,
-  
   Wrench,
   AlertTriangle,
   BellRing,
+  ShieldCheck,
+  Leaf,
+  TrendingDown,
 } from "lucide-react";
 import {
   LineChart,
@@ -49,6 +51,7 @@ import {
 import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
 import { VehicleAvatar } from "@/components/vehicle-avatar";
 import { searchCatalog, claimedMileage, type CatalogEntry } from "@/lib/vehicle-catalog";
+import { getPrefs, PREFS_EVENT, type Prefs } from "@/lib/prefs";
 
 
 export const Route = createFileRoute("/app/vehicle/$id")({
@@ -102,6 +105,50 @@ function VehiclePage() {
     const yearsLeft = 15 - age;
     return { age, yearsLeft };
   }, [vehicle.data?.model_year]);
+
+  // Live prefs (for depreciation toggle)
+  const [prefs, setPrefs] = useState<Prefs>(() => getPrefs());
+  useEffect(() => {
+    const sync = () => setPrefs(getPrefs());
+    window.addEventListener(PREFS_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(PREFS_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
+  const renewals = useMemo(() => {
+    if (!vehicle.data) return [] as Array<{ kind: "insurance" | "puc"; date: string; daysLeft: number }>;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const items: Array<{ kind: "insurance" | "puc"; date: string; daysLeft: number }> = [];
+    const push = (kind: "insurance" | "puc", date: string | null) => {
+      if (!date) return;
+      const d = new Date(date);
+      const diff = Math.ceil((d.getTime() - today.getTime()) / 86400000);
+      if (diff <= 90) items.push({ kind, date, daysLeft: diff });
+    };
+    push("insurance", vehicle.data.insurance_expiry);
+    push("puc", vehicle.data.puc_expiry);
+    return items;
+  }, [vehicle.data]);
+
+  const depreciation = useMemo(() => {
+    if (!prefs.showDepreciation || !vehicle.data) return null;
+    const price = vehicle.data.purchase_price_inr;
+    const start = vehicle.data.purchase_date;
+    if (!price || price <= 0 || !start) return null;
+    const years =
+      (Date.now() - new Date(start).getTime()) / (365.25 * 86400000);
+    if (years < 0) return null;
+    // India-typical reducing-balance: cars 15%/yr, two-wheelers 12%/yr.
+    const rate = vehicle.data.icon === "car" ? 0.15 : 0.12;
+    const value = Math.max(0, price * Math.pow(1 - rate, years));
+    const lost = price - value;
+    const pctLost = (lost / price) * 100;
+    return { price, value, lost, pctLost, years, rate };
+  }, [prefs.showDepreciation, vehicle.data]);
 
 
   return (
@@ -167,6 +214,82 @@ function VehiclePage() {
           </div>
         </div>
       )}
+
+      {renewals.length > 0 && (
+        <div className="mb-4 grid gap-2 sm:grid-cols-2 animate-fade-in">
+          {renewals.map((r) => {
+            const expired = r.daysLeft < 0;
+            const urgent = r.daysLeft <= 30;
+            const tone = expired
+              ? "border-red-500/40 bg-red-500/5 text-red-500"
+              : urgent
+                ? "border-amber-500/40 bg-amber-500/5 text-amber-500"
+                : "border-foreground/15 bg-foreground/5 text-foreground";
+            const Icon = r.kind === "insurance" ? ShieldCheck : Leaf;
+            const label = r.kind === "insurance" ? "Insurance" : "Pollution (PUC)";
+            const when = new Date(r.date).toLocaleDateString(undefined, {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            });
+            return (
+              <div
+                key={r.kind}
+                className={`glass flex items-start gap-3 rounded-2xl border p-4 ${tone}`}
+              >
+                <Icon className="mt-0.5 h-5 w-5 shrink-0" />
+                <div className="min-w-0 text-xs">
+                  <div className="text-sm font-medium text-foreground">
+                    {label} {expired ? "expired" : "renewal due"}
+                  </div>
+                  <p className="mt-0.5 text-muted-foreground">
+                    {expired
+                      ? `Lapsed ${Math.abs(r.daysLeft)} day${Math.abs(r.daysLeft) === 1 ? "" : "s"} ago (was ${when}).`
+                      : `In ${r.daysLeft} day${r.daysLeft === 1 ? "" : "s"} · ${when}`}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {depreciation && (
+        <div className="glass mb-4 rounded-2xl p-5 animate-fade-in">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <TrendingDown className="h-4 w-4 text-muted-foreground" />
+              Estimated current value
+            </div>
+            <div className="text-[11px] text-muted-foreground">
+              {(depreciation.rate * 100).toFixed(0)}% / yr · reducing balance
+            </div>
+          </div>
+          <div className="mt-2 flex items-end gap-3">
+            <div className="text-3xl font-light tracking-tight tabular-nums">
+              ₹{Math.round(depreciation.value).toLocaleString("en-IN")}
+            </div>
+            <div className="pb-1 text-xs text-muted-foreground">
+              of ₹{Math.round(depreciation.price).toLocaleString("en-IN")}
+            </div>
+          </div>
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-foreground/10">
+            <div
+              className="h-full bg-foreground/60"
+              style={{
+                width: `${Math.min(100, Math.max(0, (depreciation.value / depreciation.price) * 100)).toFixed(1)}%`,
+              }}
+            />
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            ~{depreciation.years.toFixed(1)} yrs old · lost
+            ₹{Math.round(depreciation.lost).toLocaleString("en-IN")} ({depreciation.pctLost.toFixed(0)}%).
+            Toggle this off in Settings.
+          </p>
+        </div>
+      )}
+
+
 
       {isEV ? (
         <div className="glass rounded-2xl p-5 text-sm animate-fade-in">
@@ -471,6 +594,12 @@ function EditVehicleModal({
   );
   const [reg, setReg] = useState(vehicle.reg_number ?? "");
   const [imageUrl, setImageUrl] = useState(vehicle.image_url ?? "");
+  const [insuranceExpiry, setInsuranceExpiry] = useState(vehicle.insurance_expiry ?? "");
+  const [pucExpiry, setPucExpiry] = useState(vehicle.puc_expiry ?? "");
+  const [purchaseDate, setPurchaseDate] = useState(vehicle.purchase_date ?? "");
+  const [purchasePrice, setPurchasePrice] = useState(
+    vehicle.purchase_price_inr != null ? String(vehicle.purchase_price_inr) : "",
+  );
 
   const suggestions = useMemo<CatalogEntry[]>(
     () => (name.trim().length >= 1 ? searchCatalog(name, 4) : []),
@@ -486,6 +615,10 @@ function EditVehicleModal({
         model_year: year ? Number(year) : null,
         reg_number: reg.trim() ? reg.trim().toUpperCase() : null,
         image_url: imageUrl.trim() || null,
+        insurance_expiry: insuranceExpiry || null,
+        puc_expiry: pucExpiry || null,
+        purchase_date: purchaseDate || null,
+        purchase_price_inr: purchasePrice ? Number(purchasePrice) : null,
       }),
     onSuccess: () => {
       toast.success("Vehicle updated");
@@ -611,6 +744,61 @@ function EditVehicleModal({
               className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-2.5 text-sm"
             />
           </label>
+
+          <div className="rounded-2xl glass-subtle p-3 space-y-3">
+            <div className="text-xs font-medium text-muted-foreground">
+              Renewals · optional
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-[11px] text-muted-foreground">Insurance expiry</span>
+                <input
+                  type="date"
+                  value={insuranceExpiry}
+                  onChange={(e) => setInsuranceExpiry(e.target.value)}
+                  className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2 text-sm"
+                />
+              </label>
+              <label className="block">
+                <span className="text-[11px] text-muted-foreground">PUC expiry</span>
+                <input
+                  type="date"
+                  value={pucExpiry}
+                  onChange={(e) => setPucExpiry(e.target.value)}
+                  className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2 text-sm"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="rounded-2xl glass-subtle p-3 space-y-3">
+            <div className="text-xs font-medium text-muted-foreground">
+              Purchase · for depreciation
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-[11px] text-muted-foreground">Purchase date</span>
+                <input
+                  type="date"
+                  value={purchaseDate}
+                  onChange={(e) => setPurchaseDate(e.target.value)}
+                  className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2 text-sm"
+                />
+              </label>
+              <label className="block">
+                <span className="text-[11px] text-muted-foreground">Purchase price (₹)</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={purchasePrice}
+                  onChange={(e) => setPurchasePrice(e.target.value)}
+                  placeholder="e.g. 850000"
+                  className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2 text-sm"
+                />
+              </label>
+            </div>
+          </div>
 
           <div>
             <span className="text-xs font-medium text-muted-foreground">Type</span>
