@@ -111,40 +111,38 @@
 }
 
 .dark {
-  --background: oklch(0.16 0.02 260);
-  --foreground: oklch(0.96 0.01 60);
-  --card: oklch(0.24 0.02 260 / 0.55);
-  --card-foreground: oklch(0.96 0.01 60);
-  --popover: oklch(0.2 0.02 260);
-  --popover-foreground: oklch(0.96 0.01 60);
-  --primary: oklch(0.76 0.16 38);
-  --primary-foreground: oklch(0.16 0.02 30);
-  --secondary: oklch(0.3 0.04 165);
+  --mint: #1f3a2a;
+  --sand: #3a3220;
+  --ink: #f5f5f4;
+  --mint-accent: #7BD8B0;
+
+  --background: oklch(0.16 0.01 160);
+  --foreground: oklch(0.96 0.01 80);
+  --card: oklch(0.22 0.01 160 / 0.7);
+  --card-foreground: oklch(0.96 0.01 80);
+  --popover: oklch(0.2 0.01 160);
+  --popover-foreground: oklch(0.96 0.01 80);
+  --primary: oklch(0.86 0.13 165);
+  --primary-foreground: oklch(0.16 0 0);
+  --secondary: oklch(0.28 0.04 165);
   --secondary-foreground: oklch(0.95 0.02 165);
-  --muted: oklch(0.28 0.02 260 / 0.6);
-  --muted-foreground: oklch(0.72 0.02 60);
-  --accent: oklch(0.7 0.1 165);
-  --accent-foreground: oklch(0.15 0.02 165);
+  --muted: oklch(0.26 0.01 160 / 0.6);
+  --muted-foreground: oklch(0.72 0.02 80);
+  --accent: oklch(0.7 0.12 165);
+  --accent-foreground: oklch(0.15 0 0);
   --destructive: oklch(0.66 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.4 0.02 260 / 0.4);
-  --input: oklch(0.3 0.02 260 / 0.55);
-  --ring: oklch(0.76 0.16 38);
-  --glass: oklch(0.3 0.03 260 / 0.5);
-  --glass-border: oklch(0.5 0.03 260 / 0.4);
-  --glass-hover: oklch(0.36 0.03 260 / 0.65);
-
-  --grad-mint: oklch(0.4 0.1 165);
-  --grad-peach: oklch(0.42 0.12 50);
-  --grad-coral: oklch(0.45 0.16 30);
-  --grad-lilac: oklch(0.4 0.1 320);
+  --border: oklch(1 0 0 / 0.08);
+  --input: oklch(1 0 0 / 0.08);
+  --ring: oklch(0.86 0.13 165);
+  --glass: oklch(0.24 0.01 160 / 0.6);
+  --glass-border: oklch(1 0 0 / 0.08);
+  --glass-hover: oklch(0.3 0.01 160 / 0.78);
 
   --gradient-bg:
-    radial-gradient(60% 50% at 12% 8%, color-mix(in oklab, var(--grad-mint) 55%, transparent), transparent 70%),
-    radial-gradient(55% 45% at 92% 18%, color-mix(in oklab, var(--grad-lilac) 55%, transparent), transparent 70%),
-    radial-gradient(70% 60% at 50% 95%, color-mix(in oklab, var(--grad-peach) 55%, transparent), transparent 70%),
-    radial-gradient(40% 35% at 85% 80%, color-mix(in oklab, var(--grad-coral) 50%, transparent), transparent 70%),
-    linear-gradient(180deg, oklch(0.14 0.02 260), oklch(0.1 0.02 260));
+    radial-gradient(70% 55% at 8% 5%, oklch(0.22 0.03 160 / 0.8), transparent 70%),
+    radial-gradient(60% 50% at 95% 90%, oklch(0.22 0.04 80 / 0.7), transparent 70%),
+    linear-gradient(180deg, oklch(0.14 0.01 160), oklch(0.1 0.01 160));
 
   --shadow-glass:
     0 10px 36px -8px oklch(0 0 0 / 0.5),
