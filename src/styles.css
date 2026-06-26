@@ -167,9 +167,14 @@
     color: var(--color-foreground);
     background: var(--gradient-bg);
     background-attachment: fixed;
+    font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
     -webkit-font-smoothing: antialiased;
     transition: background 0.4s ease, color 0.3s ease;
+  }
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
   }
 }
 
