@@ -322,24 +322,6 @@ function Stat({
     </div>
   );
 }
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="glass hover-lift rounded-2xl p-4">
-      <Icon className="h-4 w-4 text-primary" />
-      <div className="mt-2 text-xs uppercase tracking-wider text-muted-foreground">
-        {label}
-      </div>
-      <div className="mt-0.5 text-lg font-light tracking-tight">{value}</div>
-    </div>
-  );
-}
 
 function VehicleHeaderEditor({ vehicle }: { vehicle: Vehicle }) {
   const [editing, setEditing] = useState(false);
