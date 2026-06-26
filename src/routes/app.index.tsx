@@ -33,7 +33,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
 import { VehicleAvatar } from "@/components/vehicle-avatar";
 import { searchCatalog, type CatalogEntry } from "@/lib/vehicle-catalog";
-import { WeatherChip } from "@/components/weather-chip";
+import { WeatherChip, WeatherAdvisory } from "@/components/weather-chip";
 
 export const Route = createFileRoute("/app/")({
   component: Dashboard,
@@ -179,6 +179,8 @@ function Dashboard() {
         </div>
         <WeatherChip city={profile.data?.default_city ?? ""} />
       </div>
+
+      <WeatherAdvisory city={profile.data?.default_city ?? ""} />
 
       {authed === false && (
         <div className="mb-4 rounded-2xl border border-foreground/10 bg-foreground/5 px-4 py-2.5 text-xs animate-fade-in">
@@ -560,7 +562,7 @@ type FuelChoice = "petrol" | "diesel" | "cng" | "electric";
 function fuelOptionsFor(icon: VIcon): FuelChoice[] {
   if (icon === "bike") return ["petrol"];
   if (icon === "scooter") return ["petrol", "electric"];
-  return ["petrol", "diesel", "cng"];
+  return ["petrol", "diesel", "cng", "electric"];
 }
 
 function AddVehicleModal({ onClose }: { onClose: () => void }) {
@@ -591,7 +593,7 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
     mutationFn: () =>
       addVehicle({
         name: name.trim(),
-        fuel_type: fuelType as "petrol" | "diesel" | "cng",
+        fuel_type: fuelType as "petrol" | "diesel" | "cng" | "electric",
         icon,
         make: make.trim() || null,
         model_year: year ? Number(year) : null,
@@ -608,8 +610,15 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
 
   function handleSubmit() {
     if (!name.trim()) return;
-    if (fuelType === "electric") {
+    // Scooter EV → block adding (current behavior).
+    if (icon === "scooter" && fuelType === "electric") {
       setShowEvCongrats(true);
+      return;
+    }
+    // Car EV → show savings popup, but DO add the vehicle.
+    if (icon === "car" && fuelType === "electric") {
+      setShowEvCongrats(true);
+      mut.mutate();
       return;
     }
     mut.mutate();
@@ -751,7 +760,7 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
             <span className="text-xs font-medium text-muted-foreground">
               Fuel type
             </span>
-            <div className="mt-1 grid grid-cols-3 gap-2">
+            <div className="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {fuelOptionsFor(icon).map((f) => (
                 <button
                   key={f}
@@ -763,7 +772,7 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
                       : "glass-subtle glass-hover"
                   }`}
                 >
-                  {f === "cng" ? "CNG" : f}
+                  {f === "cng" ? "CNG" : f === "electric" ? "EV" : f}
                 </button>
               ))}
             </div>
@@ -871,13 +880,16 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
             <div className="mx-auto mb-3 text-4xl">⚡️🎉</div>
             <h3 className="font-display text-xl font-bold">Congrats on saving fuel cost!</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              You don't need this app. Ride on, eco hero.
+              {icon === "car"
+                ? "No fuel bills, lower emissions, smoother rides. We've added your EV — only the maintenance log is enabled for it."
+                : "You don't need this app. Ride on, eco hero."}
             </p>
             <button
               type="button"
               onClick={() => {
                 setShowEvCongrats(false);
-                onClose();
+                // For car-EV we already kicked off mut.mutate(); onSuccess closes the modal.
+                if (!(icon === "car" && fuelType === "electric")) onClose();
               }}
               className="press mt-5 w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground"
             >

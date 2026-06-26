@@ -8,7 +8,7 @@ export type VehicleIcon = "car" | "bike" | "scooter";
 export type Vehicle = {
   id: string;
   name: string;
-  fuel_type: "petrol" | "diesel" | "cng";
+  fuel_type: "petrol" | "diesel" | "cng" | "electric";
   icon: VehicleIcon;
   make: string | null;
   model_year: number | null;
@@ -136,7 +136,7 @@ export async function getVehicle(id: string): Promise<Vehicle> {
 
 export async function addVehicle(input: {
   name: string;
-  fuel_type: "petrol" | "diesel" | "cng";
+  fuel_type: "petrol" | "diesel" | "cng" | "electric";
   icon?: VehicleIcon;
   make?: string | null;
   model_year?: number | null;
@@ -185,7 +185,7 @@ export async function updateVehicle(
   patch: {
     name?: string;
     icon?: VehicleIcon;
-    fuel_type?: "petrol" | "diesel" | "cng";
+    fuel_type?: "petrol" | "diesel" | "cng" | "electric";
     make?: string | null;
     model_year?: number | null;
     reg_number?: string | null;

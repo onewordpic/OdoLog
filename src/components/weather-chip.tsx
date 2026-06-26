@@ -32,6 +32,18 @@ function emojiFor(code: number): string {
   return "🌡️";
 }
 
+function adviceFor(code: number, temp: number): string | null {
+  if (code >= 95) return "Thunderstorm — avoid open roads, pull over if heavy.";
+  if (code >= 80 && code <= 82) return "Heavy showers — roads slick, double your braking distance.";
+  if (code >= 71 && code <= 77) return "Snow/sleet — drive slow, no sudden turns.";
+  if (code >= 51 && code <= 67) return "Rainy — roads are wet, drive safe and keep headlights on.";
+  if ([45, 48].includes(code)) return "Foggy — use low beams and fog lamps, keep distance.";
+  if (temp >= 38) return "Scorcher out — check tyre pressure and hydrate.";
+  if (temp <= 5) return "Cold — let the engine warm up for a minute before riding.";
+  if ([0, 1].includes(code)) return "Clear skies — perfect day for a ride.";
+  return null;
+}
+
 export function WeatherChip({ city }: { city: string }) {
   const enabled = !!city && city.trim().length > 0;
   const q = useQuery({
@@ -57,6 +69,31 @@ export function WeatherChip({ city }: { city: string }) {
           <span className="opacity-60">· {q.data.name}</span>
         </>
       )}
+    </div>
+  );
+}
+
+export function WeatherAdvisory({ city }: { city: string }) {
+  const enabled = !!city && city.trim().length > 0;
+  const q = useQuery({
+    queryKey: ["weather", city.toLowerCase()],
+    queryFn: () => fetchWeather(city),
+    enabled,
+    staleTime: 1000 * 60 * 15,
+    retry: 1,
+  });
+  if (!enabled || !q.data) return null;
+  const tip = adviceFor(q.data.code, q.data.temp);
+  if (!tip) return null;
+  return (
+    <div className="glass mt-3 flex items-start gap-3 rounded-2xl px-4 py-3 text-xs animate-fade-in">
+      <span aria-hidden className="text-base leading-none">{emojiFor(q.data.code)}</span>
+      <div className="min-w-0">
+        <div className="font-medium text-foreground">
+          {q.data.name} · {q.data.temp}°C
+        </div>
+        <p className="text-muted-foreground">{tip}</p>
+      </div>
     </div>
   );
 }
