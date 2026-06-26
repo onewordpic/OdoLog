@@ -27,7 +27,7 @@ import {
   getProfile,
   type VehicleIcon as VIcon,
 } from "@/lib/data-store";
-import { getPrefs, type Prefs } from "@/lib/prefs";
+import { PREFS_EVENT, getPrefs, type Prefs } from "@/lib/prefs";
 import { useAuthed } from "@/lib/use-authed";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
@@ -104,7 +104,7 @@ function Dashboard() {
           <div className="glass flex h-9 w-9 items-center justify-center rounded-xl">
             <Fuel className="h-4 w-4 text-primary" />
           </div>
-          <span className="text-lg font-medium tracking-tight">OdoBay</span>
+          <span className="text-lg font-medium tracking-tight">OdoLog</span>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -154,7 +154,7 @@ function Dashboard() {
 
       {authed === false && (
         <div className="glass-subtle mb-6 rounded-2xl px-4 py-3 text-xs text-muted-foreground animate-fade-in">
-          You're using OdoBay as a guest — data stays in this browser only.{" "}
+          You're using OdoLog as a guest — data stays in this browser only.{" "}
           <Link to="/auth" className="font-medium text-primary hover:underline">
             Sign in
           </Link>{" "}
@@ -601,8 +601,8 @@ function ServiceAlerts({ authed }: { authed: boolean | null }) {
     function onChange() {
       setPrefs(getPrefs());
     }
-    window.addEventListener("fuelogue:prefs", onChange);
-    return () => window.removeEventListener("fuelogue:prefs", onChange);
+    window.addEventListener(PREFS_EVENT, onChange);
+    return () => window.removeEventListener(PREFS_EVENT, onChange);
   }, []);
 
   const maint = useQuery({

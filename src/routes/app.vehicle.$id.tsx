@@ -807,12 +807,18 @@ function formatDate(s: string) {
 type Segment = {
   refuelId: string;
   date: string;
+  fromDate: string;
+  fromOdo: number;
+  toOdo: number;
   km: number;
   litres: number;
   spend: number;
   kmpl: number;
   cpk: number;
+  fuelCount: number;
 };
+
+type OrderedRefuel = Refuel & { orderIndex: number };
 
 function fmtShortDate(iso: string) {
   return new Date(iso + "T00:00:00").toLocaleDateString("en-IN", {
@@ -821,55 +827,110 @@ function fmtShortDate(iso: string) {
   });
 }
 
-function computeSummary(refuels: Refuel[]) {
-  const totalLitres = refuels.reduce((s, r) => s + Number(r.litres), 0);
-  const totalSpend = refuels.reduce((s, r) => s + Number(r.amount_inr), 0);
-  const asc = [...refuels].sort((a, b) =>
-    a.refuel_date.localeCompare(b.refuel_date),
+function compareRefuelsAsc(a: Refuel, b: Refuel) {
+  const byDate = a.refuel_date.localeCompare(b.refuel_date);
+  if (byDate !== 0) return byDate;
+  return a.created_at.localeCompare(b.created_at);
+}
+
+function validNumber(value: unknown) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function litresFromRefuel(r: Refuel) {
+  const stored = validNumber(r.litres);
+  if (stored > 0) return stored;
+  const amount = validNumber(r.amount_inr);
+  const rate = validNumber(r.rate_per_litre);
+  return amount > 0 && rate > 0 ? amount / rate : 0;
+}
+
+function summarizeFuel(refuels: OrderedRefuel[]) {
+  return refuels.reduce(
+    (sum, r) => ({
+      litres: sum.litres + litresFromRefuel(r),
+      spend: sum.spend + validNumber(r.amount_inr),
+      count: sum.count + 1,
+    }),
+    { litres: 0, spend: 0, count: 0 },
   );
+}
+
+function makeSegment(
+  prev: OrderedRefuel,
+  cur: OrderedRefuel,
+  fuelRefuels: OrderedRefuel[],
+): Segment | null {
+  const fromOdo = validNumber(prev.odo_km);
+  const toOdo = validNumber(cur.odo_km);
+  const km = toOdo - fromOdo;
+  if (km <= 0) return null;
+  const fuel = summarizeFuel(fuelRefuels);
+  if (fuel.litres <= 0 || fuel.spend <= 0) return null;
+  return {
+    refuelId: cur.id,
+    date: fmtShortDate(cur.refuel_date),
+    fromDate: prev.refuel_date,
+    fromOdo,
+    toOdo,
+    km,
+    litres: fuel.litres,
+    spend: fuel.spend,
+    kmpl: km / fuel.litres,
+    cpk: fuel.spend / km,
+    fuelCount: fuel.count,
+  };
+}
+
+function computeSummary(refuels: Refuel[]) {
+  const totalLitres = refuels.reduce((s, r) => s + litresFromRefuel(r), 0);
+  const totalSpend = refuels.reduce((s, r) => s + validNumber(r.amount_inr), 0);
+  const asc: OrderedRefuel[] = [...refuels]
+    .sort(compareRefuelsAsc)
+    .map((r, orderIndex) => ({ ...r, orderIndex }));
   const fullsWithOdo = asc.filter((r) => r.full_tank && r.odo_km != null);
   const latestOdo = asc
-    .map((r) => (r.odo_km != null ? Number(r.odo_km) : null))
+    .map((r) => (r.odo_km != null ? validNumber(r.odo_km) : null))
     .filter((n): n is number => n != null)
     .reduce((max, n) => (n > max ? n : max), 0) || null;
 
-  let totalKm: number | null = null;
-  if (fullsWithOdo.length >= 2) {
-    totalKm =
-      Number(fullsWithOdo[fullsWithOdo.length - 1].odo_km) -
-      Number(fullsWithOdo[0].odo_km);
-  }
-
-  const segments: Segment[] = [];
+  const fullTankSegments: Segment[] = [];
   for (let i = 1; i < fullsWithOdo.length; i++) {
     const prev = fullsWithOdo[i - 1];
     const cur = fullsWithOdo[i];
-    const km = Number(cur.odo_km) - Number(prev.odo_km);
-    if (km <= 0) continue;
-    let litresUsed = 0;
-    let spend = 0;
-    for (const r of asc) {
-      if (r.refuel_date > prev.refuel_date && r.refuel_date <= cur.refuel_date) {
-        litresUsed += Number(r.litres);
-        spend += Number(r.amount_inr);
-      }
-    }
-    if (litresUsed <= 0) continue;
-    segments.push({
-      refuelId: cur.id,
-      date: fmtShortDate(cur.refuel_date),
-      km,
-      litres: litresUsed,
-      spend,
-      kmpl: km / litresUsed,
-      cpk: spend / km,
-    });
+    const segment = makeSegment(
+      prev,
+      cur,
+      asc.filter(
+        (r) => r.orderIndex > prev.orderIndex && r.orderIndex <= cur.orderIndex,
+      ),
+    );
+    if (segment) fullTankSegments.push(segment);
   }
 
-  // Weighted overall cost/km and mileage based on totals across segments
+  const withOdo = asc.filter((r) => r.odo_km != null);
+  const odoSegments: Segment[] = [];
+  for (let i = 1; i < withOdo.length; i++) {
+    const prev = withOdo[i - 1];
+    const cur = withOdo[i];
+    const segment = makeSegment(
+      prev,
+      cur,
+      asc.filter(
+        (r) => r.orderIndex >= prev.orderIndex && r.orderIndex < cur.orderIndex,
+      ),
+    );
+    if (segment) odoSegments.push(segment);
+  }
+
+  const segments = fullTankSegments.length > 0 ? fullTankSegments : odoSegments;
+
+  // Weighted overall cost/km and mileage based on the odometer segments.
   const totalSegKm = segments.reduce((s, x) => s + x.km, 0);
   const totalSegLitres = segments.reduce((s, x) => s + x.litres, 0);
   const totalSegSpend = segments.reduce((s, x) => s + x.spend, 0);
+  const totalKm = totalSegKm > 0 ? totalSegKm : null;
   let kmPerL = totalSegLitres > 0 ? totalSegKm / totalSegLitres : null;
   let costPerKm = totalSegKm > 0 ? totalSegSpend / totalSegKm : null;
 
@@ -879,45 +940,17 @@ function computeSummary(refuels: Refuel[]) {
   let basisDetail = "";
 
   if (segments.length >= 1) {
-    const firstSeg = fullsWithOdo[0];
-    const lastSeg = fullsWithOdo[fullsWithOdo.length - 1];
-    basisSource = "segments";
-    basisLabel = `${segments.length} full-tank segment${segments.length === 1 ? "" : "s"}`;
-    basisDetail = `${fmtShortDate(firstSeg.refuel_date)} (${Number(firstSeg.odo_km).toFixed(0)} km) → ${fmtShortDate(lastSeg.refuel_date)} (${Number(lastSeg.odo_km).toFixed(0)} km) · ${totalSegKm.toFixed(0)} km on ${totalSegLitres.toFixed(2)} L (₹${totalSegSpend.toFixed(0)})`;
-  }
-
-  // Fallback estimate when there aren't 2+ full-tank refuels yet:
-  // use the span between the earliest and latest odo readings.
-  const withOdo = asc.filter((r) => r.odo_km != null);
-  let fallbackKm = 0;
-  let fallbackLitres = 0;
-  let fallbackSpend = 0;
-  let fallbackFirst: Refuel | null = null;
-  let fallbackLast: Refuel | null = null;
-  if (withOdo.length >= 2) {
-    const first = withOdo[0];
-    const last = withOdo[withOdo.length - 1];
-    const km = Number(last.odo_km) - Number(first.odo_km);
-    if (km > 0) {
-      fallbackFirst = first;
-      fallbackLast = last;
-      fallbackKm = km;
-      if (totalKm == null) totalKm = km;
-      // litres & spend consumed AFTER the first odo reading
-      for (const r of asc) {
-        if (r.refuel_date > first.refuel_date || (r.refuel_date === first.refuel_date && r.id !== first.id)) {
-          fallbackLitres += Number(r.litres);
-          fallbackSpend += Number(r.amount_inr);
-        }
-      }
-      if (kmPerL == null && fallbackLitres > 0) kmPerL = km / fallbackLitres;
-      if (costPerKm == null && fallbackSpend > 0) costPerKm = fallbackSpend / km;
-      if (basisSource == null && (kmPerL != null || costPerKm != null)) {
-        basisSource = "fallback";
-        basisLabel = "Odometer span estimate";
-        basisDetail = `${fmtShortDate(first.refuel_date)} (${Number(first.odo_km).toFixed(0)} km) → ${fmtShortDate(last.refuel_date)} (${Number(last.odo_km).toFixed(0)} km) · ${km.toFixed(0)} km on ${fallbackLitres.toFixed(2)} L (₹${fallbackSpend.toFixed(0)})`;
-      }
-    }
+    const firstSeg = segments[0];
+    const lastSeg = segments[segments.length - 1];
+    basisSource = fullTankSegments.length > 0 ? "segments" : "fallback";
+    basisLabel =
+      fullTankSegments.length > 0
+        ? `${segments.length} full-tank segment${segments.length === 1 ? "" : "s"}`
+        : `${segments.length} odometer segment${segments.length === 1 ? "" : "s"}`;
+    basisDetail =
+      fullTankSegments.length > 0
+        ? `${fmtShortDate(firstSeg.fromDate)} (${firstSeg.fromOdo.toFixed(0)} km) → ${lastSeg.date} (${lastSeg.toOdo.toFixed(0)} km). Fuel counted from refuels up to each full tank: ${totalSegKm.toFixed(0)} km on ${totalSegLitres.toFixed(2)} L (₹${totalSegSpend.toFixed(0)}).`
+        : `${fmtShortDate(firstSeg.fromDate)} (${firstSeg.fromOdo.toFixed(0)} km) → ${lastSeg.date} (${lastSeg.toOdo.toFixed(0)} km). Fuel counted from the first refuel in each odo span: ${totalSegKm.toFixed(0)} km on ${totalSegLitres.toFixed(2)} L (₹${totalSegSpend.toFixed(0)}).`;
   }
 
   // Diagnose what's missing when cost/km or mileage can't be calculated.
@@ -931,23 +964,44 @@ function computeSummary(refuels: Refuel[]) {
     } else if (odoCount === 1) {
       missing.push("A second odometer reading — log it on your next refuel to measure the distance covered.");
     }
-    // litres after first odo reading drives the calculation
-    const litresAfterFirst =
+    const hasPositiveOdoSpan = odoSegments.length > 0 || withOdo.some((r, i) => {
+      if (i === 0) return false;
+      return validNumber(r.odo_km) > validNumber(withOdo[i - 1].odo_km);
+    });
+    if (withOdo.length >= 2 && !hasPositiveOdoSpan) {
+      missing.push("A later odometer reading that is higher than the previous one.");
+    }
+    // Fuel at the first odo reading drives the first odo-span estimate.
+    const firstOdoIndex = withOdo[0]?.orderIndex ?? -1;
+    const secondOdoIndex = withOdo[1]?.orderIndex ?? firstOdoIndex;
+    const fuelFromFirstSpan =
       withOdo.length >= 1
         ? asc
             .filter(
               (r) =>
-                r.refuel_date > withOdo[0].refuel_date ||
-                (r.refuel_date === withOdo[0].refuel_date && r.id !== withOdo[0].id),
+                r.orderIndex >= firstOdoIndex && r.orderIndex < secondOdoIndex,
             )
-            .reduce((s, r) => s + Number(r.litres), 0)
+            .reduce(
+              (sum, r) => ({
+                litres: sum.litres + litresFromRefuel(r),
+                spend: sum.spend + validNumber(r.amount_inr),
+              }),
+              { litres: 0, spend: 0 },
+            )
         : 0;
-    if (withOdo.length >= 2 && litresAfterFirst <= 0) {
-      missing.push("Fuel spend (₹) or rate on a refuel after the first odometer reading.");
+    if (
+      withOdo.length >= 2 &&
+      (typeof fuelFromFirstSpan === "number" ||
+        fuelFromFirstSpan.litres <= 0 ||
+        fuelFromFirstSpan.spend <= 0)
+    ) {
+      missing.push("First ₹ spend and fuel rate — the app uses the fuel bought at the first odo reading for the next odo span.");
     }
-    const zeroRate = asc.some((r) => Number(r.rate_per_litre) <= 0 || Number(r.amount_inr) <= 0);
-    if (zeroRate) {
-      missing.push("A valid fuel rate and ₹ amount on every refuel (some entries are zero).");
+    const missingRate = asc.some(
+      (r) => validNumber(r.amount_inr) > 0 && validNumber(r.rate_per_litre) <= 0,
+    );
+    if (missingRate) {
+      missing.push("Fuel rate (₹/L) for any refuel where you entered ₹ spend.");
     }
   }
 
