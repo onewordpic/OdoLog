@@ -10,8 +10,13 @@ export type Vehicle = {
   name: string;
   fuel_type: "petrol" | "diesel";
   icon: VehicleIcon;
+  make: string | null;
+  model_year: number | null;
+  reg_number: string | null;
+  image_url: string | null;
   created_at: string;
 };
+
 
 export type Refuel = {
   id: string;
@@ -34,10 +39,12 @@ export type MaintenanceLog = {
   odo_km: number | null;
   cost_inr: number | null;
   notes: string | null;
+  condition: string | null;
   next_service_odo_km: number | null;
   next_service_date: string | null;
   created_at: string;
 };
+
 
 export type Profile = {
   display_name: string;
