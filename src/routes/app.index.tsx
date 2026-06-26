@@ -132,6 +132,7 @@ function Dashboard() {
         </Link>
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
+          <ShareIconButton />
           <Link
             to="/app/analytics"
             className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
