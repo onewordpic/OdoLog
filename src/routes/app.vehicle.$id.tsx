@@ -869,7 +869,8 @@ function fuelBetween(
   const between = asc.filter(
     (r) => r.orderIndex > prev.orderIndex && r.orderIndex < cur.orderIndex,
   );
-  if (between.some(hasFuelData)) return between;
+  const fuelRowsBetween = between.filter(hasFuelData);
+  if (fuelRowsBetween.length > 0) return fuelRowsBetween;
 
   // Most users enter the fuel spend and odo at the same stop. In that case,
   // the fuel bought at the starting odo reading powers the distance until the
