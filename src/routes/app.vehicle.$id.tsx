@@ -99,6 +99,7 @@ function VehiclePage() {
       <header className="mb-6 flex items-center justify-between">
         <Link
           to="/app"
+          aria-label="Back to dashboard"
           className="glass glass-hover press flex h-9 w-9 items-center justify-center rounded-full"
         >
           <ArrowLeft className="h-4 w-4" />
