@@ -384,7 +384,7 @@ function formatShortDate(s: string) {
 function AddVehicleModal({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient();
   const [name, setName] = useState("");
-  const [fuelType, setFuelType] = useState<"petrol" | "diesel">("petrol");
+  const [fuelType, setFuelType] = useState<"petrol" | "diesel" | "cng">("petrol");
   const [icon, setIcon] = useState<VIcon>("car");
   const [make, setMake] = useState("");
   const [year, setYear] = useState("");
