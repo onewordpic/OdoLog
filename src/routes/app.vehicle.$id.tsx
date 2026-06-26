@@ -661,5 +661,7 @@ function computeSummary(refuels: Refuel[]) {
     costPerKm,
     chart: segments,
     segmentById,
+    latestOdo,
   };
 }
+
