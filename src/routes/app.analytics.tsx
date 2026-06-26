@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -24,6 +24,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   listVehicles,
   listRecentRefuels,
+  getProfile,
   type Vehicle,
 } from "@/lib/data-store";
 import { fetchFuelPrice } from "@/lib/fuel-price.functions";
@@ -35,6 +36,9 @@ export const Route = createFileRoute("/app/analytics")({
 });
 
 const POPULAR_CITIES = [
+  "Thiruvananthapuram",
+  "Kochi",
+  "Kozhikode",
   "Delhi",
   "Mumbai",
   "Bangalore",
@@ -44,8 +48,6 @@ const POPULAR_CITIES = [
   "Pune",
   "Ahmedabad",
   "Jaipur",
-  "Kochi",
-  "Thiruvananthapuram",
   "Chandigarh",
 ];
 
