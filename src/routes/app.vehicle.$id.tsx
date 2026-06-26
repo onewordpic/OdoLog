@@ -772,7 +772,7 @@ function AddRefuelModal({
               disabled={mut.isPending || !litres}
               className="flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-primary-foreground disabled:opacity-60"
             >
-              {mut.isPending ? "Saving…" : "Save refuel"}
+              {mut.isPending ? "Saving…" : editing ? "Save changes" : "Save refuel"}
             </button>
           </div>
         </form>
