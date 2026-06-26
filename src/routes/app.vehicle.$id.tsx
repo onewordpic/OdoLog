@@ -274,6 +274,7 @@ function VehiclePage() {
 
 
 
+      {!isEV && (
       <section className="mt-6">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
@@ -380,6 +381,8 @@ function VehiclePage() {
           </div>
         )}
       </section>
+      )}
+
 
       {showAdd && vehicle.data && (
         <AddRefuelModal
