@@ -771,13 +771,29 @@ function AddRefuelModal({
             </div>
           )}
 
-          <NumField
-            label="Odometer (km)"
-            value={odo}
-            onChange={setOdo}
-            placeholder="optional, but improves accuracy"
-            step="any"
-          />
+          <div>
+            <NumField
+              label="Odometer (km)"
+              value={odo}
+              onChange={setOdo}
+              placeholder={
+                lastOdo != null
+                  ? `must be > ${lastOdo.toFixed(0)} km`
+                  : "optional, but improves accuracy"
+              }
+              step="any"
+            />
+            {lastOdo != null && (
+              <p className="mt-1 px-1 text-[11px] text-muted-foreground">
+                Last reading: <span className="font-medium tabular-nums text-foreground">{lastOdo.toFixed(0)} km</span>
+              </p>
+            )}
+            {odoError && (
+              <p className="mt-1 px-1 text-[11px] font-medium text-destructive">
+                {odoError}
+              </p>
+            )}
+          </div>
 
           <div>
             <span className="text-xs font-medium text-muted-foreground">
