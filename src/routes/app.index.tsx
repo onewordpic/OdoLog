@@ -104,28 +104,42 @@ function Dashboard() {
   const featured = vehicles.data?.[0];
   const latest = recent.data?.[0];
 
+  // Deterministic accent color per vehicle (mirrors the reference dashboard's colored circular avatars).
+  const accents = [
+    "#A7F3D0", // mint
+    "#FCD34D", // sand
+    "#F9A8D4", // rose
+    "#93C5FD", // sky
+    "#C4B5FD", // violet
+    "#FDBA74", // orange
+  ];
+  const accentFor = (id: string) => {
+    let h = 0;
+    for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+    return accents[Math.abs(h) % accents.length];
+  };
+
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-10">
+    <main className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-10 text-foreground">
       {/* Top bar */}
-      <header className="mb-6 flex items-center justify-between animate-fade-in-up">
+      <header className="mb-8 flex items-center justify-between animate-fade-in-up">
         <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-ink text-[var(--mint-accent)]">
-            <Fuel className="h-4 w-4" />
-          </div>
-          <span className="text-lg font-display font-bold tracking-tight">OdoLog</span>
+          <span className="text-lg font-display font-bold tracking-tight">
+            .odolog<span className="text-[var(--mint-accent)]">_</span>
+          </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <ThemeToggle />
           <Link
             to="/app/analytics"
-            className="press flex h-9 w-9 items-center justify-center rounded-full bg-white border border-black/5 hover:bg-[var(--mint)] transition"
+            className="press flex h-9 w-9 items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition"
             aria-label="Analytics"
           >
             <BarChart3 className="h-4 w-4" />
           </Link>
           <Link
             to="/app/settings"
-            className="press flex h-9 w-9 items-center justify-center rounded-full bg-white border border-black/5 hover:bg-[var(--mint)] transition"
+            className="press flex h-9 w-9 items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition"
             aria-label="Settings"
           >
             <Settings className="h-4 w-4" />
@@ -133,7 +147,7 @@ function Dashboard() {
           {authed ? (
             <button
               onClick={signOut}
-              className="press flex h-9 w-9 items-center justify-center rounded-full bg-white border border-black/5 hover:bg-[var(--mint)] transition"
+              className="press flex h-9 w-9 items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition"
               aria-label="Sign out"
             >
               <LogOut className="h-4 w-4" />
@@ -141,7 +155,7 @@ function Dashboard() {
           ) : (
             <Link
               to="/auth"
-              className="press flex h-9 items-center gap-1.5 rounded-full bg-ink text-[var(--mint-accent)] px-4 text-xs font-semibold"
+              className="press flex h-9 items-center gap-1.5 rounded-full bg-[var(--mint-accent)] text-stone-900 px-4 text-xs font-semibold"
             >
               <LogIn className="h-3.5 w-3.5" /> Sign in
             </Link>
@@ -149,188 +163,144 @@ function Dashboard() {
         </div>
       </header>
 
+      {/* Page title */}
+      <div className="mb-6 flex items-end justify-between gap-4 animate-fade-in-up">
+        <div>
+          <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight leading-[1.05]">
+            {greeting}<span className="text-[var(--mint-accent)]">.</span>
+          </h1>
+          <p className="mt-2 text-sm text-[var(--cockpit-text-soft)]">
+            {vehicleCount > 0
+              ? `${vehicleCount} ${vehicleCount === 1 ? "vehicle" : "vehicles"} · ${refuelCount} refuel${refuelCount === 1 ? "" : "s"} logged`
+              : "Add your first vehicle to start tracking."}
+          </p>
+        </div>
+        <div className="hidden md:flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-[var(--cockpit-text-soft)]">
+          <span className="opacity-60">Showing</span>
+          <span className="font-semibold text-foreground">All time</span>
+        </div>
+      </div>
+
       {authed === false && (
-        <div className="mb-4 rounded-2xl bg-[var(--sand)] border border-black/5 px-4 py-2.5 text-xs animate-fade-in">
+        <div className="mb-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs animate-fade-in">
           Guest mode — data stays in this browser.{" "}
-          <Link to="/auth" className="font-semibold underline">Sign in</Link> to sync.
+          <Link to="/auth" className="font-semibold underline text-[var(--mint-accent)]">Sign in</Link> to sync.
         </div>
       )}
 
       {/* Bento grid */}
-      <div className="grid grid-cols-1 md:grid-cols-12 md:auto-rows-[140px] gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
 
-        {/* Greeting tile */}
-        <div className="md:col-span-8 md:row-span-2 rounded-[2rem] p-7 md:p-9 flex flex-col justify-between border border-black/5 stagger"
-             style={{ background: "var(--mint)", animationDelay: "0ms" }}>
-          <div>
-            <h1 className="font-display text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.05]">
-              {greeting}<span className="text-[var(--mint-accent)]">.</span>
-            </h1>
-            <p className="mt-2 text-base text-black/70">
-              {vehicleCount > 0
-                ? `${vehicleCount} ${vehicleCount === 1 ? "vehicle" : "vehicles"} · ${refuelCount} refuel${refuelCount === 1 ? "" : "s"} logged`
-                : "Add your first vehicle to start tracking."}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-6">
+        {/* Total spent (hero) */}
+        <div className="md:col-span-7 rounded-[2rem] p-7 md:p-9 border border-white/10 bg-[var(--cockpit-card)] flex flex-col justify-between min-h-[220px] stagger"
+             style={{ animationDelay: "0ms" }}>
+          <div className="flex items-start justify-between">
+            <span className="text-[11px] uppercase tracking-[0.18em] font-semibold text-[var(--cockpit-text-mute)]">
+              Total spent
+            </span>
             <button
               onClick={() => setShowAdd(true)}
-              className="press inline-flex items-center gap-1.5 px-4 py-2 bg-ink text-[var(--mint-accent)] rounded-full text-sm font-semibold"
+              className="press inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-[11px] font-semibold transition"
             >
-              <Plus className="h-3.5 w-3.5" /> Add vehicle
+              <Plus className="h-3 w-3" /> Vehicle
             </button>
-            {featured && (
-              <Link
-                to="/app/vehicle/$id"
-                params={{ id: featured.id }}
-                className="press inline-flex items-center gap-1.5 px-4 py-2 bg-white rounded-full text-sm font-medium border border-black/5"
-              >
-                Log refuel <ChevronRight className="h-3.5 w-3.5" />
-              </Link>
-            )}
           </div>
-        </div>
-
-        {/* Total spend (ink) */}
-        <div className="md:col-span-4 md:row-span-2 rounded-[2rem] p-7 flex flex-col justify-between text-white stagger"
-             style={{ background: "var(--ink)", animationDelay: "60ms" }}>
-          <div className="flex items-start justify-between">
-            <span className="text-[11px] uppercase tracking-[0.18em] font-semibold opacity-60">Total spent</span>
-            <div className="w-9 h-9 rounded-full bg-[var(--mint-accent)] flex items-center justify-center">
-              <div className="w-1.5 h-1.5 bg-ink rounded-full" />
-            </div>
-          </div>
-          <div>
-            <div className="font-display text-5xl font-bold tracking-tight">
+          <div className="mt-6">
+            <div className="font-display text-5xl md:text-6xl font-bold tracking-tight">
               ₹{totalSpent.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
             </div>
-            <p className="text-sm text-[var(--mint-accent)] mt-1">
-              Across {refuelCount} refuel{refuelCount === 1 ? "" : "s"}
-            </p>
+            <div className="mt-3 flex items-center gap-2 text-sm">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[var(--mint-accent-soft)] text-[var(--mint-accent)] px-2.5 py-1 text-[11px] font-semibold">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--mint-accent)]" /> {refuelCount} refuels
+              </span>
+              <span className="text-[var(--cockpit-text-soft)]">across {vehicleCount} {vehicleCount === 1 ? "vehicle" : "vehicles"}</span>
+            </div>
           </div>
         </div>
 
         {/* Litres */}
-        <div className="md:col-span-3 md:row-span-2 rounded-[2rem] p-6 flex flex-col justify-between border border-black/5 stagger"
-             style={{ background: "var(--sand)", animationDelay: "120ms" }}>
-          <span className="text-[11px] uppercase tracking-[0.18em] font-semibold opacity-60">Litres</span>
-          <div>
-            <div className="font-display text-3xl font-bold tracking-tight">
-              {totalLitres.toFixed(1)}<span className="text-base ml-1 opacity-50">L</span>
+        <div className="md:col-span-5 grid grid-cols-2 gap-4">
+          <div className="rounded-[2rem] p-5 border border-white/10 bg-[var(--cockpit-card)] flex flex-col justify-between stagger"
+               style={{ animationDelay: "60ms" }}>
+            <span className="text-[10px] uppercase tracking-[0.18em] font-semibold text-[var(--cockpit-text-mute)]">Litres</span>
+            <div>
+              <div className="font-display text-3xl font-bold tracking-tight">
+                {totalLitres.toFixed(1)}<span className="text-sm ml-1 text-[var(--cockpit-text-mute)]">L</span>
+              </div>
+              <div className="mt-3 flex items-end gap-1 h-6">
+                {[40, 65, 30, 80, 55, 90, 70].map((h, i) => (
+                  <div key={i} className="flex-1 rounded-sm bg-[var(--mint-accent)]/70" style={{ height: `${h}%` }} />
+                ))}
+              </div>
             </div>
-            <div className="h-1 w-full bg-black/10 rounded-full mt-4 overflow-hidden">
-              <div
-                className="h-full bg-ink rounded-full transition-all"
-                style={{ width: `${Math.min(100, (totalLitres / Math.max(50, totalLitres)) * 100)}%` }}
-              />
+          </div>
+          <div className="rounded-[2rem] p-5 border border-white/10 bg-[var(--cockpit-card)] flex flex-col justify-between stagger"
+               style={{ animationDelay: "120ms" }}>
+            <span className="text-[10px] uppercase tracking-[0.18em] font-semibold text-[var(--cockpit-text-mute)]">Refuels</span>
+            <div>
+              <div className="font-display text-3xl font-bold tracking-tight">
+                {refuelCount}
+              </div>
+              <p className="text-[11px] mt-2 text-[var(--cockpit-text-soft)]">
+                {vehicleCount} vehicle{vehicleCount === 1 ? "" : "s"}
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Refuels */}
-        <div className="md:col-span-3 md:row-span-2 rounded-[2rem] p-6 flex flex-col justify-between bg-white border border-black/5 stagger"
-             style={{ animationDelay: "180ms" }}>
-          <span className="text-[11px] uppercase tracking-[0.18em] font-semibold opacity-60">Refuels</span>
-          <div>
-            <div className="font-display text-3xl font-bold tracking-tight">
-              {refuelCount}
+        {/* Featured vehicle — mint accent hero */}
+        <div className="md:col-span-7 rounded-[2rem] p-7 relative overflow-hidden group stagger min-h-[200px]"
+             style={{ background: "var(--mint-accent)", color: "#0c1410", animationDelay: "180ms" }}>
+          <div className="relative z-10 flex flex-col h-full justify-between gap-6">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-[0.18em] opacity-70">
+                {featured ? "Active vehicle" : "Your garage"}
+              </span>
+              {featured && (
+                <div className="h-9 w-9 rounded-full bg-black/10 flex items-center justify-center">
+                  <VehicleIcon icon={featured.icon ?? "car"} className="h-4 w-4" />
+                </div>
+              )}
             </div>
-            <p className="text-xs mt-2 text-black/40">
-              {vehicleCount} vehicle{vehicleCount === 1 ? "" : "s"} tracked
-            </p>
-          </div>
-        </div>
-
-        {/* Recent refuels */}
-        <div className="md:col-span-6 md:row-span-4 rounded-[2rem] p-7 bg-white border border-black/5 flex flex-col stagger"
-             style={{ animationDelay: "240ms" }}>
-          <div className="flex justify-between items-center mb-5">
-            <h3 className="font-display text-xl font-bold flex items-center gap-2">
-              <History className="h-4 w-4 opacity-60" /> Recent refuels
-            </h3>
-          </div>
-          {recent.isLoading ? (
-            <div className="flex-1 flex items-center justify-center">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            </div>
-          ) : recent.data && recent.data.length > 0 ? (
-            <div className="space-y-3 overflow-y-auto">
-              {recent.data.slice(0, 5).map((r) => (
-                <Link
-                  key={r.id}
-                  to="/app/vehicle/$id"
-                  params={{ id: r.vehicle_id }}
-                  className="press flex items-center justify-between p-3 bg-[#f7f7f5] hover:bg-[var(--mint)] rounded-2xl transition"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 bg-[var(--sand)] rounded-xl flex items-center justify-center shrink-0">
-                      <VehicleIcon icon={r.vehicle_icon} className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold truncate">{r.vehicle_name}</p>
-                      <p className="text-[11px] opacity-50">
-                        {formatShortDate(r.refuel_date)} · {Number(r.litres).toFixed(2)} L
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-sm font-bold">₹{Number(r.amount_inr).toFixed(0)}</p>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center text-sm text-black/50">
-              <History className="h-6 w-6 mb-2 opacity-40" />
-              No refuels logged yet.
-            </div>
-          )}
-        </div>
-
-        {/* Featured vehicle tile (mint-accent) */}
-        <div className="md:col-span-6 md:row-span-2 rounded-[2rem] p-7 relative overflow-hidden group stagger"
-             style={{ background: "var(--mint-accent)", animationDelay: "300ms" }}>
-          <div className="relative z-10 flex flex-col h-full justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-black/60">
-              {featured ? "Active vehicle" : "Your garage"}
-            </span>
             {featured ? (
               <Link to="/app/vehicle/$id" params={{ id: featured.id }} className="block">
-                <h4 className="font-display text-3xl font-extrabold mt-1 leading-tight">
+                <h4 className="font-display text-3xl md:text-4xl font-bold leading-tight tracking-tight">
                   {featured.make ? `${featured.make} ${featured.name}` : featured.name}
                 </h4>
-                <p className="text-sm font-medium text-black/70 mt-1">
+                <p className="text-sm font-medium opacity-70 mt-1">
                   <span className="capitalize">{featured.fuel_type}</span>
                   {featured.model_year ? ` · ${featured.model_year}` : ""}
                   {featured.reg_number ? ` · ${featured.reg_number}` : ""}
                 </p>
-                <span className="inline-flex items-center gap-1 mt-4 text-sm font-semibold">
-                  Open <ChevronRight className="h-4 w-4" />
+                <span className="inline-flex items-center gap-1 mt-4 px-4 py-2 rounded-full bg-stone-900 text-[var(--mint-accent)] text-sm font-semibold">
+                  Log refuel <ChevronRight className="h-3.5 w-3.5" />
                 </span>
               </Link>
             ) : (
               <>
-                <h4 className="font-display text-2xl font-extrabold mt-1">Empty garage</h4>
+                <h4 className="font-display text-2xl font-bold">Empty garage</h4>
                 <button
                   onClick={() => setShowAdd(true)}
-                  className="press mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-ink text-white rounded-full text-sm font-semibold w-fit"
+                  className="press inline-flex items-center gap-1.5 px-4 py-2 bg-stone-900 text-[var(--mint-accent)] rounded-full text-sm font-semibold w-fit"
                 >
                   <Plus className="h-3.5 w-3.5" /> Add vehicle
                 </button>
               </>
             )}
           </div>
-          <div className="absolute -right-8 -bottom-8 w-48 h-48 rounded-full bg-ink/10 group-hover:scale-110 transition-transform duration-500" />
+          <div className="absolute -right-10 -bottom-10 w-52 h-52 rounded-full bg-black/10 group-hover:scale-110 transition-transform duration-500" />
         </div>
 
-        {/* Vehicles list */}
-        <div className="md:col-span-6 md:row-span-2 rounded-[2rem] p-6 bg-white border border-black/5 flex flex-col stagger"
-             style={{ animationDelay: "360ms" }}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-display text-lg font-bold">Your vehicles</h3>
+        {/* Vehicles list (colored circular avatars like reference) */}
+        <div className="md:col-span-5 rounded-[2rem] p-6 border border-white/10 bg-[var(--cockpit-card)] flex flex-col stagger"
+             style={{ animationDelay: "240ms" }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display text-lg font-bold">Your garage</h3>
             <button
               onClick={() => setShowAdd(true)}
-              className="press flex items-center gap-1 rounded-full bg-ink text-white px-3 py-1.5 text-xs font-semibold"
+              className="press flex items-center gap-1 rounded-full bg-[var(--mint-accent)] text-stone-900 px-3 py-1.5 text-[11px] font-semibold"
             >
-              <Plus className="h-3.5 w-3.5" /> Add
+              <Plus className="h-3 w-3" /> Add
             </button>
           </div>
           {vehicles.isLoading ? (
@@ -339,30 +309,91 @@ function Dashboard() {
             </div>
           ) : vehicles.data && vehicles.data.length > 0 ? (
             <div className="space-y-2 overflow-y-auto">
-              {vehicles.data.map((v) => (
-                <Link
-                  key={v.id}
-                  to="/app/vehicle/$id"
-                  params={{ id: v.id }}
-                  className="press flex items-center justify-between p-3 hover:bg-[var(--mint)] rounded-2xl transition"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <VehicleAvatar vehicle={v} size={36} />
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold truncate">
-                        {v.make ? `${v.make} ${v.name}` : v.name}
+              {vehicles.data.slice(0, 4).map((v) => {
+                const color = accentFor(v.id);
+                return (
+                  <Link
+                    key={v.id}
+                    to="/app/vehicle/$id"
+                    params={{ id: v.id }}
+                    className="press flex items-center justify-between p-2.5 hover:bg-white/5 rounded-2xl transition"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className="h-10 w-10 rounded-full flex items-center justify-center shrink-0"
+                        style={{ background: color, color: "#0c1410" }}
+                      >
+                        <VehicleIcon icon={v.icon ?? "car"} className="h-4 w-4" />
                       </div>
-                      <div className="text-[11px] capitalize opacity-50">{v.fuel_type}</div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold truncate">
+                          {v.make ? `${v.make} ${v.name}` : v.name}
+                        </div>
+                        <div className="text-[11px] capitalize text-[var(--cockpit-text-mute)]">{v.fuel_type}</div>
+                      </div>
                     </div>
-                  </div>
-                  <ChevronRight className="h-4 w-4 opacity-40 shrink-0" />
-                </Link>
-              ))}
+                    <ChevronRight className="h-4 w-4 text-[var(--cockpit-text-mute)] shrink-0" />
+                  </Link>
+                );
+              })}
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center text-sm opacity-50">
+            <div className="flex-1 flex flex-col items-center justify-center text-center text-sm text-[var(--cockpit-text-mute)] py-6">
               <Car className="h-6 w-6 mb-2 opacity-50" />
               No vehicles yet
+            </div>
+          )}
+        </div>
+
+        {/* Recent refuels — full width */}
+        <div className="md:col-span-12 rounded-[2rem] p-7 border border-white/10 bg-[var(--cockpit-card)] flex flex-col stagger"
+             style={{ animationDelay: "300ms" }}>
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="font-display text-xl font-bold flex items-center gap-2">
+              <History className="h-4 w-4 text-[var(--cockpit-text-mute)]" /> Recent refuels
+            </h3>
+            <Link to="/app/analytics" className="text-[11px] text-[var(--cockpit-text-soft)] hover:text-[var(--mint-accent)] transition">
+              View analytics →
+            </Link>
+          </div>
+          {recent.isLoading ? (
+            <div className="py-10 flex items-center justify-center">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          ) : recent.data && recent.data.length > 0 ? (
+            <div className="divide-y divide-white/5">
+              {recent.data.slice(0, 6).map((r) => {
+                const color = accentFor(r.vehicle_id);
+                return (
+                  <Link
+                    key={r.id}
+                    to="/app/vehicle/$id"
+                    params={{ id: r.vehicle_id }}
+                    className="press flex items-center justify-between py-3 hover:bg-white/5 -mx-2 px-2 rounded-xl transition"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className="h-9 w-9 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
+                        style={{ background: color, color: "#0c1410" }}
+                      >
+                        {r.vehicle_name.slice(0, 1).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold truncate">{r.vehicle_name}</p>
+                        <p className="text-[11px] text-[var(--cockpit-text-mute)]">
+                          {formatShortDate(r.refuel_date)} · {Number(r.litres).toFixed(2)} L
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-sm font-bold tabular-nums">₹{Number(r.amount_inr).toFixed(0)}</p>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="py-12 flex flex-col items-center justify-center text-center text-sm text-[var(--cockpit-text-mute)]">
+              <History className="h-6 w-6 mb-2 opacity-40" />
+              No refuels logged yet.
             </div>
           )}
         </div>
