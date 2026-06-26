@@ -8,7 +8,7 @@ export type VehicleIcon = "car" | "bike" | "scooter";
 export type Vehicle = {
   id: string;
   name: string;
-  fuel_type: "petrol" | "diesel" | "cng";
+  fuel_type: "petrol" | "diesel" | "cng" | "electric";
   icon: VehicleIcon;
   make: string | null;
   model_year: number | null;
