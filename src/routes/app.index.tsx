@@ -411,6 +411,35 @@ function Dashboard() {
 
 const ONBOARD_KEY = "odolog.cityOnboarded";
 
+const CITY_SUGGESTIONS = [
+  "Delhi",
+  "Mumbai",
+  "Bangalore",
+  "Bengaluru",
+  "Chennai",
+  "Kolkata",
+  "Hyderabad",
+  "Pune",
+  "Ahmedabad",
+  "Jaipur",
+  "Lucknow",
+  "Kochi",
+  "Thiruvananthapuram",
+  "Chandigarh",
+  "Coimbatore",
+  "Indore",
+  "Bhopal",
+  "Nagpur",
+  "Surat",
+  "Vadodara",
+  "Visakhapatnam",
+];
+
+function matchSuggestion(value: string): string {
+  const v = value.trim().toLowerCase();
+  return CITY_SUGGESTIONS.find((c) => c.toLowerCase() === v) ?? "";
+}
+
 function FirstRunCityModal({
   profileLoaded,
   currentCity,
@@ -422,7 +451,7 @@ function FirstRunCityModal({
 }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [city, setCity] = useState("");
+  const [city, setCity] = useState("Delhi");
   const [displayName, setDisplayName] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -430,7 +459,7 @@ function FirstRunCityModal({
     if (!profileLoaded) return;
     if (typeof window === "undefined") return;
     if (window.localStorage.getItem(ONBOARD_KEY)) return;
-    setCity(currentCity || "");
+    setCity(matchSuggestion(currentCity) || "Delhi");
     setDisplayName(currentName || "");
     setOpen(true);
   }, [profileLoaded, currentCity, currentName]);
@@ -485,13 +514,19 @@ function FirstRunCityModal({
             <span className="text-xs font-medium text-muted-foreground">City</span>
             <input
               autoFocus
+              list="odolog-city-suggestions"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              placeholder="e.g. Mumbai, Bengaluru, Thiruvananthapuram"
+              placeholder="Start typing — pick from suggestions"
               maxLength={60}
               required
               className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2.5 text-sm"
             />
+            <datalist id="odolog-city-suggestions">
+              {CITY_SUGGESTIONS.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
           </label>
           <div className="flex gap-2 pt-1">
             <button
