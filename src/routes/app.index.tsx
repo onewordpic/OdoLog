@@ -524,7 +524,7 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (name.trim()) mut.mutate();
+            handleSubmit();
           }}
           className="mt-5 space-y-4"
         >
