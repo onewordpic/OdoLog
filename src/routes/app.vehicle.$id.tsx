@@ -773,6 +773,13 @@ type Segment = {
   cpk: number;
 };
 
+function fmtShortDate(iso: string) {
+  return new Date(iso + "T00:00:00").toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
 function computeSummary(refuels: Refuel[]) {
   const totalLitres = refuels.reduce((s, r) => s + Number(r.litres), 0);
   const totalSpend = refuels.reduce((s, r) => s + Number(r.amount_inr), 0);
@@ -809,10 +816,7 @@ function computeSummary(refuels: Refuel[]) {
     if (litresUsed <= 0) continue;
     segments.push({
       refuelId: cur.id,
-      date: new Date(cur.refuel_date + "T00:00:00").toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-      }),
+      date: fmtShortDate(cur.refuel_date),
       km,
       litres: litresUsed,
       spend,
@@ -828,26 +832,81 @@ function computeSummary(refuels: Refuel[]) {
   let kmPerL = totalSegLitres > 0 ? totalSegKm / totalSegLitres : null;
   let costPerKm = totalSegKm > 0 ? totalSegSpend / totalSegKm : null;
 
+  // Track which refuels backed the estimate so we can show a breakdown.
+  let basisSource: "segments" | "fallback" | null = null;
+  let basisLabel = "";
+  let basisDetail = "";
+
+  if (segments.length >= 1) {
+    const firstSeg = fullsWithOdo[0];
+    const lastSeg = fullsWithOdo[fullsWithOdo.length - 1];
+    basisSource = "segments";
+    basisLabel = `${segments.length} full-tank segment${segments.length === 1 ? "" : "s"}`;
+    basisDetail = `${fmtShortDate(firstSeg.refuel_date)} (${Number(firstSeg.odo_km).toFixed(0)} km) → ${fmtShortDate(lastSeg.refuel_date)} (${Number(lastSeg.odo_km).toFixed(0)} km) · ${totalSegKm.toFixed(0)} km on ${totalSegLitres.toFixed(2)} L (₹${totalSegSpend.toFixed(0)})`;
+  }
+
   // Fallback estimate when there aren't 2+ full-tank refuels yet:
   // use the span between the earliest and latest odo readings.
   const withOdo = asc.filter((r) => r.odo_km != null);
+  let fallbackKm = 0;
+  let fallbackLitres = 0;
+  let fallbackSpend = 0;
+  let fallbackFirst: Refuel | null = null;
+  let fallbackLast: Refuel | null = null;
   if (withOdo.length >= 2) {
     const first = withOdo[0];
     const last = withOdo[withOdo.length - 1];
     const km = Number(last.odo_km) - Number(first.odo_km);
     if (km > 0) {
+      fallbackFirst = first;
+      fallbackLast = last;
+      fallbackKm = km;
       if (totalKm == null) totalKm = km;
       // litres & spend consumed AFTER the first odo reading
-      let litresUsed = 0;
-      let spendUsed = 0;
       for (const r of asc) {
         if (r.refuel_date > first.refuel_date || (r.refuel_date === first.refuel_date && r.id !== first.id)) {
-          litresUsed += Number(r.litres);
-          spendUsed += Number(r.amount_inr);
+          fallbackLitres += Number(r.litres);
+          fallbackSpend += Number(r.amount_inr);
         }
       }
-      if (kmPerL == null && litresUsed > 0) kmPerL = km / litresUsed;
-      if (costPerKm == null && spendUsed > 0) costPerKm = spendUsed / km;
+      if (kmPerL == null && fallbackLitres > 0) kmPerL = km / fallbackLitres;
+      if (costPerKm == null && fallbackSpend > 0) costPerKm = fallbackSpend / km;
+      if (basisSource == null && (kmPerL != null || costPerKm != null)) {
+        basisSource = "fallback";
+        basisLabel = "Odometer span estimate";
+        basisDetail = `${fmtShortDate(first.refuel_date)} (${Number(first.odo_km).toFixed(0)} km) → ${fmtShortDate(last.refuel_date)} (${Number(last.odo_km).toFixed(0)} km) · ${km.toFixed(0)} km on ${fallbackLitres.toFixed(2)} L (₹${fallbackSpend.toFixed(0)})`;
+      }
+    }
+  }
+
+  // Diagnose what's missing when cost/km or mileage can't be calculated.
+  const missing: string[] = [];
+  if (asc.length === 0) {
+    missing.push("Log at least one refuel to get started.");
+  } else {
+    const odoCount = withOdo.length;
+    if (odoCount === 0) {
+      missing.push("Odometer reading — add it on your next refuel so we know your starting point.");
+    } else if (odoCount === 1) {
+      missing.push("A second odometer reading — log it on your next refuel to measure the distance covered.");
+    }
+    // litres after first odo reading drives the calculation
+    const litresAfterFirst =
+      withOdo.length >= 1
+        ? asc
+            .filter(
+              (r) =>
+                r.refuel_date > withOdo[0].refuel_date ||
+                (r.refuel_date === withOdo[0].refuel_date && r.id !== withOdo[0].id),
+            )
+            .reduce((s, r) => s + Number(r.litres), 0)
+        : 0;
+    if (withOdo.length >= 2 && litresAfterFirst <= 0) {
+      missing.push("Fuel spend (₹) or rate on a refuel after the first odometer reading.");
+    }
+    const zeroRate = asc.some((r) => Number(r.rate_per_litre) <= 0 || Number(r.amount_inr) <= 0);
+    if (zeroRate) {
+      missing.push("A valid fuel rate and ₹ amount on every refuel (some entries are zero).");
     }
   }
 
@@ -862,6 +921,8 @@ function computeSummary(refuels: Refuel[]) {
     chart: segments,
     segmentById,
     latestOdo,
+    basis: basisSource ? { source: basisSource, label: basisLabel, detail: basisDetail } : null,
+    missing,
   };
 }
 
