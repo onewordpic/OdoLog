@@ -719,6 +719,31 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
           </div>
         </form>
       </div>
+
+      {showEvCongrats && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-md px-4 animate-fade-in"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="glass w-full max-w-sm rounded-3xl p-7 text-center animate-slide-up">
+            <div className="mx-auto mb-3 text-4xl">⚡️🎉</div>
+            <h3 className="font-display text-xl font-bold">Congrats on saving fuel cost!</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              You don't need this app. Ride on, eco hero.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setShowEvCongrats(false);
+                onClose();
+              }}
+              className="press mt-5 w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
