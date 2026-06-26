@@ -758,7 +758,7 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
             <span className="text-xs font-medium text-muted-foreground">
               Fuel type
             </span>
-            <div className="mt-1 grid grid-cols-3 gap-2">
+            <div className="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {fuelOptionsFor(icon).map((f) => (
                 <button
                   key={f}
@@ -770,7 +770,7 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
                       : "glass-subtle glass-hover"
                   }`}
                 >
-                  {f === "cng" ? "CNG" : f}
+                  {f === "cng" ? "CNG" : f === "electric" ? "EV" : f}
                 </button>
               ))}
             </div>
