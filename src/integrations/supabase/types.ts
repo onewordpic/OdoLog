@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      maintenance_logs: {
+        Row: {
+          cost_inr: number | null
+          created_at: string
+          id: string
+          next_service_date: string | null
+          next_service_odo_km: number | null
+          notes: string | null
+          odo_km: number | null
+          service_date: string
+          service_type: string
+          updated_at: string
+          user_id: string
+          vehicle_id: string
+        }
+        Insert: {
+          cost_inr?: number | null
+          created_at?: string
+          id?: string
+          next_service_date?: string | null
+          next_service_odo_km?: number | null
+          notes?: string | null
+          odo_km?: number | null
+          service_date?: string
+          service_type: string
+          updated_at?: string
+          user_id: string
+          vehicle_id: string
+        }
+        Update: {
+          cost_inr?: number | null
+          created_at?: string
+          id?: string
+          next_service_date?: string | null
+          next_service_odo_km?: number | null
+          notes?: string | null
+          odo_km?: number | null
+          service_date?: string
+          service_type?: string
+          updated_at?: string
+          user_id?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
