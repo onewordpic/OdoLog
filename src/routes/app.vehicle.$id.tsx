@@ -34,6 +34,7 @@ import {
   listRefuels,
   addRefuel,
   deleteRefuel,
+  updateRefuel,
   deleteVehicle,
   updateVehicle,
   getProfile,
