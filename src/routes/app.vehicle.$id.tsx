@@ -60,6 +60,7 @@ function VehiclePage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
+  const [editing, setEditing] = useState<Refuel | null>(null);
 
   const vehicle = useQuery({
     queryKey: ["vehicle", id],
