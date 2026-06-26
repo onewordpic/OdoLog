@@ -494,3 +494,87 @@ function shortDate(s: string) {
   const d = new Date(s + "T00:00:00");
   return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
+
+// ---------- Running costs per vehicle ----------
+
+function RunningCosts({
+  vehicles,
+  refuels,
+}: {
+  vehicles: Vehicle[];
+  refuels: RefuelRow[];
+}) {
+  const rows = useMemo(() => {
+    return vehicles
+      .filter((v) => v.fuel_type !== "electric")
+      .map((v) => {
+        const rs = refuels.filter((r) => r.vehicle_id === v.id);
+        const spend = rs.reduce(
+          (s, r) => s + (r.amount_inr ? Number(r.amount_inr) : 0),
+          0,
+        );
+        const litres = rs.reduce(
+          (s, r) => s + (r.litres ? Number(r.litres) : 0),
+          0,
+        );
+        const odos = rs
+          .map((r) => (r.odo_km != null ? Number(r.odo_km) : null))
+          .filter((n): n is number => n != null);
+        const km = odos.length >= 2 ? Math.max(...odos) - Math.min(...odos) : 0;
+        const cpk = km > 0 ? spend / km : null;
+        return {
+          id: v.id,
+          name: v.name,
+          fuel: v.fuel_type,
+          fills: rs.length,
+          spend,
+          litres,
+          km,
+          cpk,
+        };
+      })
+      .sort((a, b) => (b.cpk ?? -1) - (a.cpk ?? -1));
+  }, [vehicles, refuels]);
+
+  if (rows.length === 0) return null;
+
+  return (
+    <section className="glass rounded-3xl p-5 animate-fade-in-up">
+      <div className="mb-4 flex items-center gap-2">
+        <IndianRupee className="h-4 w-4 text-primary" />
+        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          Running cost per vehicle
+        </h2>
+      </div>
+      <div className="space-y-2">
+        {rows.map((r) => (
+          <div
+            key={r.id}
+            className="glass-subtle flex items-center justify-between gap-3 rounded-2xl p-3"
+          >
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium">{r.name}</div>
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                {r.fills} fill{r.fills === 1 ? "" : "s"} ·{" "}
+                {r.km > 0 ? `${r.km.toFixed(0)} km` : "no odo span"} · ₹
+                {r.spend.toFixed(0)}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="font-display text-xl font-semibold tabular-nums">
+                {r.cpk != null ? `₹${r.cpk.toFixed(2)}` : "—"}
+              </div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                per km
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-[11px] text-muted-foreground">
+        Running cost = total fuel spend ÷ distance covered (max − min odometer).
+        Add odometer readings on refuels to make this accurate.
+      </p>
+    </section>
+  );
+}
