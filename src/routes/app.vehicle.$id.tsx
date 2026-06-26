@@ -723,7 +723,7 @@ function AddRefuelModal({
     setFetchingRate(true);
     try {
       const r = await fetchPrice({
-        data: { city, fuelType: vehicle.fuel_type },
+        data: { city, fuelType: vehicle.fuel_type as "petrol" | "diesel" | "cng" },
       });
       if (r.ok) {
         setRate(r.price.toFixed(2));
