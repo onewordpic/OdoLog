@@ -78,10 +78,12 @@ function Dashboard() {
     enabled: authed !== null,
   });
 
-  const greeting = useMemo(
-    () => greetingFor((profile.data?.display_name ?? "").trim()),
-    [profile.data?.display_name],
-  );
+  const name = (profile.data?.display_name ?? "").trim();
+  const [greeting, setGreeting] = useState<string>(name ? `Hello, ${name}` : "Hello");
+  useEffect(() => {
+    setGreeting(greetingFor(name));
+  }, [name]);
+
 
   async function signOut() {
     await qc.cancelQueries();
