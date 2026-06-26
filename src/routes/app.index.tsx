@@ -309,8 +309,8 @@ function Dashboard() {
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
           ) : vehicles.data && vehicles.data.length > 0 ? (
-            <div className="space-y-2 overflow-y-auto">
-              {vehicles.data.slice(0, 4).map((v) => {
+            <div className="space-y-2 overflow-y-auto max-h-[420px] pr-1 -mr-1">
+              {vehicles.data.map((v) => {
                 const color = accentFor(v.id);
                 return (
                   <Link
