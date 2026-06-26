@@ -109,22 +109,30 @@ function VehiclePage() {
         </button>
       </header>
 
-      <div className="mb-6 flex items-center gap-4 animate-fade-in-up">
+      <div className="mb-6 flex items-start gap-4 animate-fade-in-up">
         {vehicle.data && (
-          <VehicleIconEditor
-            vehicleId={vehicle.data.id}
-            current={vehicle.data.icon}
-          />
+          <VehicleHeaderEditor vehicle={vehicle.data} />
         )}
-        <div>
-          <h1 className="text-3xl font-light tracking-tight">
-            {vehicle.data?.name ?? "…"}
+        <div className="min-w-0 flex-1">
+          <h1 className="text-3xl font-light tracking-tight truncate">
+            {vehicle.data
+              ? vehicle.data.make
+                ? `${vehicle.data.make} ${vehicle.data.name}`
+                : vehicle.data.name
+              : "…"}
           </h1>
           <p className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">
             {vehicle.data?.fuel_type}
+            {vehicle.data?.model_year ? ` · ${vehicle.data.model_year}` : ""}
           </p>
+          {vehicle.data?.reg_number && (
+            <p className="mt-1 inline-block rounded-md glass-subtle px-2 py-0.5 font-mono text-xs tracking-wider">
+              {vehicle.data.reg_number}
+            </p>
+          )}
         </div>
       </div>
+
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat
