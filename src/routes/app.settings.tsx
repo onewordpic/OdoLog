@@ -213,7 +213,7 @@ function SettingsPage() {
             <Row label="Theme" hint="Light, dark, or follow system.">
               <ThemeToggle />
             </Row>
-            <Field label="Accent color" hint="Used for highlights, buttons and chart strokes.">
+            <Field label="Accent color">
               <div className="flex flex-wrap gap-2">
                 {ACCENTS.map((a) => {
                   const active = accent === a.id;
@@ -232,7 +232,7 @@ function SettingsPage() {
                 })}
               </div>
             </Field>
-            <Field label="Background gradient" hint="The soft wash behind the whole app.">
+            <Field label="Background gradient">
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {GRADIENTS.map((g) => {
                   const active = gradient === g.id;
