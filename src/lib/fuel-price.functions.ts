@@ -3,7 +3,7 @@ import { z } from "zod";
 
 const inputSchema = z.object({
   city: z.string().min(1).max(60),
-  fuelType: z.enum(["petrol", "diesel"]),
+  fuelType: z.enum(["petrol", "diesel", "cng"]),
 });
 
 // goodreturns.in uses some legacy/short slugs for several Indian cities.
