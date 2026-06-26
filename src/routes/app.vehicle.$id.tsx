@@ -825,8 +825,31 @@ function computeSummary(refuels: Refuel[]) {
   const totalSegKm = segments.reduce((s, x) => s + x.km, 0);
   const totalSegLitres = segments.reduce((s, x) => s + x.litres, 0);
   const totalSegSpend = segments.reduce((s, x) => s + x.spend, 0);
-  const kmPerL = totalSegLitres > 0 ? totalSegKm / totalSegLitres : null;
-  const costPerKm = totalSegKm > 0 ? totalSegSpend / totalSegKm : null;
+  let kmPerL = totalSegLitres > 0 ? totalSegKm / totalSegLitres : null;
+  let costPerKm = totalSegKm > 0 ? totalSegSpend / totalSegKm : null;
+
+  // Fallback estimate when there aren't 2+ full-tank refuels yet:
+  // use the span between the earliest and latest odo readings.
+  const withOdo = asc.filter((r) => r.odo_km != null);
+  if (withOdo.length >= 2) {
+    const first = withOdo[0];
+    const last = withOdo[withOdo.length - 1];
+    const km = Number(last.odo_km) - Number(first.odo_km);
+    if (km > 0) {
+      if (totalKm == null) totalKm = km;
+      // litres & spend consumed AFTER the first odo reading
+      let litresUsed = 0;
+      let spendUsed = 0;
+      for (const r of asc) {
+        if (r.refuel_date > first.refuel_date || (r.refuel_date === first.refuel_date && r.id !== first.id)) {
+          litresUsed += Number(r.litres);
+          spendUsed += Number(r.amount_inr);
+        }
+      }
+      if (kmPerL == null && litresUsed > 0) kmPerL = km / litresUsed;
+      if (costPerKm == null && spendUsed > 0) costPerKm = spendUsed / km;
+    }
+  }
 
   const segmentById = new Map(segments.map((s) => [s.refuelId, s]));
 
@@ -841,6 +864,7 @@ function computeSummary(refuels: Refuel[]) {
     latestOdo,
   };
 }
+
 
 // ---------- Interactive trend chart ----------
 
