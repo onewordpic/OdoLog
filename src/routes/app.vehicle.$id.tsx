@@ -670,6 +670,7 @@ function AddRefuelModal({
   const mut = useMutation({
     mutationFn: async () => {
       if (!litres) throw new Error("Enter amount and rate");
+      if (odoError) throw new Error(odoError);
       const payload = {
         refuel_date: date,
         amount_inr: amountN,
