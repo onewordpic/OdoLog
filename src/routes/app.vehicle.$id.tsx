@@ -622,18 +622,22 @@ function AddRefuelModal({
   const mut = useMutation({
     mutationFn: async () => {
       if (!litres) throw new Error("Enter amount and rate");
-      await addRefuel({
-        vehicle_id: vehicle.id,
+      const payload = {
         refuel_date: date,
         amount_inr: amountN,
         rate_per_litre: rateN,
         litres: Number(litres.toFixed(3)),
         odo_km: odo ? parseFloat(odo) : null,
         full_tank: fullTank,
-      });
+      };
+      if (editing) {
+        await updateRefuel(editing.id, payload);
+      } else {
+        await addRefuel({ vehicle_id: vehicle.id, ...payload });
+      }
     },
     onSuccess: () => {
-      toast.success("Refuel logged");
+      toast.success(editing ? "Refuel updated" : "Refuel logged");
       qc.invalidateQueries({ queryKey: ["refuels", vehicle.id] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       qc.invalidateQueries({ queryKey: ["recent-refuels"] });
