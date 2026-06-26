@@ -300,6 +300,31 @@ function Stat({
   icon: Icon,
   label,
   value,
+  hint,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  hint?: string;
+}) {
+  return (
+    <div className="glass hover-lift rounded-2xl p-4">
+      <Icon className="h-4 w-4 text-primary" />
+      <div className="mt-2 text-xs uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-0.5 text-lg font-light tracking-tight">{value}</div>
+      {hint && value !== "—" && (
+        <div className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+          {hint}
+        </div>
+      )}
+    </div>
+  );
+}
+  icon: Icon,
+  label,
+  value,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
