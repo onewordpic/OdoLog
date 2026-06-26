@@ -99,7 +99,7 @@ function Dashboard() {
           <div className="glass flex h-9 w-9 items-center justify-center rounded-xl">
             <Fuel className="h-4 w-4 text-primary" />
           </div>
-          <span className="text-lg font-medium tracking-tight">PitStop</span>
+          <span className="text-lg font-medium tracking-tight">OdoBay</span>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -142,7 +142,7 @@ function Dashboard() {
 
       {authed === false && (
         <div className="glass-subtle mb-6 rounded-2xl px-4 py-3 text-xs text-muted-foreground animate-fade-in">
-          You're using PitStop as a guest — data stays in this browser only.{" "}
+          You're using OdoBay as a guest — data stays in this browser only.{" "}
           <Link to="/auth" className="font-medium text-primary hover:underline">
             Sign in
           </Link>{" "}
