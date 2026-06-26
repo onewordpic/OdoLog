@@ -26,6 +26,19 @@ export type Refuel = {
   created_at: string;
 };
 
+export type MaintenanceLog = {
+  id: string;
+  vehicle_id: string;
+  service_date: string;
+  service_type: string;
+  odo_km: number | null;
+  cost_inr: number | null;
+  notes: string | null;
+  next_service_odo_km: number | null;
+  next_service_date: string | null;
+  created_at: string;
+};
+
 export type Profile = {
   display_name: string;
   default_city: string;
