@@ -75,13 +75,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Fuelogue — Track fuel & cost per km" },
+      { title: "PitStop — Track fuel & cost per km" },
       {
         name: "description",
         content:
           "Minimal fuel tracker for Indian vehicles. Log refuels in rupees, auto-derive litres, and see real cost per km.",
       },
-      { property: "og:title", content: "Fuelogue — Track fuel & cost per km" },
+      { property: "og:title", content: "PitStop — Track fuel & cost per km" },
       {
         property: "og:description",
         content:

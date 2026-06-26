@@ -304,7 +304,7 @@ function SettingsPage() {
           </Section>
 
           <p className="px-1 pt-2 text-center text-xs text-muted-foreground">
-            Fuelogue · v1 · {authed ? "synced to cloud" : "guest mode"}
+            PitStop · v1 · {authed ? "synced to cloud" : "guest mode"}
           </p>
         </div>
       )}

@@ -92,7 +92,7 @@ function AuthPage() {
           <div className="glass flex h-10 w-10 items-center justify-center rounded-2xl">
             <Fuel className="h-5 w-5 text-primary" />
           </div>
-          <span className="text-xl font-medium tracking-tight">Fuelogue</span>
+          <span className="text-xl font-medium tracking-tight">PitStop</span>
         </Link>
 
         <div className="glass soft-shadow rounded-3xl p-8">

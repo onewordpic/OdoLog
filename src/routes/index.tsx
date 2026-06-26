@@ -15,7 +15,7 @@ export const Route = createFileRoute("/")({
   component: Landing,
   head: () => ({
     meta: [
-      { title: "Fuelogue — know what every kilometre costs" },
+      { title: "PitStop — know what every kilometre costs" },
       {
         name: "description",
         content:
@@ -35,7 +35,7 @@ function Landing() {
           <div className="glass flex h-10 w-10 items-center justify-center rounded-2xl">
             <Fuel className="h-4.5 w-4.5 text-primary" />
           </div>
-          <span className="text-lg font-medium tracking-tight">Fuelogue</span>
+          <span className="text-lg font-medium tracking-tight">PitStop</span>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -71,7 +71,7 @@ function Landing() {
             actually costs.
           </h1>
           <p className="mt-6 max-w-md text-base text-muted-foreground">
-            Type the rupees you spent. Fuelogue pulls today's rate, derives
+            Type the rupees you spent. PitStop pulls today's rate, derives
             litres, and turns your odometer into clean mileage and cost-per-km.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
@@ -211,7 +211,7 @@ function Landing() {
       </section>
 
       <footer className="mt-auto pt-16 text-xs text-muted-foreground">
-        Fuelogue · prices via goodreturns.in · {new Date().getFullYear()}
+        PitStop · prices via goodreturns.in · {new Date().getFullYear()}
       </footer>
     </main>
   );
