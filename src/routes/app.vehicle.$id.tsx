@@ -215,6 +215,82 @@ function VehiclePage() {
         </div>
       )}
 
+      {renewals.length > 0 && (
+        <div className="mb-4 grid gap-2 sm:grid-cols-2 animate-fade-in">
+          {renewals.map((r) => {
+            const expired = r.daysLeft < 0;
+            const urgent = r.daysLeft <= 30;
+            const tone = expired
+              ? "border-red-500/40 bg-red-500/5 text-red-500"
+              : urgent
+                ? "border-amber-500/40 bg-amber-500/5 text-amber-500"
+                : "border-foreground/15 bg-foreground/5 text-foreground";
+            const Icon = r.kind === "insurance" ? ShieldCheck : Leaf;
+            const label = r.kind === "insurance" ? "Insurance" : "Pollution (PUC)";
+            const when = new Date(r.date).toLocaleDateString(undefined, {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            });
+            return (
+              <div
+                key={r.kind}
+                className={`glass flex items-start gap-3 rounded-2xl border p-4 ${tone}`}
+              >
+                <Icon className="mt-0.5 h-5 w-5 shrink-0" />
+                <div className="min-w-0 text-xs">
+                  <div className="text-sm font-medium text-foreground">
+                    {label} {expired ? "expired" : "renewal due"}
+                  </div>
+                  <p className="mt-0.5 text-muted-foreground">
+                    {expired
+                      ? `Lapsed ${Math.abs(r.daysLeft)} day${Math.abs(r.daysLeft) === 1 ? "" : "s"} ago (was ${when}).`
+                      : `In ${r.daysLeft} day${r.daysLeft === 1 ? "" : "s"} · ${when}`}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {depreciation && (
+        <div className="glass mb-4 rounded-2xl p-5 animate-fade-in">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <TrendingDown className="h-4 w-4 text-muted-foreground" />
+              Estimated current value
+            </div>
+            <div className="text-[11px] text-muted-foreground">
+              {(depreciation.rate * 100).toFixed(0)}% / yr · reducing balance
+            </div>
+          </div>
+          <div className="mt-2 flex items-end gap-3">
+            <div className="text-3xl font-light tracking-tight tabular-nums">
+              ₹{Math.round(depreciation.value).toLocaleString("en-IN")}
+            </div>
+            <div className="pb-1 text-xs text-muted-foreground">
+              of ₹{Math.round(depreciation.price).toLocaleString("en-IN")}
+            </div>
+          </div>
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-foreground/10">
+            <div
+              className="h-full bg-foreground/60"
+              style={{
+                width: `${Math.min(100, Math.max(0, (depreciation.value / depreciation.price) * 100)).toFixed(1)}%`,
+              }}
+            />
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            ~{depreciation.years.toFixed(1)} yrs old · lost
+            ₹{Math.round(depreciation.lost).toLocaleString("en-IN")} ({depreciation.pctLost.toFixed(0)}%).
+            Toggle this off in Settings.
+          </p>
+        </div>
+      )}
+
+
+
       {isEV ? (
         <div className="glass rounded-2xl p-5 text-sm animate-fade-in">
           <div className="flex items-center gap-2 font-medium">
