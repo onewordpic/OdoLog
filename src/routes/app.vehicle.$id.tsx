@@ -1292,10 +1292,13 @@ function TrendChart({
 function MaintenanceSection({
   vehicleId,
   latestOdo,
+  isEV = false,
 }: {
   vehicleId: string;
   latestOdo: number | null;
+  isEV?: boolean;
 }) {
+
   const qc = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
 
