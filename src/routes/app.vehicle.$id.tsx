@@ -16,6 +16,9 @@ import {
   Droplet,
   Pencil,
   Check,
+  Wrench,
+  AlertTriangle,
+  BellRing,
 } from "lucide-react";
 import {
   LineChart,
@@ -24,6 +27,7 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  CartesianGrid,
 } from "recharts";
 import {
   getVehicle,
@@ -33,8 +37,12 @@ import {
   deleteVehicle,
   updateVehicle,
   getProfile,
+  listMaintenance,
+  addMaintenance,
+  deleteMaintenance,
   type Refuel,
   type Vehicle,
+  type MaintenanceLog,
   type VehicleIcon as VIcon,
 } from "@/lib/data-store";
 import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
