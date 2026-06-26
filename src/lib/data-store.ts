@@ -185,7 +185,7 @@ export async function updateVehicle(
   patch: {
     name?: string;
     icon?: VehicleIcon;
-    fuel_type?: "petrol" | "diesel" | "cng";
+    fuel_type?: "petrol" | "diesel" | "cng" | "electric";
     make?: string | null;
     model_year?: number | null;
     reg_number?: string | null;
