@@ -75,13 +75,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "OdoLog — Track fuel & cost per km" },
       {
         name: "description",
         content:
           "OdoLog tracks vehicle fuel consumption, calculating litres from INR spent, odometer readings, and daily fuel rates.",
       },
+      { name: "theme-color", content: "#1c1917" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "OdoLog" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "mobile-web-app-capable", content: "yes" },
       { property: "og:title", content: "OdoLog — Track fuel & cost per km" },
       {
         property: "og:description",
@@ -95,7 +100,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7650fee0-1176-4445-9fa6-16a034751866/id-preview-c0a707d1--21669def-ed77-42ec-a79e-6632364c7423.lovable.app-1782468456641.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7650fee0-1176-4445-9fa6-16a034751866/id-preview-c0a707d1--21669def-ed77-42ec-a79e-6632364c7423.lovable.app-1782468456641.png" },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon-512.png" },
+      { rel: "apple-touch-icon", href: "/icon-192.png" },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
