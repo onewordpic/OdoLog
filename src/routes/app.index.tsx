@@ -589,3 +589,168 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
+
+// ---------- Service due / upcoming alerts (across all vehicles) ----------
+
+type Status = "due" | "upcoming";
+
+function ServiceAlerts({ authed }: { authed: boolean | null }) {
+  const [prefs, setPrefs] = useState<Prefs | null>(null);
+  useEffect(() => {
+    setPrefs(getPrefs());
+    function onChange() {
+      setPrefs(getPrefs());
+    }
+    window.addEventListener("fuelogue:prefs", onChange);
+    return () => window.removeEventListener("fuelogue:prefs", onChange);
+  }, []);
+
+  const maint = useQuery({
+    queryKey: ["all-maintenance", authed],
+    queryFn: listAllMaintenance,
+    enabled: authed !== null,
+  });
+
+  // Pull a generous slice of refuels to compute latest odo per vehicle.
+  const refuels = useQuery({
+    queryKey: ["recent-refuels-odo", authed],
+    queryFn: () => listRecentRefuels(2000),
+    enabled: authed !== null,
+  });
+
+  const items = useMemo(() => {
+    if (!prefs || !prefs.serviceAlertsEnabled) return [];
+    if (!maint.data || !refuels.data) return [];
+
+    const latestOdoByVehicle = new Map<string, number>();
+    for (const r of refuels.data) {
+      if (r.odo_km == null) continue;
+      const odo = Number(r.odo_km);
+      const prev = latestOdoByVehicle.get(r.vehicle_id) ?? 0;
+      if (odo > prev) latestOdoByVehicle.set(r.vehicle_id, odo);
+    }
+
+    const today = new Date();
+    const todayISO = today.toISOString().slice(0, 10);
+    const leadDate = new Date(today);
+    leadDate.setDate(leadDate.getDate() + prefs.reminderLeadDays);
+    const leadISO = leadDate.toISOString().slice(0, 10);
+
+    const out: {
+      id: string;
+      vehicle_id: string;
+      vehicle_name: string;
+      vehicle_icon: VIcon;
+      service_type: string;
+      detail: string;
+      status: Status;
+    }[] = [];
+
+    for (const m of maint.data) {
+      const latestOdo = latestOdoByVehicle.get(m.vehicle_id) ?? null;
+      let status: Status | null = null;
+      const detailParts: string[] = [];
+
+      if (m.next_service_date) {
+        if (m.next_service_date <= todayISO) {
+          status = "due";
+          detailParts.push(`by ${m.next_service_date}`);
+        } else if (m.next_service_date <= leadISO) {
+          status = status ?? "upcoming";
+          detailParts.push(`due ${m.next_service_date}`);
+        }
+      }
+
+      if (m.next_service_odo_km != null && latestOdo != null) {
+        const target = Number(m.next_service_odo_km);
+        const remaining = target - latestOdo;
+        if (remaining <= 0) {
+          status = "due";
+          detailParts.push(`at ${target.toFixed(0)} km`);
+        } else if (remaining <= prefs.reminderLeadKm) {
+          status = status ?? "upcoming";
+          detailParts.push(`in ${remaining.toFixed(0)} km`);
+        }
+      }
+
+      if (!status) continue;
+      out.push({
+        id: m.id,
+        vehicle_id: m.vehicle_id,
+        vehicle_name: m.vehicle_name,
+        vehicle_icon: m.vehicle_icon,
+        service_type: m.service_type,
+        detail: detailParts.join(" · "),
+        status,
+      });
+    }
+
+    // Due first, then upcoming.
+    return out.sort((a, b) =>
+      a.status === b.status ? 0 : a.status === "due" ? -1 : 1,
+    );
+  }, [prefs, maint.data, refuels.data]);
+
+  if (items.length === 0) return null;
+  const dueCount = items.filter((i) => i.status === "due").length;
+
+  return (
+    <section className="mt-6 animate-fade-in-up">
+      <div className="mb-3 flex items-center gap-2">
+        <BellRing className="h-3.5 w-3.5 text-destructive" />
+        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          Service reminders
+        </h2>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          {dueCount > 0 ? `${dueCount} due` : `${items.length} upcoming`}
+        </span>
+      </div>
+      <div className="space-y-2">
+        {items.slice(0, 6).map((i) => (
+          <Link
+            key={i.id}
+            to="/app/vehicle/$id"
+            params={{ id: i.vehicle_id }}
+            className={`glass glass-hover hover-lift press flex items-center justify-between rounded-2xl p-4 ${
+              i.status === "due"
+                ? "border border-destructive/30 bg-destructive/5"
+                : ""
+            }`}
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <div
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                  i.status === "due"
+                    ? "bg-destructive/10 text-destructive"
+                    : "bg-primary/10 text-primary"
+                }`}
+              >
+                <Wrench className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-medium">
+                  {i.service_type}
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                    {i.vehicle_name}
+                  </span>
+                </div>
+                <div className="truncate text-xs text-muted-foreground">
+                  {i.detail}
+                </div>
+              </div>
+            </div>
+            <span
+              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider ${
+                i.status === "due"
+                  ? "bg-destructive/15 text-destructive"
+                  : "bg-foreground/10 text-muted-foreground"
+              }`}
+            >
+              {i.status}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
