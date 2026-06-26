@@ -311,12 +311,14 @@ function VehiclePage() {
       {showAdd && vehicle.data && (
         <AddRefuelModal
           vehicle={vehicle.data}
+          existingRefuels={refuels.data ?? []}
           onClose={() => setShowAdd(false)}
         />
       )}
       {editing && vehicle.data && (
         <AddRefuelModal
           vehicle={vehicle.data}
+          existingRefuels={refuels.data ?? []}
           editing={editing}
           onClose={() => setEditing(null)}
         />
