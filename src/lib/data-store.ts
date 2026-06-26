@@ -14,6 +14,10 @@ export type Vehicle = {
   model_year: number | null;
   reg_number: string | null;
   image_url: string | null;
+  insurance_expiry: string | null;
+  puc_expiry: string | null;
+  purchase_date: string | null;
+  purchase_price_inr: number | null;
   created_at: string;
 };
 
