@@ -46,6 +46,7 @@ export type Profile = {
 
 const LS_VEHICLES = "fuelogue.vehicles";
 const LS_REFUELS = "fuelogue.refuels";
+const LS_MAINT = "fuelogue.maintenance";
 const LS_PROFILE = "fuelogue.profile";
 
 function lsRead<T>(key: string, fallback: T): T {
