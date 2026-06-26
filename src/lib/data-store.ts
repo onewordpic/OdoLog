@@ -136,7 +136,7 @@ export async function getVehicle(id: string): Promise<Vehicle> {
 
 export async function addVehicle(input: {
   name: string;
-  fuel_type: "petrol" | "diesel" | "cng";
+  fuel_type: "petrol" | "diesel" | "cng" | "electric";
   icon?: VehicleIcon;
   make?: string | null;
   model_year?: number | null;
