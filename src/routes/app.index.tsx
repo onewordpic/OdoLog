@@ -30,6 +30,7 @@ import {
 import { PREFS_EVENT, getPrefs, type Prefs } from "@/lib/prefs";
 import { useAuthed } from "@/lib/use-authed";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ShareIconButton, ShareCard } from "@/components/share-button";
 import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
 import { VehicleAvatar } from "@/components/vehicle-avatar";
 import { searchCatalog, type CatalogEntry } from "@/lib/vehicle-catalog";
