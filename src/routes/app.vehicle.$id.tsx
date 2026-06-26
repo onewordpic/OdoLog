@@ -15,7 +15,7 @@ import {
   Wallet,
   Droplet,
   Pencil,
-  Check,
+  
   Wrench,
   AlertTriangle,
   BellRing,
