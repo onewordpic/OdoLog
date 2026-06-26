@@ -1119,6 +1119,7 @@ function AddMaintenanceModal({
   const [odo, setOdo] = useState(latestOdo != null ? String(Math.round(latestOdo)) : "");
   const [cost, setCost] = useState("");
   const [notes, setNotes] = useState("");
+  const [condition, setCondition] = useState("");
   const [nextOdo, setNextOdo] = useState("");
   const [nextDate, setNextDate] = useState("");
 
@@ -1132,6 +1133,7 @@ function AddMaintenanceModal({
         odo_km: odo ? parseFloat(odo) : null,
         cost_inr: cost ? parseFloat(cost) : null,
         notes: notes.trim() || null,
+        condition: condition || null,
         next_service_odo_km: nextOdo ? parseFloat(nextOdo) : null,
         next_service_date: nextDate || null,
       });
@@ -1152,7 +1154,26 @@ function AddMaintenanceModal({
     return () => window.removeEventListener("keydown", esc);
   }, [onClose]);
 
-  const presets = ["Oil change", "Tyre rotation", "Brake pads", "Air filter", "General service"];
+  const presets = [
+    "Oil change",
+    "Oil filter",
+    "Tyre check",
+    "Tyre rotation",
+    "Tyre replacement",
+    "Brake pads",
+    "Air filter",
+    "Coolant",
+    "Chain lube",
+    "General service",
+  ];
+  const isTyre = /tyre/i.test(type);
+  const isOil = /oil/i.test(type);
+  const conditionOptions = isTyre
+    ? ["New", "Good", "Worn", "Replace soon", "Punctured"]
+    : isOil
+      ? ["Fresh", "OK", "Dirty", "Needs change"]
+      : ["Good", "OK", "Needs attention"];
+
 
   return (
     <div
