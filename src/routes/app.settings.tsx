@@ -30,6 +30,16 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuthed } from "@/lib/use-authed";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  ACCENTS,
+  GRADIENTS,
+  getAccent,
+  getGradient,
+  applyAccent,
+  applyGradient,
+  type Accent,
+  type Gradient,
+} from "@/lib/theming";
 
 export const Route = createFileRoute("/app/settings")({
   component: SettingsPage,
