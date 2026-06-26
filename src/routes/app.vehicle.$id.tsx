@@ -34,6 +34,7 @@ import {
   listRefuels,
   addRefuel,
   deleteRefuel,
+  updateRefuel,
   deleteVehicle,
   updateVehicle,
   getProfile,
@@ -59,6 +60,7 @@ function VehiclePage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
+  const [editing, setEditing] = useState<Refuel | null>(null);
 
   const vehicle = useQuery({
     queryKey: ["vehicle", id],
@@ -217,58 +219,78 @@ function VehiclePage() {
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
         ) : refuels.data && refuels.data.length > 0 ? (
-          <div className="space-y-2">
-            {refuels.data.map((r) => {
-              const seg = summary.segmentById.get(r.id);
-              return (
-              <div
-                key={r.id}
-                className="glass flex items-center justify-between rounded-2xl p-4"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">
+          <div className="glass overflow-hidden rounded-2xl">
+            <div className="hidden grid-cols-12 gap-2 px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:grid">
+              <div className="col-span-2">Date</div>
+              <div className="col-span-2">Odo (km)</div>
+              <div className="col-span-2 text-right">Amount</div>
+              <div className="col-span-2 text-right">Litres @ rate</div>
+              <div className="col-span-2 text-right">Cost / km</div>
+              <div className="col-span-2 text-right">Actions</div>
+            </div>
+            <ul className="divide-y divide-foreground/5">
+              {refuels.data.map((r) => {
+                const seg = summary.segmentById.get(r.id);
+                return (
+                  <li
+                    key={r.id}
+                    className="group grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm transition hover:bg-foreground/5"
+                  >
+                    <div className="col-span-6 md:col-span-2">
+                      <div className="font-medium">{formatDate(r.refuel_date)}</div>
+                      {!r.full_tank && (
+                        <span className="mt-0.5 inline-block rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-medium uppercase text-accent-foreground">
+                          Partial
+                        </span>
+                      )}
+                    </div>
+                    <div className="col-span-6 text-right md:col-span-2 md:text-left tabular-nums">
+                      {r.odo_km != null ? Number(r.odo_km).toFixed(0) : "—"}
+                    </div>
+                    <div className="col-span-4 text-right md:col-span-2 tabular-nums font-semibold">
                       ₹{Number(r.amount_inr).toFixed(0)}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      · {Number(r.litres).toFixed(2)} L @ ₹
-                      {Number(r.rate_per_litre).toFixed(2)}
-                    </span>
-                    {!r.full_tank && (
-                      <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-medium uppercase text-accent-foreground">
-                        Partial
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    <span>{formatDate(r.refuel_date)}</span>
-                    {r.odo_km != null && (
-                      <span>· {Number(r.odo_km).toFixed(0)} km</span>
-                    )}
-                    {seg && (
-                      <>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
-                          ₹{seg.cpk.toFixed(2)}/km
+                    </div>
+                    <div className="col-span-4 text-right md:col-span-2 tabular-nums text-muted-foreground">
+                      {Number(r.litres).toFixed(2)} L
+                      <span className="ml-1 text-[11px]">@ ₹{Number(r.rate_per_litre).toFixed(2)}</span>
+                    </div>
+                    <div className="col-span-4 text-right md:col-span-2 tabular-nums">
+                      {seg ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                          ₹{seg.cpk.toFixed(2)}
+                          <span className="font-normal text-muted-foreground">/km</span>
                         </span>
-                        <span className="text-[11px]">
-                          {seg.kmpl.toFixed(1)} km/l · {seg.km.toFixed(0)} km on ₹{seg.spend.toFixed(0)}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    if (confirm("Delete this refuel?")) del.mutate(r.id);
-                  }}
-                  className="ml-3 text-muted-foreground hover:text-destructive"
-                  aria-label="Delete"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-              );
-            })}
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                      {seg && (
+                        <div className="text-[10px] text-muted-foreground">
+                          {seg.kmpl.toFixed(1)} km/l · {seg.km.toFixed(0)} km
+                        </div>
+                      )}
+                    </div>
+                    <div className="col-span-12 flex items-center justify-end gap-1 md:col-span-2">
+                      <button
+                        onClick={() => setEditing(r)}
+                        className="press rounded-full p-1.5 text-muted-foreground transition hover:bg-foreground/10 hover:text-foreground"
+                        aria-label="Edit refuel"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm("Delete this refuel?")) del.mutate(r.id);
+                        }}
+                        className="press rounded-full p-1.5 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                        aria-label="Delete refuel"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         ) : (
           <div className="glass flex flex-col items-center justify-center rounded-2xl px-6 py-12 text-center">
@@ -290,6 +312,13 @@ function VehiclePage() {
         <AddRefuelModal
           vehicle={vehicle.data}
           onClose={() => setShowAdd(false)}
+        />
+      )}
+      {editing && vehicle.data && (
+        <AddRefuelModal
+          vehicle={vehicle.data}
+          editing={editing}
+          onClose={() => setEditing(null)}
         />
       )}
     </main>
@@ -555,19 +584,23 @@ function EditVehicleModal({
 function AddRefuelModal({
   vehicle,
   onClose,
+  editing,
 }: {
   vehicle: Vehicle;
   onClose: () => void;
+  editing?: Refuel | null;
 }) {
   const qc = useQueryClient();
   const fetchPrice = useServerFn(fetchFuelPrice);
   const today = new Date().toISOString().slice(0, 10);
 
-  const [date, setDate] = useState(today);
-  const [amount, setAmount] = useState("");
-  const [rate, setRate] = useState("");
-  const [odo, setOdo] = useState("");
-  const [fullTank, setFullTank] = useState(true);
+  const [date, setDate] = useState(editing?.refuel_date ?? today);
+  const [amount, setAmount] = useState(editing ? String(editing.amount_inr) : "");
+  const [rate, setRate] = useState(editing ? String(editing.rate_per_litre) : "");
+  const [odo, setOdo] = useState(editing?.odo_km != null ? String(editing.odo_km) : "");
+  const [fullTank, setFullTank] = useState(
+    editing ? editing.full_tank : vehicle.fuel_type === "cng",
+  );
   const [fetchingRate, setFetchingRate] = useState(false);
   const [city, setCity] = useState("");
 
@@ -577,8 +610,9 @@ function AddRefuelModal({
     });
   }, []);
 
-  // Auto-fetch rate on open if today's date
+  // Auto-fetch rate on open if today's date (skip when editing existing entry).
   useEffect(() => {
+    if (editing) return;
     if (!city) return;
     if (date !== today) return;
     if (rate) return;
@@ -617,18 +651,22 @@ function AddRefuelModal({
   const mut = useMutation({
     mutationFn: async () => {
       if (!litres) throw new Error("Enter amount and rate");
-      await addRefuel({
-        vehicle_id: vehicle.id,
+      const payload = {
         refuel_date: date,
         amount_inr: amountN,
         rate_per_litre: rateN,
         litres: Number(litres.toFixed(3)),
         odo_km: odo ? parseFloat(odo) : null,
         full_tank: fullTank,
-      });
+      };
+      if (editing) {
+        await updateRefuel(editing.id, payload);
+      } else {
+        await addRefuel({ vehicle_id: vehicle.id, ...payload });
+      }
     },
     onSuccess: () => {
-      toast.success("Refuel logged");
+      toast.success(editing ? "Refuel updated" : "Refuel logged");
       qc.invalidateQueries({ queryKey: ["refuels", vehicle.id] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       qc.invalidateQueries({ queryKey: ["recent-refuels"] });
@@ -654,10 +692,11 @@ function AddRefuelModal({
         onClick={(e) => e.stopPropagation()}
         className="glass max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl p-6 md:rounded-3xl"
       >
-        <h3 className="text-lg font-medium">New refuel</h3>
+        <h3 className="text-lg font-medium">{editing ? "Edit refuel" : "New refuel"}</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           {vehicle.name} · {vehicle.fuel_type}
         </p>
+
 
         <form
           onSubmit={(e) => {
@@ -761,7 +800,7 @@ function AddRefuelModal({
               disabled={mut.isPending || !litres}
               className="flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-primary-foreground disabled:opacity-60"
             >
-              {mut.isPending ? "Saving…" : "Save refuel"}
+              {mut.isPending ? "Saving…" : editing ? "Save changes" : "Save refuel"}
             </button>
           </div>
         </form>

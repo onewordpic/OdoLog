@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { initThemeFromStorage } from "@/components/theme-toggle";
+import { initThemingFromStorage } from "@/lib/theming";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -122,6 +123,7 @@ function RootComponent() {
 
   useEffect(() => {
     initThemeFromStorage();
+    initThemingFromStorage();
   }, []);
 
   useEffect(() => {

@@ -123,23 +123,24 @@ function Dashboard() {
     <main className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-10 text-foreground">
       {/* Top bar */}
       <header className="mb-8 flex items-center justify-between animate-fade-in-up">
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-display font-bold tracking-tight">
-            .odolog<span className="text-[var(--mint-accent)]">_</span>
+        <Link to="/app" className="flex items-center gap-2 group">
+          <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[var(--mint-accent)] text-[#0c1410] soft-shadow group-hover:scale-105 transition">
+            <Fuel className="h-4 w-4" strokeWidth={2.5} />
           </span>
-        </div>
+          <span className="text-lg font-display font-bold tracking-tight">OdoLog</span>
+        </Link>
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
           <Link
             to="/app/analytics"
-            className="press flex h-9 w-9 items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition"
+            className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
             aria-label="Analytics"
           >
             <BarChart3 className="h-4 w-4" />
           </Link>
           <Link
             to="/app/settings"
-            className="press flex h-9 w-9 items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition"
+            className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
             aria-label="Settings"
           >
             <Settings className="h-4 w-4" />
@@ -147,7 +148,7 @@ function Dashboard() {
           {authed ? (
             <button
               onClick={signOut}
-              className="press flex h-9 w-9 items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition"
+              className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
               aria-label="Sign out"
             >
               <LogOut className="h-4 w-4" />
@@ -175,14 +176,14 @@ function Dashboard() {
               : "Add your first vehicle to start tracking."}
           </p>
         </div>
-        <div className="hidden md:flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-[var(--cockpit-text-soft)]">
+        <div className="hidden md:flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-3 py-1.5 text-[11px] text-[var(--cockpit-text-soft)]">
           <span className="opacity-60">Showing</span>
           <span className="font-semibold text-foreground">All time</span>
         </div>
       </div>
 
       {authed === false && (
-        <div className="mb-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs animate-fade-in">
+        <div className="mb-4 rounded-2xl border border-foreground/10 bg-foreground/5 px-4 py-2.5 text-xs animate-fade-in">
           Guest mode — data stays in this browser.{" "}
           <Link to="/auth" className="font-semibold underline text-[var(--mint-accent)]">Sign in</Link> to sync.
         </div>
@@ -192,7 +193,7 @@ function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
 
         {/* Total spent (hero) */}
-        <div className="md:col-span-7 rounded-[2rem] p-7 md:p-9 border border-white/10 bg-[var(--cockpit-card)] flex flex-col justify-between min-h-[220px] stagger"
+        <div className="md:col-span-7 rounded-[2rem] p-7 md:p-9 border border-foreground/10 bg-[var(--cockpit-card)] flex flex-col justify-between min-h-[220px] stagger"
              style={{ animationDelay: "0ms" }}>
           <div className="flex items-start justify-between">
             <span className="text-[11px] uppercase tracking-[0.18em] font-semibold text-[var(--cockpit-text-mute)]">
@@ -200,7 +201,7 @@ function Dashboard() {
             </span>
             <button
               onClick={() => setShowAdd(true)}
-              className="press inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-[11px] font-semibold transition"
+              className="press inline-flex items-center gap-1.5 rounded-full border border-foreground/10 bg-foreground/5 hover:bg-foreground/10 px-3 py-1.5 text-[11px] font-semibold transition"
             >
               <Plus className="h-3 w-3" /> Vehicle
             </button>
@@ -220,7 +221,7 @@ function Dashboard() {
 
         {/* Litres */}
         <div className="md:col-span-5 grid grid-cols-2 gap-4">
-          <div className="rounded-[2rem] p-5 border border-white/10 bg-[var(--cockpit-card)] flex flex-col justify-between stagger"
+          <div className="rounded-[2rem] p-5 border border-foreground/10 bg-[var(--cockpit-card)] flex flex-col justify-between stagger"
                style={{ animationDelay: "60ms" }}>
             <span className="text-[10px] uppercase tracking-[0.18em] font-semibold text-[var(--cockpit-text-mute)]">Litres</span>
             <div>
@@ -234,7 +235,7 @@ function Dashboard() {
               </div>
             </div>
           </div>
-          <div className="rounded-[2rem] p-5 border border-white/10 bg-[var(--cockpit-card)] flex flex-col justify-between stagger"
+          <div className="rounded-[2rem] p-5 border border-foreground/10 bg-[var(--cockpit-card)] flex flex-col justify-between stagger"
                style={{ animationDelay: "120ms" }}>
             <span className="text-[10px] uppercase tracking-[0.18em] font-semibold text-[var(--cockpit-text-mute)]">Refuels</span>
             <div>
@@ -292,7 +293,7 @@ function Dashboard() {
         </div>
 
         {/* Vehicles list (colored circular avatars like reference) */}
-        <div className="md:col-span-5 rounded-[2rem] p-6 border border-white/10 bg-[var(--cockpit-card)] flex flex-col stagger"
+        <div className="md:col-span-5 rounded-[2rem] p-6 border border-foreground/10 bg-[var(--cockpit-card)] flex flex-col stagger"
              style={{ animationDelay: "240ms" }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-display text-lg font-bold">Your garage</h3>
@@ -316,7 +317,7 @@ function Dashboard() {
                     key={v.id}
                     to="/app/vehicle/$id"
                     params={{ id: v.id }}
-                    className="press flex items-center justify-between p-2.5 hover:bg-white/5 rounded-2xl transition"
+                    className="press flex items-center justify-between p-2.5 hover:bg-foreground/5 rounded-2xl transition"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div
@@ -346,7 +347,7 @@ function Dashboard() {
         </div>
 
         {/* Recent refuels — full width */}
-        <div className="md:col-span-12 rounded-[2rem] p-7 border border-white/10 bg-[var(--cockpit-card)] flex flex-col stagger"
+        <div className="md:col-span-12 rounded-[2rem] p-7 border border-foreground/10 bg-[var(--cockpit-card)] flex flex-col stagger"
              style={{ animationDelay: "300ms" }}>
           <div className="flex justify-between items-center mb-5">
             <h3 className="font-display text-xl font-bold flex items-center gap-2">
@@ -361,7 +362,7 @@ function Dashboard() {
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
           ) : recent.data && recent.data.length > 0 ? (
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-foreground/10">
               {recent.data.slice(0, 6).map((r) => {
                 const color = accentFor(r.vehicle_id);
                 return (
@@ -369,7 +370,7 @@ function Dashboard() {
                     key={r.id}
                     to="/app/vehicle/$id"
                     params={{ id: r.vehicle_id }}
-                    className="press flex items-center justify-between py-3 hover:bg-white/5 -mx-2 px-2 rounded-xl transition"
+                    className="press flex items-center justify-between py-3 hover:bg-foreground/5 -mx-2 px-2 rounded-xl transition"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div
