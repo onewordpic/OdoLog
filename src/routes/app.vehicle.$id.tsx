@@ -585,10 +585,12 @@ function EditVehicleModal({
 
 function AddRefuelModal({
   vehicle,
+  existingRefuels,
   onClose,
   editing,
 }: {
   vehicle: Vehicle;
+  existingRefuels: Refuel[];
   onClose: () => void;
   editing?: Refuel | null;
 }) {
@@ -605,6 +607,21 @@ function AddRefuelModal({
   );
   const [fetchingRate, setFetchingRate] = useState(false);
   const [city, setCity] = useState("");
+
+  // Highest odo reading among other refuels (exclude the entry being edited).
+  const lastOdo = useMemo(() => {
+    const others = existingRefuels.filter(
+      (r) => r.id !== editing?.id && r.odo_km != null,
+    );
+    if (others.length === 0) return null;
+    return others.reduce((m, r) => Math.max(m, Number(r.odo_km)), 0);
+  }, [existingRefuels, editing?.id]);
+
+  const odoN = odo ? parseFloat(odo) : null;
+  const odoError =
+    odoN != null && lastOdo != null && odoN <= lastOdo
+      ? `Odometer must be greater than the last reading (${lastOdo.toFixed(0)} km).`
+      : null;
 
   useEffect(() => {
     getProfile().then((p) => {
