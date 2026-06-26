@@ -213,6 +213,45 @@ function SettingsPage() {
             <Row label="Theme" hint="Light, dark, or follow system.">
               <ThemeToggle />
             </Row>
+            <Field label="Accent color" hint="Used for highlights, buttons and chart strokes.">
+              <div className="flex flex-wrap gap-2">
+                {ACCENTS.map((a) => {
+                  const active = accent === a.id;
+                  const isDark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+                  return (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => { setAccent(a.id); applyAccent(a.id); }}
+                      className={`press flex items-center gap-2 rounded-full glass-subtle px-3 py-1.5 text-xs font-medium transition ${active ? "ring-2 ring-foreground/30" : ""}`}
+                    >
+                      <span className="h-4 w-4 rounded-full" style={{ background: isDark ? a.dark : a.light }} />
+                      {a.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+            <Field label="Background gradient" hint="The soft wash behind the whole app.">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {GRADIENTS.map((g) => {
+                  const active = gradient === g.id;
+                  return (
+                    <button
+                      key={g.id}
+                      type="button"
+                      onClick={() => { setGradient(g.id); applyGradient(g.id); }}
+                      className={`press relative h-16 overflow-hidden rounded-xl border text-[11px] font-semibold transition ${active ? "border-foreground/40" : "border-foreground/10"}`}
+                      style={{ background: g.preview }}
+                    >
+                      <span className="absolute inset-x-0 bottom-1 text-center text-foreground/80 mix-blend-luminosity">
+                        {g.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
             <Row label="Density" hint="Tighter layout on small screens.">
               <Segmented
                 value={prefs.density}
