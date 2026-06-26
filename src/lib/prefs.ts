@@ -10,7 +10,9 @@ export type Prefs = {
   reminderLeadDays: number; // warn this many days before next-service date
 };
 
-const KEY = "fuelogue.prefs";
+const KEY = "odolog.prefs";
+const LEGACY_KEY = "fuelogue.prefs";
+export const PREFS_EVENT = "odolog:prefs";
 
 export const DEFAULT_PREFS: Prefs = {
   density: "comfortable",
@@ -23,7 +25,11 @@ export const DEFAULT_PREFS: Prefs = {
 export function getPrefs(): Prefs {
   if (typeof window === "undefined") return DEFAULT_PREFS;
   try {
-    const raw = window.localStorage.getItem(KEY);
+    let raw = window.localStorage.getItem(KEY);
+    if (!raw) {
+      raw = window.localStorage.getItem(LEGACY_KEY);
+      if (raw) window.localStorage.setItem(KEY, raw);
+    }
     if (!raw) return DEFAULT_PREFS;
     return { ...DEFAULT_PREFS, ...JSON.parse(raw) };
   } catch {
@@ -34,17 +40,24 @@ export function getPrefs(): Prefs {
 export function savePrefs(p: Prefs): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(KEY, JSON.stringify(p));
-  window.dispatchEvent(new CustomEvent("fuelogue:prefs"));
+  window.dispatchEvent(new CustomEvent(PREFS_EVENT));
 }
 
 export function clearLocalData(): void {
   if (typeof window === "undefined") return;
   for (const k of [
+    "odolog.vehicles",
+    "odolog.refuels",
+    "odolog.maintenance",
+    "odolog.profile",
+    "odolog.prefs",
+    "odolog.theme",
     "fuelogue.vehicles",
     "fuelogue.refuels",
     "fuelogue.maintenance",
     "fuelogue.profile",
     "fuelogue.prefs",
+    "fuelogue.theme",
   ]) {
     window.localStorage.removeItem(k);
   }

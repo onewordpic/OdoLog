@@ -51,15 +51,27 @@ export type Profile = {
   default_city: string;
 };
 
-const LS_VEHICLES = "fuelogue.vehicles";
-const LS_REFUELS = "fuelogue.refuels";
-const LS_MAINT = "fuelogue.maintenance";
-const LS_PROFILE = "fuelogue.profile";
+const LS_VEHICLES = "odolog.vehicles";
+const LS_REFUELS = "odolog.refuels";
+const LS_MAINT = "odolog.maintenance";
+const LS_PROFILE = "odolog.profile";
+
+const LEGACY_KEYS: Record<string, string> = {
+  [LS_VEHICLES]: "fuelogue.vehicles",
+  [LS_REFUELS]: "fuelogue.refuels",
+  [LS_MAINT]: "fuelogue.maintenance",
+  [LS_PROFILE]: "fuelogue.profile",
+};
 
 function lsRead<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
   try {
-    const v = window.localStorage.getItem(key);
+    let v = window.localStorage.getItem(key);
+    const legacyKey = LEGACY_KEYS[key];
+    if (!v && legacyKey) {
+      v = window.localStorage.getItem(legacyKey);
+      if (v) window.localStorage.setItem(key, v);
+    }
     return v ? (JSON.parse(v) as T) : fallback;
   } catch {
     return fallback;

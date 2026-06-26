@@ -7,6 +7,15 @@ import { Fuel, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
+  head: () => ({
+    meta: [
+      { title: "Sign in to OdoLog" },
+      {
+        name: "description",
+        content: "Sign in to OdoLog to sync your vehicles, refuels, mileage, and maintenance logs.",
+      },
+    ],
+  }),
 });
 
 function AuthPage() {
@@ -58,6 +67,10 @@ function AuthPage() {
     setLoading(true);
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
+      extraParams: {
+        app_name: "OdoLog",
+        client_name: "OdoLog",
+      },
     });
     if (result.error) {
       toast.error(result.error.message || "Google sign-in failed");
@@ -92,7 +105,7 @@ function AuthPage() {
           <div className="glass flex h-10 w-10 items-center justify-center rounded-2xl">
             <Fuel className="h-5 w-5 text-primary" />
           </div>
-          <span className="text-xl font-medium tracking-tight">OdoBay</span>
+          <span className="text-xl font-medium tracking-tight">OdoLog</span>
         </Link>
 
         <div className="glass soft-shadow rounded-3xl p-8">

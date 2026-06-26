@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
-const STORAGE_KEY = "fuelogue.theme";
+const STORAGE_KEY = "odolog.theme";
+const LEGACY_STORAGE_KEY = "fuelogue.theme";
+
+function readThemeFromStorage() {
+  if (typeof window === "undefined") return null;
+  const stored = window.localStorage.getItem(STORAGE_KEY);
+  if (stored) return stored;
+  const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+  if (legacy) window.localStorage.setItem(STORAGE_KEY, legacy);
+  return legacy;
+}
 
 function applyTheme(theme: "light" | "dark") {
   if (typeof document === "undefined") return;
@@ -10,7 +20,7 @@ function applyTheme(theme: "light" | "dark") {
 
 export function initThemeFromStorage() {
   if (typeof window === "undefined") return;
-  const stored = window.localStorage.getItem(STORAGE_KEY);
+  const stored = readThemeFromStorage();
   const prefersDark =
     window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
   const theme: "light" | "dark" =
@@ -26,10 +36,7 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
-    const stored =
-      typeof window !== "undefined"
-        ? window.localStorage.getItem(STORAGE_KEY)
-        : null;
+    const stored = readThemeFromStorage();
     const prefersDark =
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-color-scheme: dark)").matches;
