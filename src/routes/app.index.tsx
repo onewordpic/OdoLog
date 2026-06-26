@@ -404,7 +404,115 @@ function Dashboard() {
       <ServiceAlerts authed={authed} />
 
       {showAdd && <AddVehicleModal onClose={() => setShowAdd(false)} />}
+      <FirstRunCityModal profileLoaded={profile.isSuccess} currentCity={profile.data?.default_city ?? ""} currentName={name} />
     </main>
+  );
+}
+
+const ONBOARD_KEY = "odolog.cityOnboarded";
+
+function FirstRunCityModal({
+  profileLoaded,
+  currentCity,
+  currentName,
+}: {
+  profileLoaded: boolean;
+  currentCity: string;
+  currentName: string;
+}) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [city, setCity] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!profileLoaded) return;
+    if (typeof window === "undefined") return;
+    if (window.localStorage.getItem(ONBOARD_KEY)) return;
+    setCity(currentCity || "");
+    setDisplayName(currentName || "");
+    setOpen(true);
+  }, [profileLoaded, currentCity, currentName]);
+
+  async function save(skip = false) {
+    setSaving(true);
+    try {
+      if (!skip) {
+        const { saveProfile } = await import("@/lib/data-store");
+        await saveProfile({
+          display_name: displayName.trim() || currentName,
+          default_city: (city.trim() || currentCity || "delhi").toLowerCase(),
+        });
+        qc.invalidateQueries({ queryKey: ["profile"] });
+        toast.success("Welcome to OdoLog");
+      }
+      window.localStorage.setItem(ONBOARD_KEY, "1");
+      setOpen(false);
+    } catch (e: any) {
+      toast.error(e.message ?? "Could not save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-[55] flex items-center justify-center bg-black/50 backdrop-blur-md px-4 animate-fade-in">
+      <div className="glass w-full max-w-sm rounded-3xl p-6 animate-slide-up">
+        <h3 className="font-display text-xl font-bold">Welcome to OdoLog</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Tell us your city — we'll auto-fetch local fuel rates when you log refuels.
+        </p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            save(false);
+          }}
+          className="mt-4 space-y-3"
+        >
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">Your name (optional)</span>
+            <input
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="e.g. Safwan"
+              maxLength={60}
+              className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2.5 text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">City</span>
+            <input
+              autoFocus
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="e.g. Mumbai, Bengaluru, Thiruvananthapuram"
+              maxLength={60}
+              required
+              className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2.5 text-sm"
+            />
+          </label>
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => save(true)}
+              disabled={saving}
+              className="press flex-1 rounded-xl glass-subtle glass-hover py-2.5 text-sm font-medium"
+            >
+              Skip
+            </button>
+            <button
+              type="submit"
+              disabled={saving || !city.trim()}
+              className="press flex-1 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
@@ -413,10 +521,18 @@ function formatShortDate(s: string) {
   return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
+type FuelChoice = "petrol" | "diesel" | "cng" | "electric";
+
+function fuelOptionsFor(icon: VIcon): FuelChoice[] {
+  if (icon === "bike") return ["petrol"];
+  if (icon === "scooter") return ["petrol", "electric"];
+  return ["petrol", "diesel", "cng"];
+}
+
 function AddVehicleModal({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient();
   const [name, setName] = useState("");
-  const [fuelType, setFuelType] = useState<"petrol" | "diesel" | "cng">("petrol");
+  const [fuelType, setFuelType] = useState<FuelChoice>("petrol");
   const [icon, setIcon] = useState<VIcon>("car");
   const [make, setMake] = useState("");
   const [year, setYear] = useState("");
@@ -424,6 +540,13 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
   const [imageUrl, setImageUrl] = useState("");
   const [showDetails, setShowDetails] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [showEvCongrats, setShowEvCongrats] = useState(false);
+
+  // Keep fuel type valid when icon changes.
+  useEffect(() => {
+    const allowed = fuelOptionsFor(icon);
+    if (!allowed.includes(fuelType)) setFuelType(allowed[0]);
+  }, [icon]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const suggestions = useMemo<CatalogEntry[]>(
     () => (name.trim().length >= 1 ? searchCatalog(name, 6) : []),
@@ -434,7 +557,7 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
     mutationFn: () =>
       addVehicle({
         name: name.trim(),
-        fuel_type: fuelType,
+        fuel_type: fuelType as "petrol" | "diesel" | "cng",
         icon,
         make: make.trim() || null,
         model_year: year ? Number(year) : null,
@@ -449,11 +572,21 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
     onError: (e) => toast.error(e.message),
   });
 
+  function handleSubmit() {
+    if (!name.trim()) return;
+    if (fuelType === "electric") {
+      setShowEvCongrats(true);
+      return;
+    }
+    mut.mutate();
+  }
+
   function applySuggestion(s: CatalogEntry) {
     setName(s.model);
     setMake(s.make);
     setIcon(s.type);
-    setFuelType(s.fuel);
+    const allowed = fuelOptionsFor(s.type);
+    setFuelType(allowed.includes(s.fuel as FuelChoice) ? (s.fuel as FuelChoice) : allowed[0]);
     if (s.image && !imageUrl) setImageUrl(s.image);
     setShowSuggestions(false);
     if (!showDetails) setShowDetails(true);
@@ -499,7 +632,7 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (name.trim()) mut.mutate();
+            handleSubmit();
           }}
           className="mt-5 space-y-4"
         >
@@ -585,7 +718,7 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
               Fuel type
             </span>
             <div className="mt-1 grid grid-cols-3 gap-2">
-              {(["petrol", "diesel", "cng"] as const).map((f) => (
+              {fuelOptionsFor(icon).map((f) => (
                 <button
                   key={f}
                   type="button"
@@ -600,6 +733,11 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
                 </button>
               ))}
             </div>
+            {icon === "bike" && (
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                Bikes are petrol-only in OdoLog.
+              </p>
+            )}
           </div>
 
           <button
@@ -689,6 +827,31 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
           </div>
         </form>
       </div>
+
+      {showEvCongrats && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-md px-4 animate-fade-in"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="glass w-full max-w-sm rounded-3xl p-7 text-center animate-slide-up">
+            <div className="mx-auto mb-3 text-4xl">⚡️🎉</div>
+            <h3 className="font-display text-xl font-bold">Congrats on saving fuel cost!</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              You don't need this app. Ride on, eco hero.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setShowEvCongrats(false);
+                onClose();
+              }}
+              className="press mt-5 w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
