@@ -1450,10 +1450,12 @@ function MaintenanceSection({
 function AddMaintenanceModal({
   vehicleId,
   latestOdo,
+  isEV = false,
   onClose,
 }: {
   vehicleId: string;
   latestOdo: number | null;
+  isEV?: boolean;
   onClose: () => void;
 }) {
   const qc = useQueryClient();
@@ -1471,6 +1473,7 @@ function AddMaintenanceModal({
     mutationFn: async () => {
       if (!type.trim()) throw new Error("Enter a service type");
       await addMaintenance({
+
         vehicle_id: vehicleId,
         service_date: date,
         service_type: type.trim(),
