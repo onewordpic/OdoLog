@@ -7,6 +7,8 @@ import {
   Loader2,
   RefreshCcw,
   TrendingUp,
+  IndianRupee,
+
 } from "lucide-react";
 import {
   Bar,
@@ -103,6 +105,7 @@ function AnalyticsPage() {
       {vehicles.data && refuels.data && (
         <div className="space-y-6">
           <VehicleTrends vehicles={vehicles.data} refuels={refuels.data} />
+          <RunningCosts vehicles={vehicles.data} refuels={refuels.data} />
           <CityPriceTrends refuels={refuels.data} />
         </div>
       )}
