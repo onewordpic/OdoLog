@@ -109,6 +109,13 @@ function Dashboard() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Link
+            to="/app/analytics"
+            className="glass glass-hover press flex h-9 w-9 items-center justify-center rounded-full"
+            aria-label="Analytics"
+          >
+            <BarChart3 className="h-4 w-4" />
+          </Link>
+          <Link
             to="/app/settings"
             className="glass glass-hover press flex h-9 w-9 items-center justify-center rounded-full"
             aria-label="Settings"
