@@ -286,13 +286,13 @@
     inset 0 -1px 0 0 color-mix(in oklab, black 8%, transparent),
     0 22px 60px -28px color-mix(in oklab, black 35%, transparent);
   overflow: hidden;
-}
-@utility liquid-glass::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(120% 80% at 0% 0%, color-mix(in oklab, white 22%, transparent), transparent 60%);
-  pointer-events: none;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(120% 80% at 0% 0%, color-mix(in oklab, white 22%, transparent), transparent 60%);
+    pointer-events: none;
+  }
 }
 
 @utility hover-lift {
