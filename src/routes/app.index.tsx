@@ -14,15 +14,20 @@ import {
   Settings,
   History,
   Search,
+  BellRing,
+  BarChart3,
+  Wrench,
 } from "lucide-react";
 import {
   listVehicles,
   addVehicle,
   dashboardStats,
   listRecentRefuels,
+  listAllMaintenance,
   getProfile,
   type VehicleIcon as VIcon,
 } from "@/lib/data-store";
+import { getPrefs, type Prefs } from "@/lib/prefs";
 import { useAuthed } from "@/lib/use-authed";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
