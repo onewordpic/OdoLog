@@ -581,8 +581,9 @@ function AddRefuelModal({
     });
   }, []);
 
-  // Auto-fetch rate on open if today's date
+  // Auto-fetch rate on open if today's date (skip when editing existing entry).
   useEffect(() => {
+    if (editing) return;
     if (!city) return;
     if (date !== today) return;
     if (rate) return;
