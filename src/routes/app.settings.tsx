@@ -351,12 +351,26 @@ function SettingsPage() {
 
             <button
               onClick={handleClear}
-              className="press flex w-full items-center justify-between rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/10"
+              className="press flex w-full items-center justify-between gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/10"
             >
-              <span className="flex items-center gap-2">
-                <Trash2 className="h-4 w-4" /> Clear local guest data
+              <span className="flex min-w-0 items-center gap-2">
+                <Trash2 className="h-4 w-4 shrink-0" />
+                <span className="truncate">Clear local guest data</span>
               </span>
-              <span className="text-xs opacity-70">browser only</span>
+              <span className="shrink-0 text-xs opacity-70">browser only</span>
+            </button>
+
+            <button
+              onClick={handleDeleteAll}
+              className="press flex w-full items-center justify-between gap-2 rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive hover:bg-destructive/20"
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span className="truncate">Delete all my data</span>
+              </span>
+              <span className="shrink-0 text-xs opacity-80">
+                {authed ? "cloud + browser" : "browser"}
+              </span>
             </button>
 
             {authed ? (
@@ -380,9 +394,32 @@ function SettingsPage() {
             )}
           </Section>
 
-          <p className="px-1 pt-2 text-center text-xs text-muted-foreground">
-            OdoLog · v1 · {authed ? "synced to cloud" : "guest mode"}
-          </p>
+          <footer className="space-y-2 px-1 pt-4 text-center text-xs text-muted-foreground">
+            <p className="flex items-center justify-center gap-1.5">
+              Made with <Heart className="h-3 w-3 fill-destructive text-destructive" aria-hidden /> in India by{" "}
+              <span className="font-medium text-foreground">Safwan</span>
+            </p>
+            <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+              <a
+                href="https://x.com/onewordpic"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="hover:text-foreground hover:underline"
+              >
+                @onewordpic on X
+              </a>
+              <span aria-hidden>·</span>
+              <a
+                href="https://safwan.online"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="hover:text-foreground hover:underline"
+              >
+                safwan.online
+              </a>
+            </p>
+            <p>OdoLog · v1 · {authed ? "synced to cloud" : "guest mode"}</p>
+          </footer>
         </div>
       )}
     </main>
