@@ -93,6 +93,16 @@ function VehiclePage() {
   });
 
   const summary = useMemo(() => computeSummary(refuels.data ?? []), [refuels.data]);
+  const isEV = vehicle.data?.fuel_type === "electric";
+  const ageReminder = useMemo(() => {
+    const y = vehicle.data?.model_year;
+    if (!y) return null;
+    const age = new Date().getFullYear() - y;
+    if (age < 13 || age > 15) return null;
+    const yearsLeft = 15 - age;
+    return { age, yearsLeft };
+  }, [vehicle.data?.model_year]);
+
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 md:px-6 animate-fade-in">
