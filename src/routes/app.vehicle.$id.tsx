@@ -471,6 +471,12 @@ function EditVehicleModal({
   );
   const [reg, setReg] = useState(vehicle.reg_number ?? "");
   const [imageUrl, setImageUrl] = useState(vehicle.image_url ?? "");
+  const [insuranceExpiry, setInsuranceExpiry] = useState(vehicle.insurance_expiry ?? "");
+  const [pucExpiry, setPucExpiry] = useState(vehicle.puc_expiry ?? "");
+  const [purchaseDate, setPurchaseDate] = useState(vehicle.purchase_date ?? "");
+  const [purchasePrice, setPurchasePrice] = useState(
+    vehicle.purchase_price_inr != null ? String(vehicle.purchase_price_inr) : "",
+  );
 
   const suggestions = useMemo<CatalogEntry[]>(
     () => (name.trim().length >= 1 ? searchCatalog(name, 4) : []),
@@ -486,6 +492,10 @@ function EditVehicleModal({
         model_year: year ? Number(year) : null,
         reg_number: reg.trim() ? reg.trim().toUpperCase() : null,
         image_url: imageUrl.trim() || null,
+        insurance_expiry: insuranceExpiry || null,
+        puc_expiry: pucExpiry || null,
+        purchase_date: purchaseDate || null,
+        purchase_price_inr: purchasePrice ? Number(purchasePrice) : null,
       }),
     onSuccess: () => {
       toast.success("Vehicle updated");
