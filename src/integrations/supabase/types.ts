@@ -191,7 +191,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      fuel_type: "petrol" | "diesel" | "cng"
+      fuel_type: "petrol" | "diesel" | "cng" | "electric"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -319,7 +319,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      fuel_type: ["petrol", "diesel", "cng"],
+      fuel_type: ["petrol", "diesel", "cng", "electric"],
     },
   },
 } as const

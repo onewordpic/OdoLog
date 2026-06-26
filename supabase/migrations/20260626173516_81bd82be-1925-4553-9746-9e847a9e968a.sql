@@ -1,0 +1,1 @@
+ALTER TYPE public.fuel_type ADD VALUE IF NOT EXISTS 'electric';
