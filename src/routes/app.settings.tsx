@@ -13,12 +13,15 @@ import {
   Database,
   LogOut,
   LogIn,
+  Heart,
+  AlertTriangle,
 } from "lucide-react";
 import {
   getProfile,
   saveProfile,
   listVehicles,
   listRecentRefuels,
+  clearAllData,
 } from "@/lib/data-store";
 import {
   getPrefs,
