@@ -448,6 +448,9 @@ export async function listAllMaintenance(): Promise<
       vehicle_icon: v?.icon ?? "car",
     };
   });
+}
+
+
 
 export async function addMaintenance(input: {
   vehicle_id: string;
