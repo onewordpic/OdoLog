@@ -353,3 +353,67 @@ export async function saveProfile(input: Profile): Promise<void> {
 export async function isSignedIn(): Promise<boolean> {
   return (await getUserId()) !== null;
 }
+
+// ---------- Maintenance ----------
+
+export async function listMaintenance(vehicleId: string): Promise<MaintenanceLog[]> {
+  const userId = await getUserId();
+  if (userId) {
+    const { data, error } = await supabase
+      .from("maintenance_logs")
+      .select("*")
+      .eq("vehicle_id", vehicleId)
+      .order("service_date", { ascending: false })
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data as MaintenanceLog[];
+  }
+  return lsRead<MaintenanceLog[]>(LS_MAINT, [])
+    .filter((m) => m.vehicle_id === vehicleId)
+    .sort((a, b) => {
+      const d = b.service_date.localeCompare(a.service_date);
+      return d !== 0 ? d : b.created_at.localeCompare(a.created_at);
+    });
+}
+
+export async function addMaintenance(input: {
+  vehicle_id: string;
+  service_date: string;
+  service_type: string;
+  odo_km: number | null;
+  cost_inr: number | null;
+  notes: string | null;
+  next_service_odo_km: number | null;
+  next_service_date: string | null;
+}): Promise<void> {
+  const userId = await getUserId();
+  if (userId) {
+    const { error } = await supabase.from("maintenance_logs").insert({
+      ...input,
+      user_id: userId,
+    });
+    if (error) throw error;
+    return;
+  }
+  const m: MaintenanceLog = {
+    id: uid(),
+    ...input,
+    created_at: new Date().toISOString(),
+  };
+  const all = lsRead<MaintenanceLog[]>(LS_MAINT, []);
+  all.push(m);
+  lsWrite(LS_MAINT, all);
+}
+
+export async function deleteMaintenance(id: string): Promise<void> {
+  const userId = await getUserId();
+  if (userId) {
+    const { error } = await supabase.from("maintenance_logs").delete().eq("id", id);
+    if (error) throw error;
+    return;
+  }
+  lsWrite(
+    LS_MAINT,
+    lsRead<MaintenanceLog[]>(LS_MAINT, []).filter((m) => m.id !== id),
+  );
+}
