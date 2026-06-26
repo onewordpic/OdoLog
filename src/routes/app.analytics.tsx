@@ -452,7 +452,7 @@ function CityPriceTrends({ refuels }: { refuels: RefuelRow[] }) {
                 <YAxis stroke="oklch(0.5 0.02 250)" fontSize={11} tickLine={false} axisLine={false} width={40}
                   domain={["dataMin - 2", "dataMax + 2"]} />
                 <Tooltip contentStyle={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 12 }}
-                  formatter={(v: number | null) => (v == null ? ["—", ""] : [`₹${v.toFixed(2)}`, ""])} />
+                  formatter={(v: any) => (v == null ? ["—", ""] : [`₹${Number(v).toFixed(2)}`, ""])} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Line type="monotone" dataKey="petrol" name="Petrol ₹/L" stroke="oklch(0.65 0.17 38)" strokeWidth={2.5} dot={{ r: 3 }} connectNulls />
                 <Line type="monotone" dataKey="diesel" name="Diesel ₹/L" stroke="oklch(0.55 0.18 250)" strokeWidth={2.5} dot={{ r: 3 }} connectNulls />
