@@ -106,6 +106,50 @@ function VehiclePage() {
     return { age, yearsLeft };
   }, [vehicle.data?.model_year]);
 
+  // Live prefs (for depreciation toggle)
+  const [prefs, setPrefs] = useState<Prefs>(() => getPrefs());
+  useEffect(() => {
+    const sync = () => setPrefs(getPrefs());
+    window.addEventListener(PREFS_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(PREFS_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
+  const renewals = useMemo(() => {
+    if (!vehicle.data) return [] as Array<{ kind: "insurance" | "puc"; date: string; daysLeft: number }>;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const items: Array<{ kind: "insurance" | "puc"; date: string; daysLeft: number }> = [];
+    const push = (kind: "insurance" | "puc", date: string | null) => {
+      if (!date) return;
+      const d = new Date(date);
+      const diff = Math.ceil((d.getTime() - today.getTime()) / 86400000);
+      if (diff <= 90) items.push({ kind, date, daysLeft: diff });
+    };
+    push("insurance", vehicle.data.insurance_expiry);
+    push("puc", vehicle.data.puc_expiry);
+    return items;
+  }, [vehicle.data]);
+
+  const depreciation = useMemo(() => {
+    if (!prefs.showDepreciation || !vehicle.data) return null;
+    const price = vehicle.data.purchase_price_inr;
+    const start = vehicle.data.purchase_date;
+    if (!price || price <= 0 || !start) return null;
+    const years =
+      (Date.now() - new Date(start).getTime()) / (365.25 * 86400000);
+    if (years < 0) return null;
+    // India-typical reducing-balance: cars 15%/yr, two-wheelers 12%/yr.
+    const rate = vehicle.data.icon === "car" ? 0.15 : 0.12;
+    const value = Math.max(0, price * Math.pow(1 - rate, years));
+    const lost = price - value;
+    const pctLost = (lost / price) * 100;
+    return { price, value, lost, pctLost, years, rate };
+  }, [prefs.showDepreciation, vehicle.data]);
+
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 md:px-6 animate-fade-in">
