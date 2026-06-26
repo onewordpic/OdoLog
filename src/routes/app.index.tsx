@@ -560,8 +560,7 @@ function formatShortDate(s: string) {
 type FuelChoice = "petrol" | "diesel" | "cng" | "electric";
 
 function fuelOptionsFor(icon: VIcon): FuelChoice[] {
-  if (icon === "bike") return ["petrol"];
-  if (icon === "scooter") return ["petrol", "electric"];
+  if (icon === "bike" || icon === "scooter") return ["petrol", "electric"];
   return ["petrol", "diesel", "cng", "electric"];
 }
 
@@ -610,8 +609,8 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
 
   function handleSubmit() {
     if (!name.trim()) return;
-    // Scooter EV → block adding (current behavior).
-    if (icon === "scooter" && fuelType === "electric") {
+    // Bike / Scooter EV → block adding, just celebrate.
+    if ((icon === "scooter" || icon === "bike") && fuelType === "electric") {
       setShowEvCongrats(true);
       return;
     }
@@ -776,9 +775,9 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
                 </button>
               ))}
             </div>
-            {icon === "bike" && (
+            {(icon === "bike" || icon === "scooter") && (
               <p className="mt-1.5 text-[11px] text-muted-foreground">
-                Bikes are petrol-only in OdoLog.
+                Diesel isn't available for {icon}s. Pick EV if yours is electric.
               </p>
             )}
           </div>
