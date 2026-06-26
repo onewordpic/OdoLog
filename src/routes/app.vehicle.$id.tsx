@@ -1277,6 +1277,31 @@ function AddMaintenanceModal({
             </div>
           </div>
 
+          <div>
+            <span className="text-xs font-medium text-muted-foreground">
+              Condition {isTyre ? "(tyre)" : isOil ? "(oil)" : ""}
+            </span>
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {conditionOptions.map((c) => {
+                const active = condition === c;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCondition(active ? "" : c)}
+                    className={`press rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
+                      active
+                        ? "bg-primary text-primary-foreground"
+                        : "glass-subtle text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {c}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <label className="block">
             <span className="text-xs font-medium text-muted-foreground">Notes</span>
             <textarea
@@ -1286,6 +1311,7 @@ function AddMaintenanceModal({
               className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
             />
           </label>
+
 
           <div className="flex gap-2 pt-2">
             <button
