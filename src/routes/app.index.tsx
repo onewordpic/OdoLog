@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -13,21 +13,40 @@ import {
   Loader2,
   Settings,
   History,
+  Search,
 } from "lucide-react";
 import {
   listVehicles,
   addVehicle,
   dashboardStats,
   listRecentRefuels,
+  getProfile,
   type VehicleIcon as VIcon,
 } from "@/lib/data-store";
 import { useAuthed } from "@/lib/use-authed";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
+import { VehicleAvatar } from "@/components/vehicle-avatar";
+import { searchCatalog, type CatalogEntry } from "@/lib/vehicle-catalog";
 
 export const Route = createFileRoute("/app/")({
   component: Dashboard,
 });
+
+function greetingFor(name: string) {
+  const h = new Date().getHours();
+  const slot =
+    h < 5 ? "Burning the midnight oil" :
+    h < 12 ? "Good morning" :
+    h < 17 ? "Good afternoon" :
+    h < 21 ? "Good evening" :
+    "Good night";
+  const flavours = ["Happy riding", "Safe travels", "Drive safe"];
+  const flavour = flavours[new Date().getDate() % flavours.length];
+  const who = name ? `, ${name}` : "";
+  // Alternate greeting style across the day for variety.
+  return (h % 2 === 0 ? slot : flavour) + who;
+}
 
 function Dashboard() {
   const qc = useQueryClient();
@@ -53,6 +72,17 @@ function Dashboard() {
     enabled: authed !== null,
   });
 
+  const profile = useQuery({
+    queryKey: ["profile", authed],
+    queryFn: getProfile,
+    enabled: authed !== null,
+  });
+
+  const greeting = useMemo(
+    () => greetingFor((profile.data?.display_name ?? "").trim()),
+    [profile.data?.display_name],
+  );
+
   async function signOut() {
     await qc.cancelQueries();
     qc.clear();
@@ -62,7 +92,7 @@ function Dashboard() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 md:px-6">
-      <header className="mb-8 flex items-center justify-between animate-fade-in-up">
+      <header className="mb-6 flex items-center justify-between animate-fade-in-up">
         <div className="flex items-center gap-2">
           <div className="glass flex h-9 w-9 items-center justify-center rounded-xl">
             <Fuel className="h-4 w-4 text-primary" />
@@ -97,6 +127,16 @@ function Dashboard() {
           )}
         </div>
       </header>
+
+      <section className="mb-8 animate-fade-in-up">
+        <h1 className="text-3xl font-light tracking-tight md:text-4xl">
+          {greeting}
+          <span className="text-primary">.</span>
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Here's how your garage is doing.
+        </p>
+      </section>
 
       {authed === false && (
         <div className="glass-subtle mb-6 rounded-2xl px-4 py-3 text-xs text-muted-foreground animate-fade-in">
@@ -151,18 +191,20 @@ function Dashboard() {
                 className="glass glass-hover hover-lift press stagger flex items-center justify-between rounded-2xl p-4"
                 style={{ animationDelay: `${i * 50}ms` }}
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                    <VehicleIcon icon={v.icon} className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-medium">{v.name}</div>
-                    <div className="text-xs capitalize text-muted-foreground">
-                      {v.fuel_type}
+                <div className="flex items-center gap-3 min-w-0">
+                  <VehicleAvatar vehicle={v} size={44} />
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">
+                      {v.make ? `${v.make} ${v.name}` : v.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      <span className="capitalize">{v.fuel_type}</span>
+                      {v.model_year ? ` · ${v.model_year}` : ""}
+                      {v.reg_number ? ` · ${v.reg_number}` : ""}
                     </div>
                   </div>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
               </Link>
             ))}
           </div>
@@ -256,10 +298,29 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
   const [fuelType, setFuelType] = useState<"petrol" | "diesel">("petrol");
   const [icon, setIcon] = useState<VIcon>("car");
+  const [make, setMake] = useState("");
+  const [year, setYear] = useState("");
+  const [reg, setReg] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [showDetails, setShowDetails] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(true);
+
+  const suggestions = useMemo<CatalogEntry[]>(
+    () => (name.trim().length >= 1 ? searchCatalog(name, 6) : []),
+    [name],
+  );
 
   const mut = useMutation({
     mutationFn: () =>
-      addVehicle({ name: name.trim(), fuel_type: fuelType, icon }),
+      addVehicle({
+        name: name.trim(),
+        fuel_type: fuelType,
+        icon,
+        make: make.trim() || null,
+        model_year: year ? Number(year) : null,
+        reg_number: reg.trim() ? reg.trim().toUpperCase() : null,
+        image_url: imageUrl.trim() || null,
+      }),
     onSuccess: () => {
       toast.success("Vehicle added");
       qc.invalidateQueries({ queryKey: ["vehicles"] });
@@ -267,6 +328,16 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
     },
     onError: (e) => toast.error(e.message),
   });
+
+  function applySuggestion(s: CatalogEntry) {
+    setName(s.model);
+    setMake(s.make);
+    setIcon(s.type);
+    setFuelType(s.fuel);
+    if (s.image && !imageUrl) setImageUrl(s.image);
+    setShowSuggestions(false);
+    if (!showDetails) setShowDetails(true);
+  }
 
   useEffect(() => {
     function esc(e: KeyboardEvent) {
@@ -276,6 +347,8 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener("keydown", esc);
   }, [onClose]);
 
+  const currentYear = new Date().getFullYear();
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center animate-fade-in"
@@ -283,12 +356,26 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="glass w-full max-w-md rounded-t-3xl p-6 md:rounded-3xl animate-slide-up"
+        className="glass max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl p-6 md:rounded-3xl animate-slide-up"
       >
-        <h3 className="text-lg font-medium">Add vehicle</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Give it a memorable name.
-        </p>
+        <div className="flex items-center gap-3">
+          <VehicleAvatar
+            vehicle={{
+              icon,
+              make: make || null,
+              image_url: imageUrl || null,
+              name,
+            }}
+            size={52}
+          />
+          <div>
+            <h3 className="text-lg font-medium">Add vehicle</h3>
+            <p className="text-xs text-muted-foreground">
+              Type a model — we'll suggest the make.
+            </p>
+          </div>
+        </div>
+
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -296,20 +383,56 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
           }}
           className="mt-5 space-y-4"
         >
-          <label className="block">
+          <div className="relative">
             <span className="text-xs font-medium text-muted-foreground">
-              Name
+              Model
             </span>
-            <input
-              autoFocus
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Activa, Swift"
-              maxLength={50}
-              required
-              className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
-            />
-          </label>
+            <div className="relative mt-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                autoFocus
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                placeholder="e.g. i20, Swift, Activa"
+                maxLength={60}
+                required
+                className="w-full rounded-xl glass-input glass-input-focus pl-9 pr-4 py-3 text-sm"
+              />
+            </div>
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="glass animate-fade-in mt-2 max-h-56 overflow-y-auto rounded-xl p-1">
+                {suggestions.map((s) => (
+                  <button
+                    key={`${s.make}-${s.model}`}
+                    type="button"
+                    onClick={() => applySuggestion(s)}
+                    className="press flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-foreground/5"
+                  >
+                    <VehicleAvatar
+                      vehicle={{
+                        icon: s.type,
+                        make: s.make,
+                        image_url: s.image ?? null,
+                      }}
+                      size={32}
+                      rounded="rounded-lg"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">
+                        {s.make} {s.model}
+                      </div>
+                      <div className="text-[11px] capitalize text-muted-foreground">
+                        {s.type} · {s.fuel}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <div>
             <span className="text-xs font-medium text-muted-foreground">
@@ -358,6 +481,75 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
               ))}
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setShowDetails((s) => !s)}
+            className="press w-full rounded-xl glass-subtle px-4 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+          >
+            {showDetails ? "Hide" : "Add"} optional details
+          </button>
+
+          {showDetails && (
+            <div className="animate-fade-in space-y-3 rounded-xl glass-subtle p-3">
+              <label className="block">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Make
+                </span>
+                <input
+                  value={make}
+                  onChange={(e) => setMake(e.target.value)}
+                  placeholder="e.g. Hyundai"
+                  maxLength={40}
+                  className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-2.5 text-sm"
+                />
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Year
+                  </span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1950}
+                    max={currentYear + 1}
+                    value={year}
+                    onChange={(e) => setYear(e.target.value)}
+                    placeholder={`${currentYear}`}
+                    className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-2.5 text-sm"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Reg. number
+                  </span>
+                  <input
+                    value={reg}
+                    onChange={(e) => setReg(e.target.value.toUpperCase())}
+                    placeholder="KL 01 AB 1234"
+                    maxLength={20}
+                    className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-2.5 text-sm uppercase"
+                  />
+                </label>
+              </div>
+              <label className="block">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Photo URL
+                </span>
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="https://…"
+                  className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-2.5 text-sm"
+                />
+                <span className="mt-1 block text-[11px] text-muted-foreground">
+                  Auto-filled from suggestions when available.
+                </span>
+              </label>
+            </div>
+          )}
 
           <div className="flex gap-2 pt-2">
             <button
