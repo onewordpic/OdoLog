@@ -1438,12 +1438,14 @@ function MaintenanceSection({
         <AddMaintenanceModal
           vehicleId={vehicleId}
           latestOdo={latestOdo}
+          isEV={isEV}
           onClose={() => setShowAdd(false)}
         />
       )}
     </section>
   );
 }
+
 
 function AddMaintenanceModal({
   vehicleId,
