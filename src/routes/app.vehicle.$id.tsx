@@ -141,68 +141,10 @@ function VehiclePage() {
         />
       </section>
 
-      {summary.chart.length >= 2 && (
-        <section className="glass mt-6 rounded-2xl p-4">
-          <div className="mb-2 px-2 text-xs uppercase tracking-wider text-muted-foreground">
-            Mileage trend (km/l)
-          </div>
-          <div className="h-44">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={summary.chart}>
-                <XAxis
-                  dataKey="date"
-                  stroke="oklch(0.5 0.02 250)"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  stroke="oklch(0.5 0.02 250)"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                  width={30}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: "rgba(255,255,255,0.9)",
-                    border: "1px solid rgba(255,255,255,0.6)",
-                    borderRadius: 12,
-                    backdropFilter: "blur(10px)",
-                    fontSize: 12,
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="kmpl"
-                  name="km/l"
-                  stroke="oklch(0.5 0.18 250)"
-                  strokeWidth={2}
-                  dot={{ r: 3, fill: "oklch(0.5 0.18 250)" }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="cpk"
-                  name="₹/km"
-                  stroke="oklch(0.65 0.18 30)"
-                  strokeWidth={2}
-                  dot={{ r: 3, fill: "oklch(0.65 0.18 30)" }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-2 flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block h-2 w-2 rounded-full" style={{ background: "oklch(0.5 0.18 250)" }} />
-              km/l
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block h-2 w-2 rounded-full" style={{ background: "oklch(0.65 0.18 30)" }} />
-              ₹/km
-            </span>
-          </div>
-        </section>
-      )}
+      <TrendChart summary={summary} refuels={refuels.data ?? []} />
+
+      <MaintenanceSection vehicleId={id} latestOdo={summary.latestOdo} />
+
 
       <section className="mt-6">
         <div className="mb-3 flex items-center justify-between">
