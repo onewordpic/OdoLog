@@ -622,6 +622,61 @@ function EditVehicleModal({
             />
           </label>
 
+          <div className="rounded-2xl glass-subtle p-3 space-y-3">
+            <div className="text-xs font-medium text-muted-foreground">
+              Renewals · optional
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-[11px] text-muted-foreground">Insurance expiry</span>
+                <input
+                  type="date"
+                  value={insuranceExpiry}
+                  onChange={(e) => setInsuranceExpiry(e.target.value)}
+                  className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2 text-sm"
+                />
+              </label>
+              <label className="block">
+                <span className="text-[11px] text-muted-foreground">PUC expiry</span>
+                <input
+                  type="date"
+                  value={pucExpiry}
+                  onChange={(e) => setPucExpiry(e.target.value)}
+                  className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2 text-sm"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="rounded-2xl glass-subtle p-3 space-y-3">
+            <div className="text-xs font-medium text-muted-foreground">
+              Purchase · for depreciation
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-[11px] text-muted-foreground">Purchase date</span>
+                <input
+                  type="date"
+                  value={purchaseDate}
+                  onChange={(e) => setPurchaseDate(e.target.value)}
+                  className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2 text-sm"
+                />
+              </label>
+              <label className="block">
+                <span className="text-[11px] text-muted-foreground">Purchase price (₹)</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={purchasePrice}
+                  onChange={(e) => setPurchasePrice(e.target.value)}
+                  placeholder="e.g. 850000"
+                  className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2 text-sm"
+                />
+              </label>
+            </div>
+          </div>
+
           <div>
             <span className="text-xs font-medium text-muted-foreground">Type</span>
             <div className="mt-1 grid grid-cols-3 gap-2">
