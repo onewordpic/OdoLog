@@ -1501,18 +1501,32 @@ function AddMaintenanceModal({
     return () => window.removeEventListener("keydown", esc);
   }, [onClose]);
 
-  const presets = [
-    "Oil change",
-    "Oil filter",
-    "Tyre check",
-    "Tyre rotation",
-    "Tyre replacement",
-    "Brake pads",
-    "Air filter",
-    "Coolant",
-    "Chain lube",
-    "General service",
-  ];
+  const presets = isEV
+    ? [
+        "General service",
+        "Brake pads",
+        "Brake fluid",
+        "Tyre check",
+        "Tyre rotation",
+        "Tyre replacement",
+        "Battery health check",
+        "Coolant (battery)",
+        "Cabin filter",
+        "Software update",
+      ]
+    : [
+        "Oil change",
+        "Oil filter",
+        "Tyre check",
+        "Tyre rotation",
+        "Tyre replacement",
+        "Brake pads",
+        "Air filter",
+        "Coolant",
+        "Chain lube",
+        "General service",
+      ];
+
   const isTyre = /tyre/i.test(type);
   const isOil = /oil/i.test(type);
   const conditionOptions = isTyre
