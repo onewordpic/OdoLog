@@ -75,13 +75,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "PitStop — Track fuel & cost per km" },
+      { title: "OdoBay — Track fuel & cost per km" },
       {
         name: "description",
         content:
           "Minimal fuel tracker for Indian vehicles. Log refuels in rupees, auto-derive litres, and see real cost per km.",
       },
-      { property: "og:title", content: "PitStop — Track fuel & cost per km" },
+      { property: "og:title", content: "OdoBay — Track fuel & cost per km" },
       {
         property: "og:description",
         content:
@@ -89,6 +89,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "OdoBay — Track fuel & cost per km" },
+      { name: "description", content: "Fuel Buddy tracks vehicle fuel consumption, calculating liters from INR spent and daily fuel rates." },
+      { property: "og:description", content: "Fuel Buddy tracks vehicle fuel consumption, calculating liters from INR spent and daily fuel rates." },
+      { name: "twitter:description", content: "Fuel Buddy tracks vehicle fuel consumption, calculating liters from INR spent and daily fuel rates." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7650fee0-1176-4445-9fa6-16a034751866/id-preview-c0a707d1--21669def-ed77-42ec-a79e-6632364c7423.lovable.app-1782468456641.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7650fee0-1176-4445-9fa6-16a034751866/id-preview-c0a707d1--21669def-ed77-42ec-a79e-6632364c7423.lovable.app-1782468456641.png" },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
