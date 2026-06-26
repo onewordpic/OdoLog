@@ -314,6 +314,13 @@ function VehiclePage() {
           onClose={() => setShowAdd(false)}
         />
       )}
+      {editing && vehicle.data && (
+        <AddRefuelModal
+          vehicle={vehicle.data}
+          editing={editing}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </main>
   );
 }
