@@ -664,10 +664,11 @@ function AddRefuelModal({
         onClick={(e) => e.stopPropagation()}
         className="glass max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl p-6 md:rounded-3xl"
       >
-        <h3 className="text-lg font-medium">New refuel</h3>
+        <h3 className="text-lg font-medium">{editing ? "Edit refuel" : "New refuel"}</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           {vehicle.name} · {vehicle.fuel_type}
         </p>
+
 
         <form
           onSubmit={(e) => {
