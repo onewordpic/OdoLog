@@ -1046,11 +1046,17 @@ function MaintenanceSection({
                         · ₹{Number(m.cost_inr).toFixed(0)}
                       </span>
                     )}
+                    {m.condition && (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-primary">
+                        {m.condition}
+                      </span>
+                    )}
                     {isDue && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-medium uppercase text-destructive">
                         <AlertTriangle className="h-3 w-3" /> Due
                       </span>
                     )}
+
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     <span>{formatDate(m.service_date)}</span>
