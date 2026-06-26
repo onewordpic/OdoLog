@@ -142,11 +142,13 @@ function VehiclePage() {
           icon={Wallet}
           label="Cost / km"
           value={summary.costPerKm != null ? `₹${summary.costPerKm.toFixed(2)}` : "—"}
+          hint={summary.basis?.label}
         />
         <Stat
           icon={TrendingUp}
           label="Mileage"
           value={summary.kmPerL != null ? `${summary.kmPerL.toFixed(1)} km/l` : "—"}
+          hint={summary.basis?.label}
         />
         <Stat
           icon={Droplet}
@@ -159,6 +161,38 @@ function VehiclePage() {
           value={summary.totalKm != null ? `${summary.totalKm.toFixed(0)} km` : "—"}
         />
       </section>
+
+      {summary.basis && (summary.costPerKm != null || summary.kmPerL != null) && (
+        <div className="mt-3 glass-subtle rounded-2xl px-4 py-3 text-xs text-muted-foreground animate-fade-in">
+          <span className="font-medium text-foreground">
+            {summary.basis.source === "segments" ? "Based on " : "Estimated from "}
+            {summary.basis.label.toLowerCase()}:
+          </span>{" "}
+          {summary.basis.detail}
+        </div>
+      )}
+
+      {(summary.costPerKm == null || summary.kmPerL == null) && summary.missing.length > 0 && (
+        <div className="mt-3 glass rounded-2xl px-4 py-3 animate-fade-in">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <div className="text-xs">
+              <div className="font-medium text-foreground">
+                {summary.costPerKm == null && summary.kmPerL == null
+                  ? "Cost/km and Mileage need a bit more data"
+                  : summary.costPerKm == null
+                    ? "Cost/km needs a bit more data"
+                    : "Mileage needs a bit more data"}
+              </div>
+              <ul className="mt-1.5 space-y-1 text-muted-foreground">
+                {summary.missing.map((m, i) => (
+                  <li key={i}>• {m}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
 
       <TrendChart summary={summary} refuels={refuels.data ?? []} />
 
