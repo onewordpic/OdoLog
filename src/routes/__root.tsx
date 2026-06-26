@@ -123,6 +123,7 @@ function RootComponent() {
 
   useEffect(() => {
     initThemeFromStorage();
+    initThemingFromStorage();
   }, []);
 
   useEffect(() => {
