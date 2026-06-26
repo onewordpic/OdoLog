@@ -70,47 +70,44 @@
 }
 
 :root {
-  --radius: 1.25rem;
-  --background: oklch(0.985 0.006 80);
-  --foreground: oklch(0.22 0.02 30);
-  --card: oklch(1 0 0 / 0.62);
-  --card-foreground: oklch(0.22 0.02 30);
-  --popover: oklch(0.995 0.003 80);
-  --popover-foreground: oklch(0.22 0.02 30);
-  --primary: oklch(0.72 0.17 38);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.95 0.03 165);
-  --secondary-foreground: oklch(0.3 0.04 165);
-  --muted: oklch(0.96 0.01 80 / 0.7);
-  --muted-foreground: oklch(0.5 0.02 60);
-  --accent: oklch(0.83 0.09 165);
-  --accent-foreground: oklch(0.25 0.04 165);
+  --radius: 1.5rem;
+  --mint: #E8F5E9;
+  --sand: #FFF4D6;
+  --ink: #111111;
+  --mint-accent: #7BD8B0;
+
+  --background: oklch(0.985 0.005 150);
+  --foreground: oklch(0.16 0 0);
+  --card: oklch(1 0 0 / 0.85);
+  --card-foreground: oklch(0.16 0 0);
+  --popover: oklch(0.995 0 0);
+  --popover-foreground: oklch(0.16 0 0);
+  --primary: oklch(0.16 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0.04 150);
+  --secondary-foreground: oklch(0.16 0 0);
+  --muted: oklch(0.96 0.01 150 / 0.7);
+  --muted-foreground: oklch(0.45 0.01 60);
+  --accent: oklch(0.86 0.13 165);
+  --accent-foreground: oklch(0.16 0 0);
   --destructive: oklch(0.62 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.9 0.01 80 / 0.55);
-  --input: oklch(1 0 0 / 0.55);
-  --ring: oklch(0.72 0.17 38);
-  --glass: oklch(1 0 0 / 0.55);
-  --glass-border: oklch(1 0 0 / 0.7);
-  --glass-hover: oklch(1 0 0 / 0.78);
-
-  --grad-mint: oklch(0.9 0.07 165);
-  --grad-peach: oklch(0.88 0.09 50);
-  --grad-coral: oklch(0.82 0.13 30);
-  --grad-lilac: oklch(0.86 0.08 320);
+  --border: oklch(0.16 0 0 / 0.08);
+  --input: oklch(1 0 0 / 0.7);
+  --ring: oklch(0.16 0 0);
+  --glass: oklch(1 0 0 / 0.72);
+  --glass-border: oklch(0.16 0 0 / 0.06);
+  --glass-hover: oklch(1 0 0 / 0.92);
 
   --gradient-bg:
-    radial-gradient(60% 50% at 12% 8%, color-mix(in oklab, var(--grad-mint) 70%, transparent), transparent 70%),
-    radial-gradient(55% 45% at 92% 18%, color-mix(in oklab, var(--grad-lilac) 65%, transparent), transparent 70%),
-    radial-gradient(70% 60% at 50% 95%, color-mix(in oklab, var(--grad-peach) 70%, transparent), transparent 70%),
-    radial-gradient(40% 35% at 85% 80%, color-mix(in oklab, var(--grad-coral) 55%, transparent), transparent 70%),
-    linear-gradient(180deg, oklch(0.985 0.006 80), oklch(0.95 0.02 60));
+    radial-gradient(70% 55% at 8% 5%, color-mix(in oklab, var(--mint) 85%, transparent), transparent 70%),
+    radial-gradient(60% 50% at 95% 90%, color-mix(in oklab, var(--sand) 75%, transparent), transparent 70%),
+    linear-gradient(180deg, #fdfdfd, #f7f7f5);
 
   --shadow-glass:
-    0 10px 36px -8px oklch(0.55 0.06 40 / 0.18),
-    0 2px 6px -2px oklch(0.55 0.06 40 / 0.08),
-    inset 0 1px 0 0 oklch(1 0 0 / 0.7);
-  --shadow-soft: 0 18px 50px -16px oklch(0.55 0.08 30 / 0.22);
+    0 1px 0 0 oklch(1 0 0 / 0.9) inset,
+    0 10px 30px -16px oklch(0 0 0 / 0.12);
+  --shadow-soft: 0 24px 60px -28px oklch(0 0 0 / 0.22);
 }
 
 .dark {
