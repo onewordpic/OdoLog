@@ -49,6 +49,9 @@ export const Route = createFileRoute("/app/settings")({
 });
 
 const CITIES = [
+  "Thiruvananthapuram",
+  "Kochi",
+  "Kozhikode",
   "Delhi",
   "Mumbai",
   "Bangalore",
@@ -60,8 +63,6 @@ const CITIES = [
   "Ahmedabad",
   "Jaipur",
   "Lucknow",
-  "Kochi",
-  "Thiruvananthapuram",
   "Chandigarh",
   "Coimbatore",
   "Indore",
@@ -72,12 +73,28 @@ const CITIES = [
   "Visakhapatnam",
 ];
 
+const GITHUB_URL = "https://github.com/onewordpic/odolog";
+const STAR_DISMISS_KEY = "odolog.githubStarDismissed";
+
 function SettingsPage() {
   const qc = useQueryClient();
   const authed = useAuthed();
   const navigate = useNavigate();
   const [name, setName] = useState("");
-  const [city, setCity] = useState("delhi");
+  const [city, setCity] = useState("thiruvananthapuram");
+  const [showStar, setShowStar] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setShowStar(window.localStorage.getItem(STAR_DISMISS_KEY) !== "1");
+  }, []);
+
+  function dismissStar() {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(STAR_DISMISS_KEY, "1");
+    }
+    setShowStar(false);
+  }
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
 
   const profile = useQuery({ queryKey: ["profile"], queryFn: getProfile });
@@ -85,7 +102,7 @@ function SettingsPage() {
   useEffect(() => {
     if (profile.data) {
       setName(profile.data.display_name ?? "");
-      setCity(profile.data.default_city ?? "delhi");
+      setCity(profile.data.default_city ?? "thiruvananthapuram");
     }
   }, [profile.data]);
 
