@@ -69,22 +69,39 @@ function AuthPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="mb-6 flex items-center justify-center gap-2">
-          <div className="glass flex h-10 w-10 items-center justify-center rounded-xl">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-12">
+      {/* decorative blobs */}
+      <div
+        className="blob h-[360px] w-[360px] -left-20 top-10"
+        style={{ background: "var(--grad-mint)" }}
+      />
+      <div
+        className="blob h-[320px] w-[320px] right-[-60px] top-1/3"
+        style={{ background: "var(--grad-coral)" }}
+      />
+      <div
+        className="blob h-[280px] w-[280px] left-1/3 bottom-[-60px]"
+        style={{ background: "var(--grad-lilac)" }}
+      />
+
+      <div className="relative z-10 w-full max-w-md animate-fade-in-up">
+        <Link
+          to="/"
+          className="mb-6 flex items-center justify-center gap-2 transition hover:opacity-80"
+        >
+          <div className="glass flex h-10 w-10 items-center justify-center rounded-2xl">
             <Fuel className="h-5 w-5 text-primary" />
           </div>
           <span className="text-xl font-medium tracking-tight">Fuelogue</span>
-        </div>
+        </Link>
 
-        <div className="glass rounded-3xl p-8">
+        <div className="glass soft-shadow rounded-3xl p-8">
           <h1 className="text-2xl font-light tracking-tight">
             {mode === "signin" ? "Welcome back" : "Create your account"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {mode === "signin"
-              ? "Sign in to track your vehicles."
+              ? "Sign in to sync vehicles across devices."
               : "Start logging refuels in seconds."}
           </p>
 
@@ -92,7 +109,7 @@ function AuthPage() {
             type="button"
             onClick={handleGoogle}
             disabled={loading}
-            className="mt-6 flex w-full items-center justify-center gap-3 rounded-xl glass-subtle py-3 text-sm font-medium transition hover:bg-white/60 disabled:opacity-60"
+            className="press mt-6 flex w-full items-center justify-center gap-3 rounded-xl glass-subtle py-3 text-sm font-medium transition hover:bg-white/60 disabled:opacity-60"
           >
             <GoogleIcon /> Continue with Google
           </button>
@@ -132,7 +149,7 @@ function AuthPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
+              className="press mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
               {mode === "signin" ? "Sign in" : "Create account"}
@@ -168,6 +185,7 @@ function AuthPage() {
     </main>
   );
 }
+
 
 function Field({
   label,
