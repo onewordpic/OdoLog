@@ -397,6 +397,24 @@ function SettingsPage() {
             </Field>
           </Section>
 
+          {/* Vehicle value */}
+          <Section
+            icon={Database}
+            title="Vehicle value"
+            subtitle="Estimate current resale value from purchase price."
+          >
+            <Row
+              label="Show depreciation card"
+              hint="Reducing-balance estimate: 15%/yr cars, 12%/yr bikes & scooters. Set purchase price + date on each vehicle."
+            >
+              <Toggle
+                checked={prefs.showDepreciation}
+                onChange={(v) => updatePrefs({ showDepreciation: v })}
+              />
+            </Row>
+          </Section>
+
+
           {/* Data */}
           <Section icon={Database} title="Data & privacy" subtitle="Export, clear, or sign out.">
             <button
