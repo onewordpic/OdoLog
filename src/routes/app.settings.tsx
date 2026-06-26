@@ -15,6 +15,9 @@ import {
   LogIn,
   Heart,
   AlertTriangle,
+  Star,
+  Github,
+  X,
 } from "lucide-react";
 import {
   getProfile,
