@@ -413,10 +413,18 @@ function formatShortDate(s: string) {
   return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
+type FuelChoice = "petrol" | "diesel" | "cng" | "electric";
+
+function fuelOptionsFor(icon: VIcon): FuelChoice[] {
+  if (icon === "bike") return ["petrol"];
+  if (icon === "scooter") return ["petrol", "electric"];
+  return ["petrol", "diesel", "cng"];
+}
+
 function AddVehicleModal({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient();
   const [name, setName] = useState("");
-  const [fuelType, setFuelType] = useState<"petrol" | "diesel" | "cng">("petrol");
+  const [fuelType, setFuelType] = useState<FuelChoice>("petrol");
   const [icon, setIcon] = useState<VIcon>("car");
   const [make, setMake] = useState("");
   const [year, setYear] = useState("");
@@ -424,6 +432,13 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
   const [imageUrl, setImageUrl] = useState("");
   const [showDetails, setShowDetails] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [showEvCongrats, setShowEvCongrats] = useState(false);
+
+  // Keep fuel type valid when icon changes.
+  useEffect(() => {
+    const allowed = fuelOptionsFor(icon);
+    if (!allowed.includes(fuelType)) setFuelType(allowed[0]);
+  }, [icon]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const suggestions = useMemo<CatalogEntry[]>(
     () => (name.trim().length >= 1 ? searchCatalog(name, 6) : []),
@@ -434,7 +449,7 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
     mutationFn: () =>
       addVehicle({
         name: name.trim(),
-        fuel_type: fuelType,
+        fuel_type: fuelType as "petrol" | "diesel" | "cng",
         icon,
         make: make.trim() || null,
         model_year: year ? Number(year) : null,
@@ -449,11 +464,21 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
     onError: (e) => toast.error(e.message),
   });
 
+  function handleSubmit() {
+    if (!name.trim()) return;
+    if (fuelType === "electric") {
+      setShowEvCongrats(true);
+      return;
+    }
+    mut.mutate();
+  }
+
   function applySuggestion(s: CatalogEntry) {
     setName(s.model);
     setMake(s.make);
     setIcon(s.type);
-    setFuelType(s.fuel);
+    const allowed = fuelOptionsFor(s.type);
+    setFuelType(allowed.includes(s.fuel as FuelChoice) ? (s.fuel as FuelChoice) : allowed[0]);
     if (s.image && !imageUrl) setImageUrl(s.image);
     setShowSuggestions(false);
     if (!showDetails) setShowDetails(true);
