@@ -591,7 +591,7 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
     mutationFn: () =>
       addVehicle({
         name: name.trim(),
-        fuel_type: fuelType as "petrol" | "diesel" | "cng",
+        fuel_type: fuelType as "petrol" | "diesel" | "cng" | "electric",
         icon,
         make: make.trim() || null,
         model_year: year ? Number(year) : null,
@@ -608,8 +608,15 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
 
   function handleSubmit() {
     if (!name.trim()) return;
-    if (fuelType === "electric") {
+    // Scooter EV → block adding (current behavior).
+    if (icon === "scooter" && fuelType === "electric") {
       setShowEvCongrats(true);
+      return;
+    }
+    // Car EV → show savings popup, but DO add the vehicle.
+    if (icon === "car" && fuelType === "electric") {
+      setShowEvCongrats(true);
+      mut.mutate();
       return;
     }
     mut.mutate();
