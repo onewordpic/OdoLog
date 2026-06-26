@@ -423,6 +423,43 @@ export async function isSignedIn(): Promise<boolean> {
   return (await getUserId()) !== null;
 }
 
+// Wipes ALL user data: cloud (when signed in) and local guest data.
+// Profile row is reset to empty defaults rather than deleted.
+export async function clearAllData(): Promise<void> {
+  const userId = await getUserId();
+  if (userId) {
+    // Delete in FK-safe order; RLS scopes each delete to the current user.
+    const r1 = await supabase.from("refuels").delete().eq("user_id", userId);
+    if (r1.error) throw r1.error;
+    const r2 = await supabase
+      .from("maintenance_logs")
+      .delete()
+      .eq("user_id", userId);
+    if (r2.error) throw r2.error;
+    const r3 = await supabase.from("vehicles").delete().eq("user_id", userId);
+    if (r3.error) throw r3.error;
+    await supabase
+      .from("profiles")
+      .update({ display_name: "", default_city: "delhi" })
+      .eq("id", userId);
+  }
+  // Always clear local data too, regardless of auth state.
+  if (typeof window !== "undefined") {
+    for (const k of [
+      LS_VEHICLES,
+      LS_REFUELS,
+      LS_MAINT,
+      LS_PROFILE,
+      "fuelogue.vehicles",
+      "fuelogue.refuels",
+      "fuelogue.maintenance",
+      "fuelogue.profile",
+    ]) {
+      window.localStorage.removeItem(k);
+    }
+  }
+}
+
 // ---------- Maintenance ----------
 
 export async function listMaintenance(vehicleId: string): Promise<MaintenanceLog[]> {
