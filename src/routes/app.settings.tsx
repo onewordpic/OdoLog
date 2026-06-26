@@ -218,6 +218,46 @@ function SettingsPage() {
         </div>
       ) : (
         <div className="space-y-5">
+          {showStar && (
+            <div className="relative animate-fade-in-up overflow-hidden rounded-3xl border border-foreground/10 bg-gradient-to-br from-amber-200/30 via-foreground/5 to-transparent p-5">
+              <button
+                onClick={dismissStar}
+                aria-label="Dismiss"
+                className="press absolute right-3 top-3 rounded-full p-1 text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+              <div className="flex items-start gap-3 pr-6">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400/20 text-amber-500">
+                  <Star className="h-5 w-5" fill="currentColor" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold">Love OdoLog? Star it on GitHub</h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    It's open source. A star helps more drivers find it — takes 5 seconds.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <a
+                      href={GITHUB_URL}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      onClick={dismissStar}
+                      className="press inline-flex items-center gap-1.5 rounded-full bg-foreground px-3.5 py-1.5 text-xs font-semibold text-background hover:opacity-90"
+                    >
+                      <Github className="h-3.5 w-3.5" /> Star on GitHub
+                    </a>
+                    <button
+                      onClick={dismissStar}
+                      className="press rounded-full px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      Maybe later
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Profile */}
           <Section icon={User} title="Profile" subtitle="Your name and default city for fuel-rate lookups.">
             <Field label="Name">
