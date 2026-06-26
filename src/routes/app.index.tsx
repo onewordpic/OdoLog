@@ -514,13 +514,19 @@ function FirstRunCityModal({
             <span className="text-xs font-medium text-muted-foreground">City</span>
             <input
               autoFocus
+              list="odolog-city-suggestions"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              placeholder="e.g. Mumbai, Bengaluru, Thiruvananthapuram"
+              placeholder="Start typing — pick from suggestions"
               maxLength={60}
               required
               className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2.5 text-sm"
             />
+            <datalist id="odolog-city-suggestions">
+              {CITY_SUGGESTIONS.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
           </label>
           <div className="flex gap-2 pt-1">
             <button
