@@ -113,7 +113,7 @@ function SettingsPage() {
         notes: r.notes ?? "",
       }));
       const { downloadCsv } = await import("@/lib/prefs");
-      downloadCsv(`fuelogue-refuels-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+      downloadCsv(`odobay-refuels-${new Date().toISOString().slice(0, 10)}.csv`, rows);
       toast.success(`Exported ${rows.length} refuels`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Export failed");
@@ -304,7 +304,7 @@ function SettingsPage() {
           </Section>
 
           <p className="px-1 pt-2 text-center text-xs text-muted-foreground">
-            PitStop · v1 · {authed ? "synced to cloud" : "guest mode"}
+            OdoBay · v1 · {authed ? "synced to cloud" : "guest mode"}
           </p>
         </div>
       )}

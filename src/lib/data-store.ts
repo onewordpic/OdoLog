@@ -409,6 +409,49 @@ export async function listMaintenance(vehicleId: string): Promise<MaintenanceLog
     });
 }
 
+export async function listAllMaintenance(): Promise<
+  (MaintenanceLog & { vehicle_name: string; vehicle_icon: VehicleIcon })[]
+> {
+  const userId = await getUserId();
+  let logs: MaintenanceLog[] = [];
+  let vehicles: Vehicle[] = [];
+  if (userId) {
+    const [m, v] = await Promise.all([
+      supabase
+        .from("maintenance_logs")
+        .select("*")
+        .order("service_date", { ascending: false }),
+      supabase.from("vehicles").select("*"),
+    ]);
+    if (m.error) throw m.error;
+    if (v.error) throw v.error;
+    logs = m.data as MaintenanceLog[];
+    vehicles = (v.data as any[]).map((x) => ({
+      ...x,
+      icon: normIcon(x.icon),
+    })) as Vehicle[];
+  } else {
+    logs = lsRead<MaintenanceLog[]>(LS_MAINT, []).sort((a, b) =>
+      b.service_date.localeCompare(a.service_date),
+    );
+    vehicles = lsRead<Vehicle[]>(LS_VEHICLES, []).map((v) => ({
+      ...v,
+      icon: normIcon((v as any).icon),
+    }));
+  }
+  const byId = new Map(vehicles.map((v) => [v.id, v]));
+  return logs.map((m) => {
+    const v = byId.get(m.vehicle_id);
+    return {
+      ...m,
+      vehicle_name: v?.name ?? "Unknown",
+      vehicle_icon: v?.icon ?? "car",
+    };
+  });
+}
+
+
+
 export async function addMaintenance(input: {
   vehicle_id: string;
   service_date: string;
