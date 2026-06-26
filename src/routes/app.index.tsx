@@ -78,10 +78,12 @@ function Dashboard() {
     enabled: authed !== null,
   });
 
-  const greeting = useMemo(
-    () => greetingFor((profile.data?.display_name ?? "").trim()),
-    [profile.data?.display_name],
-  );
+  const name = (profile.data?.display_name ?? "").trim();
+  const [greeting, setGreeting] = useState<string>(name ? `Hello, ${name}` : "Hello");
+  useEffect(() => {
+    setGreeting(greetingFor(name));
+  }, [name]);
+
 
   async function signOut() {
     await qc.cancelQueries();
@@ -97,7 +99,7 @@ function Dashboard() {
           <div className="glass flex h-9 w-9 items-center justify-center rounded-xl">
             <Fuel className="h-4 w-4 text-primary" />
           </div>
-          <span className="text-lg font-medium tracking-tight">Fuelogue</span>
+          <span className="text-lg font-medium tracking-tight">PitStop</span>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -140,7 +142,7 @@ function Dashboard() {
 
       {authed === false && (
         <div className="glass-subtle mb-6 rounded-2xl px-4 py-3 text-xs text-muted-foreground animate-fade-in">
-          You're using Fuelogue as a guest — data stays in this browser only.{" "}
+          You're using PitStop as a guest — data stays in this browser only.{" "}
           <Link to="/auth" className="font-medium text-primary hover:underline">
             Sign in
           </Link>{" "}

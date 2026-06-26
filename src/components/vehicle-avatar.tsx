@@ -1,5 +1,4 @@
 import { VehicleIcon as VIcon } from "@/components/vehicle-icon";
-import { brandColor, brandInitials } from "@/lib/vehicle-catalog";
 import type { Vehicle, VehicleIcon as VIconType } from "@/lib/data-store";
 import { useState } from "react";
 
@@ -11,8 +10,8 @@ type VehicleLike = {
 };
 
 /**
- * Renders a vehicle's photo when available, falling back to a brand badge,
- * then to the generic icon. Use everywhere we previously rendered just the icon.
+ * Renders a vehicle's photo when available, falling back to the
+ * user-chosen icon (car / bike / scooter) on a soft tinted tile.
  */
 export function VehicleAvatar({
   vehicle,
@@ -46,27 +45,6 @@ export function VehicleAvatar({
     );
   }
 
-  if (vehicle.make) {
-    const c = brandColor(vehicle.make);
-    return (
-      <div
-        className={`flex items-center justify-center ${rounded} ${className}`}
-        style={{
-          ...dim,
-          background: `linear-gradient(135deg, ${c}, oklch(0.92 0.04 240))`,
-        }}
-        aria-label={vehicle.make}
-      >
-        <span
-          className="font-semibold text-white drop-shadow-sm"
-          style={{ fontSize: size * 0.36 }}
-        >
-          {brandInitials(vehicle.make)}
-        </span>
-      </div>
-    );
-  }
-
   return (
     <div
       className={`flex items-center justify-center bg-primary/10 ${rounded} ${className}`}
@@ -78,3 +56,4 @@ export function VehicleAvatar({
 }
 
 export type { Vehicle };
+
