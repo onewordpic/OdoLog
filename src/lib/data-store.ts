@@ -10,8 +10,13 @@ export type Vehicle = {
   name: string;
   fuel_type: "petrol" | "diesel";
   icon: VehicleIcon;
+  make: string | null;
+  model_year: number | null;
+  reg_number: string | null;
+  image_url: string | null;
   created_at: string;
 };
+
 
 export type Refuel = {
   id: string;
@@ -34,10 +39,12 @@ export type MaintenanceLog = {
   odo_km: number | null;
   cost_inr: number | null;
   notes: string | null;
+  condition: string | null;
   next_service_odo_km: number | null;
   next_service_date: string | null;
   created_at: string;
 };
+
 
 export type Profile = {
   display_name: string;
@@ -119,13 +126,29 @@ export async function addVehicle(input: {
   name: string;
   fuel_type: "petrol" | "diesel";
   icon?: VehicleIcon;
+  make?: string | null;
+  model_year?: number | null;
+  reg_number?: string | null;
+  image_url?: string | null;
 }): Promise<Vehicle> {
   const icon = normIcon(input.icon);
+  const extras = {
+    make: input.make ?? null,
+    model_year: input.model_year ?? null,
+    reg_number: input.reg_number ?? null,
+    image_url: input.image_url ?? null,
+  };
   const userId = await getUserId();
   if (userId) {
     const { data, error } = await supabase
       .from("vehicles")
-      .insert({ name: input.name, fuel_type: input.fuel_type, icon, user_id: userId } as any)
+      .insert({
+        name: input.name,
+        fuel_type: input.fuel_type,
+        icon,
+        user_id: userId,
+        ...extras,
+      } as any)
       .select()
       .single();
     if (error) throw error;
@@ -136,6 +159,7 @@ export async function addVehicle(input: {
     name: input.name,
     fuel_type: input.fuel_type,
     icon,
+    ...extras,
     created_at: new Date().toISOString(),
   };
   const all = lsRead<Vehicle[]>(LS_VEHICLES, []);
@@ -146,11 +170,20 @@ export async function addVehicle(input: {
 
 export async function updateVehicle(
   id: string,
-  patch: { name?: string; icon?: VehicleIcon; fuel_type?: "petrol" | "diesel" },
+  patch: {
+    name?: string;
+    icon?: VehicleIcon;
+    fuel_type?: "petrol" | "diesel";
+    make?: string | null;
+    model_year?: number | null;
+    reg_number?: string | null;
+    image_url?: string | null;
+  },
 ): Promise<void> {
   const userId = await getUserId();
   if (userId) {
     const { error } = await supabase
+
       .from("vehicles")
       .update(patch as any)
       .eq("id", id);
@@ -383,13 +416,15 @@ export async function addMaintenance(input: {
   odo_km: number | null;
   cost_inr: number | null;
   notes: string | null;
+  condition?: string | null;
   next_service_odo_km: number | null;
   next_service_date: string | null;
 }): Promise<void> {
+  const payload = { condition: input.condition ?? null, ...input };
   const userId = await getUserId();
   if (userId) {
     const { error } = await supabase.from("maintenance_logs").insert({
-      ...input,
+      ...payload,
       user_id: userId,
     });
     if (error) throw error;
@@ -397,13 +432,15 @@ export async function addMaintenance(input: {
   }
   const m: MaintenanceLog = {
     id: uid(),
-    ...input,
+    ...payload,
+    condition: payload.condition ?? null,
     created_at: new Date().toISOString(),
   };
   const all = lsRead<MaintenanceLog[]>(LS_MAINT, []);
   all.push(m);
   lsWrite(LS_MAINT, all);
 }
+
 
 export async function deleteMaintenance(id: string): Promise<void> {
   const userId = await getUserId();

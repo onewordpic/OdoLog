@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       maintenance_logs: {
         Row: {
+          condition: string | null
           cost_inr: number | null
           created_at: string
           id: string
@@ -30,6 +31,7 @@ export type Database = {
           vehicle_id: string
         }
         Insert: {
+          condition?: string | null
           cost_inr?: number | null
           created_at?: string
           id?: string
@@ -44,6 +46,7 @@ export type Database = {
           vehicle_id: string
         }
         Update: {
+          condition?: string | null
           cost_inr?: number | null
           created_at?: string
           id?: string
@@ -147,7 +150,11 @@ export type Database = {
           fuel_type: Database["public"]["Enums"]["fuel_type"]
           icon: string
           id: string
+          image_url: string | null
+          make: string | null
+          model_year: number | null
           name: string
+          reg_number: string | null
           user_id: string
         }
         Insert: {
@@ -155,7 +162,11 @@ export type Database = {
           fuel_type?: Database["public"]["Enums"]["fuel_type"]
           icon?: string
           id?: string
+          image_url?: string | null
+          make?: string | null
+          model_year?: number | null
           name: string
+          reg_number?: string | null
           user_id: string
         }
         Update: {
@@ -163,7 +174,11 @@ export type Database = {
           fuel_type?: Database["public"]["Enums"]["fuel_type"]
           icon?: string
           id?: string
+          image_url?: string | null
+          make?: string | null
+          model_year?: number | null
           name?: string
+          reg_number?: string | null
           user_id?: string
         }
         Relationships: []
