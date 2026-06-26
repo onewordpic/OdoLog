@@ -103,7 +103,7 @@ function AnalyticsPage() {
       {vehicles.data && refuels.data && (
         <div className="space-y-6">
           <VehicleTrends vehicles={vehicles.data} refuels={refuels.data} />
-          <CityPriceTrends />
+          <CityPriceTrends refuels={refuels.data} />
         </div>
       )}
     </main>
