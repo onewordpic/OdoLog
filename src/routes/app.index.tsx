@@ -33,6 +33,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
 import { VehicleAvatar } from "@/components/vehicle-avatar";
 import { searchCatalog, type CatalogEntry } from "@/lib/vehicle-catalog";
+import { WeatherChip } from "@/components/weather-chip";
 
 export const Route = createFileRoute("/app/")({
   component: Dashboard,
@@ -176,10 +177,7 @@ function Dashboard() {
               : "Add your first vehicle to start tracking."}
           </p>
         </div>
-        <div className="hidden md:flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-3 py-1.5 text-[11px] text-[var(--cockpit-text-soft)]">
-          <span className="opacity-60">Showing</span>
-          <span className="font-semibold text-foreground">All time</span>
-        </div>
+        <WeatherChip city={profile.data?.default_city ?? ""} />
       </div>
 
       {authed === false && (
@@ -412,6 +410,9 @@ function Dashboard() {
 const ONBOARD_KEY = "odolog.cityOnboarded";
 
 const CITY_SUGGESTIONS = [
+  "Thiruvananthapuram",
+  "Kochi",
+  "Kozhikode",
   "Delhi",
   "Mumbai",
   "Bangalore",
@@ -423,8 +424,6 @@ const CITY_SUGGESTIONS = [
   "Ahmedabad",
   "Jaipur",
   "Lucknow",
-  "Kochi",
-  "Thiruvananthapuram",
   "Chandigarh",
   "Coimbatore",
   "Indore",
@@ -451,7 +450,7 @@ function FirstRunCityModal({
 }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [city, setCity] = useState("Delhi");
+  const [city, setCity] = useState("Thiruvananthapuram");
   const [displayName, setDisplayName] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -459,7 +458,7 @@ function FirstRunCityModal({
     if (!profileLoaded) return;
     if (typeof window === "undefined") return;
     if (window.localStorage.getItem(ONBOARD_KEY)) return;
-    setCity(matchSuggestion(currentCity) || "Delhi");
+    setCity(matchSuggestion(currentCity) || "Thiruvananthapuram");
     setDisplayName(currentName || "");
     setOpen(true);
   }, [profileLoaded, currentCity, currentName]);
@@ -471,7 +470,7 @@ function FirstRunCityModal({
         const { saveProfile } = await import("@/lib/data-store");
         await saveProfile({
           display_name: displayName.trim() || currentName,
-          default_city: (city.trim() || currentCity || "delhi").toLowerCase(),
+          default_city: (city.trim() || currentCity || "thiruvananthapuram").toLowerCase(),
         });
         qc.invalidateQueries({ queryKey: ["profile"] });
         toast.success("Welcome to OdoLog");

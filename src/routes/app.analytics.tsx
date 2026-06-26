@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -24,6 +24,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   listVehicles,
   listRecentRefuels,
+  getProfile,
   type Vehicle,
 } from "@/lib/data-store";
 import { fetchFuelPrice } from "@/lib/fuel-price.functions";
@@ -35,6 +36,9 @@ export const Route = createFileRoute("/app/analytics")({
 });
 
 const POPULAR_CITIES = [
+  "Thiruvananthapuram",
+  "Kochi",
+  "Kozhikode",
   "Delhi",
   "Mumbai",
   "Bangalore",
@@ -44,8 +48,6 @@ const POPULAR_CITIES = [
   "Pune",
   "Ahmedabad",
   "Jaipur",
-  "Kochi",
-  "Thiruvananthapuram",
   "Chandigarh",
 ];
 
@@ -101,7 +103,7 @@ function AnalyticsPage() {
       {vehicles.data && refuels.data && (
         <div className="space-y-6">
           <VehicleTrends vehicles={vehicles.data} refuels={refuels.data} />
-          <CityPriceTrends />
+          <CityPriceTrends refuels={refuels.data} />
         </div>
       )}
     </main>
@@ -275,44 +277,88 @@ function VehicleTrends({
   );
 }
 
-// ---------- City price comparison ----------
+// ---------- Petrol vs diesel (single city) + price history ----------
 
-function CityPriceTrends() {
+type RefuelRow = Awaited<ReturnType<typeof listRecentRefuels>>[number];
+
+function CityPriceTrends({ refuels }: { refuels: RefuelRow[] }) {
   const fetchPrice = useServerFn(fetchFuelPrice);
-  const [cities, setCities] = useState<string[]>([
-    "Delhi",
-    "Mumbai",
-    "Bangalore",
-    "Chennai",
-  ]);
-  const [fuelType, setFuelType] = useState<"petrol" | "diesel">("petrol");
+  const profile = useQuery({ queryKey: ["profile"], queryFn: getProfile });
+  const [city, setCity] = useState<string>("Thiruvananthapuram");
   const [nonce, setNonce] = useState(0);
 
-  function toggleCity(c: string) {
-    setCities((prev) =>
-      prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c].slice(0, 8),
-    );
-  }
+  // Default to profile city once loaded.
+  useEffect(() => {
+    const pc = (profile.data?.default_city ?? "").trim();
+    if (!pc) return;
+    const match = POPULAR_CITIES.find((c) => c.toLowerCase() === pc.toLowerCase());
+    setCity(match ?? toTitleCase(pc));
+  }, [profile.data?.default_city]);
 
   const queries = useQueries({
-    queries: cities.map((city) => ({
+    queries: (["petrol", "diesel"] as const).map((fuelType) => ({
       queryKey: ["city-price", city, fuelType, nonce],
       queryFn: () => fetchPrice({ data: { city, fuelType } }),
       staleTime: 1000 * 60 * 10,
+      enabled: !!city,
     })),
   });
 
+  const [petrolQ, dieselQ] = queries;
+  const petrol = petrolQ.data?.ok ? Number(petrolQ.data.price) : null;
+  const diesel = dieselQ.data?.ok ? Number(dieselQ.data.price) : null;
   const loading = queries.some((q) => q.isLoading);
-  const chartData = cities
-    .map((city, i) => {
-      const r = queries[i].data;
+
+  const compareData = [
+    { fuel: "Petrol", price: petrol ?? 0, color: "oklch(0.72 0.17 38)" },
+    { fuel: "Diesel", price: diesel ?? 0, color: "oklch(0.55 0.18 250)" },
+  ].filter((d) => d.price > 0);
+
+  // ---- 12-month history derived from user's own logged refuels ----
+  const history = useMemo(() => {
+    const now = new Date();
+    const months: { key: string; label: string; year: number; month: number }[] = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+        label: d.toLocaleDateString("en-IN", { month: "short" }) +
+          (d.getMonth() === 0 ? ` '${String(d.getFullYear()).slice(-2)}` : ""),
+        year: d.getFullYear(),
+        month: d.getMonth(),
+      });
+    }
+    const bucket: Record<string, { p: number[]; d: number[] }> = {};
+    for (const m of months) bucket[m.key] = { p: [], d: [] };
+    for (const r of refuels) {
+      const dt = new Date(r.refuel_date + "T00:00:00");
+      const k = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
+      if (!bucket[k]) continue;
+      const rate = Number(r.rate_per_litre);
+      if (!isFinite(rate) || rate <= 0) continue;
+      // We don't track fuel type per refuel row; bucket by vehicle fuel
+      // type via the vehicle map carried on the row if available.
+      const ft = (r as any).fuel_type ?? null;
+      if (ft === "diesel") bucket[k].d.push(rate);
+      else if (ft === "petrol") bucket[k].p.push(rate);
+      else {
+        // Unknown — count as petrol (most common) so the line isn't empty.
+        bucket[k].p.push(rate);
+      }
+    }
+    return months.map((m) => {
+      const b = bucket[m.key];
+      const avg = (arr: number[]) =>
+        arr.length > 0 ? arr.reduce((s, n) => s + n, 0) / arr.length : null;
       return {
-        city,
-        price: r && r.ok ? Number(r.price) : null,
-        error: r && !r.ok ? r.error : null,
+        month: m.label,
+        petrol: avg(b.p),
+        diesel: avg(b.d),
       };
-    })
-    .filter((x) => x.price != null);
+    });
+  }, [refuels]);
+
+  const hasHistory = history.some((h) => h.petrol != null || h.diesel != null);
 
   return (
     <section className="glass animate-fade-in-up rounded-3xl p-5">
@@ -322,9 +368,9 @@ function CityPriceTrends() {
             <BarChart3 className="h-4 w-4 text-primary" />
           </div>
           <div className="min-w-0">
-            <h2 className="text-sm font-medium">City fuel prices</h2>
+            <h2 className="text-sm font-medium">Petrol vs diesel</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Live rates from goodreturns.in. Pick cities to compare.
+              Today's pump rate in your city and how it has moved over the last year (your logs).
             </p>
           </div>
         </div>
@@ -336,109 +382,95 @@ function CityPriceTrends() {
         </button>
       </div>
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="glass-subtle flex rounded-full p-1 text-[11px]">
-          {(["petrol", "diesel"] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFuelType(f)}
-              className={`press rounded-full px-3 py-1 capitalize transition ${
-                fuelType === f
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="mb-4 flex flex-wrap gap-1.5">
-        {POPULAR_CITIES.map((c) => {
-          const active = cities.includes(c);
-          return (
-            <button
-              key={c}
-              onClick={() => toggleCity(c)}
-              className={`press rounded-full px-2.5 py-1 text-[11px] transition ${
-                active
-                  ? "bg-primary text-primary-foreground"
-                  : "glass-subtle text-muted-foreground hover:text-foreground"
-              }`}
-            >
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <select
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          className="rounded-full glass-input px-3 py-1.5 text-xs"
+        >
+          {POPULAR_CITIES.map((c) => (
+            <option key={c} value={c}>
               {c}
-            </button>
-          );
-        })}
+            </option>
+          ))}
+        </select>
+        {petrol != null && (
+          <span className="rounded-full bg-[oklch(0.72_0.17_38_/_0.15)] px-2.5 py-1 text-[11px] font-semibold text-[oklch(0.55_0.18_38)]">
+            Petrol ₹{petrol.toFixed(2)}/L
+          </span>
+        )}
+        {diesel != null && (
+          <span className="rounded-full bg-[oklch(0.55_0.18_250_/_0.15)] px-2.5 py-1 text-[11px] font-semibold text-[oklch(0.5_0.18_250)]">
+            Diesel ₹{diesel.toFixed(2)}/L
+          </span>
+        )}
+        {petrol != null && diesel != null && (
+          <span className="text-[11px] text-muted-foreground">
+            · Gap ₹{Math.abs(petrol - diesel).toFixed(2)}/L
+          </span>
+        )}
       </div>
 
-      {loading && chartData.length === 0 ? (
+      {loading && compareData.length === 0 ? (
         <div className="flex h-40 items-center justify-center">
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         </div>
-      ) : chartData.length === 0 ? (
-        <p className="py-10 text-center text-xs text-muted-foreground">
-          No rates available for the selected cities.
+      ) : compareData.length === 0 ? (
+        <p className="py-8 text-center text-xs text-muted-foreground">
+          No rates available for {city}. Try another city.
         </p>
       ) : (
-        <div className="h-64">
+        <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={chartData}
-              margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="oklch(0.7 0.02 250 / 0.2)"
-              />
-              <XAxis
-                dataKey="city"
-                stroke="oklch(0.5 0.02 250)"
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-                interval={0}
-                angle={-20}
-                textAnchor="end"
-                height={50}
-              />
-              <YAxis
-                stroke="oklch(0.5 0.02 250)"
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-                width={48}
-                domain={["dataMin - 2", "dataMax + 2"]}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: "var(--background)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 12,
-                  fontSize: 12,
-                }}
-                formatter={(v: number) => [`₹${v.toFixed(2)} /L`, fuelType]}
-              />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar
-                dataKey="price"
-                name={`${fuelType} ₹/L`}
-                fill={fuelType === "petrol" ? "oklch(0.72 0.17 38)" : "oklch(0.55 0.18 250)"}
-                radius={[8, 8, 0, 0]}
-              />
+            <BarChart data={compareData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.7 0.02 250 / 0.2)" />
+              <XAxis dataKey="fuel" stroke="oklch(0.5 0.02 250)" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="oklch(0.5 0.02 250)" fontSize={11} tickLine={false} axisLine={false} width={48}
+                domain={["dataMin - 2", "dataMax + 2"]} />
+              <Tooltip contentStyle={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 12 }}
+                formatter={(v: number) => [`₹${v.toFixed(2)} /L`, "rate"]} />
+              <Bar dataKey="price" radius={[8, 8, 0, 0]} fill="oklch(0.6 0.15 30)" />
             </BarChart>
           </ResponsiveContainer>
         </div>
       )}
 
+      {/* ---- 12-month price history (user logs) ---- */}
+      <div className="mt-6 border-t border-foreground/10 pt-4">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          12-month price history
+        </h3>
+        <p className="mt-0.5 text-[11px] text-muted-foreground">
+          Monthly avg ₹/L from your logged refuels.
+        </p>
+        {hasHistory ? (
+          <div className="mt-3 h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={history} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.7 0.02 250 / 0.2)" />
+                <XAxis dataKey="month" stroke="oklch(0.5 0.02 250)" fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis stroke="oklch(0.5 0.02 250)" fontSize={11} tickLine={false} axisLine={false} width={40}
+                  domain={["dataMin - 2", "dataMax + 2"]} />
+                <Tooltip contentStyle={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 12 }}
+                  formatter={(v: any) => (v == null ? ["—", ""] : [`₹${Number(v).toFixed(2)}`, ""])} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Line type="monotone" dataKey="petrol" name="Petrol ₹/L" stroke="oklch(0.65 0.17 38)" strokeWidth={2.5} dot={{ r: 3 }} connectNulls />
+                <Line type="monotone" dataKey="diesel" name="Diesel ₹/L" stroke="oklch(0.55 0.18 250)" strokeWidth={2.5} dot={{ r: 3 }} connectNulls />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <p className="mt-3 rounded-xl glass-subtle px-3 py-4 text-center text-xs text-muted-foreground">
+            Log a few refuels and the historical trend will appear here automatically.
+          </p>
+        )}
+      </div>
+
       {queries.some((q) => q.data && !q.data.ok) && (
         <div className="mt-3 space-y-1 text-[11px] text-muted-foreground">
           {queries.map((q, i) =>
             q.data && !q.data.ok ? (
-              <div key={cities[i]}>
-                · {cities[i]}: {q.data.error}
-              </div>
+              <div key={i}>· {i === 0 ? "petrol" : "diesel"}: {q.data.error}</div>
             ) : null,
           )}
         </div>
@@ -446,6 +478,14 @@ function CityPriceTrends() {
     </section>
   );
 }
+
+function toTitleCase(s: string) {
+  return s
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+}
+
 
 function shortDate(s: string) {
   const d = new Date(s + "T00:00:00");

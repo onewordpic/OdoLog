@@ -48,7 +48,7 @@ import {
 } from "@/lib/data-store";
 import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
 import { VehicleAvatar } from "@/components/vehicle-avatar";
-import { searchCatalog, type CatalogEntry } from "@/lib/vehicle-catalog";
+import { searchCatalog, claimedMileage, type CatalogEntry } from "@/lib/vehicle-catalog";
 
 
 export const Route = createFileRoute("/app/vehicle/$id")({
@@ -164,6 +164,35 @@ function VehiclePage() {
           value={summary.totalKm != null ? `${summary.totalKm.toFixed(0)} km` : "—"}
         />
       </section>
+
+      {vehicle.data && (() => {
+        const claimed = claimedMileage(vehicle.data.name, vehicle.data.make);
+        if (claimed == null) return null;
+        const actual = summary.kmPerL;
+        const diff = actual != null ? actual - claimed : null;
+        const pct = actual != null ? ((actual - claimed) / claimed) * 100 : null;
+        return (
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl glass-subtle px-4 py-3 text-xs animate-fade-in">
+            <span className="font-medium text-foreground">Company-claimed mileage:</span>
+            <span className="rounded-full bg-foreground/10 px-2 py-0.5 font-semibold tabular-nums">
+              {claimed.toFixed(1)} km/l
+            </span>
+            {actual != null && diff != null && pct != null && (
+              <span
+                className={`rounded-full px-2 py-0.5 font-medium ${
+                  diff >= 0
+                    ? "bg-primary/15 text-primary"
+                    : "bg-destructive/15 text-destructive"
+                }`}
+              >
+                You: {actual.toFixed(1)} km/l ({diff >= 0 ? "+" : ""}
+                {pct.toFixed(0)}%)
+              </span>
+            )}
+            <span className="text-muted-foreground">· ARAI / brand figure</span>
+          </div>
+        );
+      })()}
 
       {summary.basis && (summary.costPerKm != null || summary.kmPerL != null) && (
         <div className="mt-3 glass-subtle rounded-2xl px-4 py-3 text-xs text-muted-foreground animate-fade-in">
