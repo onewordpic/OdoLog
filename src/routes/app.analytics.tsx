@@ -517,26 +517,48 @@ function RunningCosts({
           (s, r) => s + (r.litres ? Number(r.litres) : 0),
           0,
         );
+        const odoCount = rs.filter((r) => r.odo_km != null).length;
         const odos = rs
           .map((r) => (r.odo_km != null ? Number(r.odo_km) : null))
           .filter((n): n is number => n != null);
         const km = odos.length >= 2 ? Math.max(...odos) - Math.min(...odos) : 0;
         const cpk = km > 0 ? spend / km : null;
+
+        // Reason it can't be computed yet.
+        let missing: string | null = null;
+        if (rs.length === 0) missing = "No refuels logged yet.";
+        else if (rs.length === 1) missing = "Only 1 refuel — log another to compare.";
+        else if (odoCount === 0) missing = "No odometer readings on any refuel.";
+        else if (odoCount === 1) missing = "Add an odometer reading to at least one more refuel.";
+        else if (km <= 0) missing = "Odometer hasn't advanced between fills.";
+        else if (spend <= 0) missing = "No ₹ spend recorded on these refuels.";
+
         return {
           id: v.id,
           name: v.name,
           fuel: v.fuel_type,
           fills: rs.length,
+          odoCount,
           spend,
           litres,
           km,
           cpk,
+          missing,
         };
       })
-      .sort((a, b) => (b.cpk ?? -1) - (a.cpk ?? -1));
+      .sort((a, b) => {
+        // Computable first (highest ₹/km), then incomplete vehicles.
+        if (a.cpk != null && b.cpk == null) return -1;
+        if (a.cpk == null && b.cpk != null) return 1;
+        return (b.cpk ?? 0) - (a.cpk ?? 0);
+      });
   }, [vehicles, refuels]);
 
-  if (rows.length === 0) return null;
+  if (vehicles.filter((v) => v.fuel_type !== "electric").length === 0) {
+    return null;
+  }
+
+  const allMissing = rows.every((r) => r.missing);
 
   return (
     <section className="glass rounded-3xl p-5 animate-fade-in-up">
@@ -546,6 +568,18 @@ function RunningCosts({
           Running cost per vehicle
         </h2>
       </div>
+
+      {allMissing && (
+        <div className="mb-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
+          <div className="font-medium">Not enough data yet</div>
+          <p className="mt-0.5 opacity-90">
+            ₹/km needs at least <strong>two refuels with odometer readings</strong> and
+            a non-zero ₹ amount. Add odo readings when you log a fill — that's
+            what makes this number trustworthy.
+          </p>
+        </div>
+      )}
+
       <div className="space-y-2">
         {rows.map((r) => (
           <div
@@ -555,17 +589,26 @@ function RunningCosts({
             <div className="min-w-0">
               <div className="truncate text-sm font-medium">{r.name}</div>
               <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                {r.fills} fill{r.fills === 1 ? "" : "s"} ·{" "}
-                {r.km > 0 ? `${r.km.toFixed(0)} km` : "no odo span"} · ₹
+                {r.fills} fill{r.fills === 1 ? "" : "s"} · {r.odoCount} odo ·{" "}
+                {r.km > 0 ? `${r.km.toFixed(0)} km` : "no span"} · ₹
                 {r.spend.toFixed(0)}
               </div>
+              {r.missing && (
+                <div className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">
+                  {r.missing}
+                </div>
+              )}
             </div>
             <div className="text-right">
-              <div className="font-display text-xl font-semibold tabular-nums">
+              <div
+                className={`font-display text-xl font-semibold tabular-nums ${
+                  r.cpk == null ? "text-muted-foreground/60" : ""
+                }`}
+              >
                 {r.cpk != null ? `₹${r.cpk.toFixed(2)}` : "—"}
               </div>
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                per km
+                {r.cpk != null ? "per km" : "needs data"}
               </div>
             </div>
           </div>
@@ -573,8 +616,9 @@ function RunningCosts({
       </div>
       <p className="mt-3 text-[11px] text-muted-foreground">
         Running cost = total fuel spend ÷ distance covered (max − min odometer).
-        Add odometer readings on refuels to make this accurate.
+        Each refuel needs an odometer reading for this to reflect reality.
       </p>
     </section>
   );
 }
+

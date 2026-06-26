@@ -1,13 +1,20 @@
 import { Share2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  getPrefs,
+  DEFAULT_SHARE_MESSAGE,
+  DEFAULT_SHARE_URL,
+} from "@/lib/prefs";
 
-const SHARE_TEXT =
-  "Tracking my fuel costs & mileage with OdoLog — a clean, free, open-source vehicle log. Give it a spin:";
-const SHARE_URL =
-  typeof window !== "undefined" ? window.location.origin : "https://odolog.app";
+function buildPayload() {
+  const prefs = getPrefs();
+  const text = (prefs.shareMessage || DEFAULT_SHARE_MESSAGE).trim();
+  const url = (prefs.shareUrl || DEFAULT_SHARE_URL).trim();
+  return { title: "OdoLog", text, url };
+}
 
 export async function shareOdoLog() {
-  const payload = { title: "OdoLog", text: SHARE_TEXT, url: SHARE_URL };
+  const payload = buildPayload();
   try {
     if (typeof navigator !== "undefined" && (navigator as any).share) {
       await (navigator as any).share(payload);
@@ -17,7 +24,7 @@ export async function shareOdoLog() {
     // user cancelled or unsupported — fall through to clipboard
   }
   try {
-    await navigator.clipboard.writeText(`${SHARE_TEXT} ${SHARE_URL}`);
+    await navigator.clipboard.writeText(`${payload.text} ${payload.url}`.trim());
     toast.success("Share link copied to clipboard");
   } catch {
     toast.error("Couldn't copy link");
@@ -51,6 +58,7 @@ export function ShareCard() {
           <h3 className="text-sm font-semibold">Spread the word</h3>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Know a friend who'd love a no-nonsense fuel log? Share OdoLog with them.
+            Customize the message below.
           </p>
           <div className="mt-3">
             <button

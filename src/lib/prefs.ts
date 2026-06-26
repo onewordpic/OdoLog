@@ -10,11 +10,18 @@ export type Prefs = {
   reminderLeadDays: number; // warn this many days before next-service date
   // Depreciation
   showDepreciation: boolean;
+  // Sharing
+  shareMessage: string;
+  shareUrl: string;
 };
 
 const KEY = "odolog.prefs";
 const LEGACY_KEY = "fuelogue.prefs";
 export const PREFS_EVENT = "odolog:prefs";
+
+export const DEFAULT_SHARE_MESSAGE =
+  "Tracking my fuel costs & mileage with OdoLog — a clean, free, open-source vehicle log. Give it a spin:";
+export const DEFAULT_SHARE_URL = "https://odolog.lovable.app";
 
 export const DEFAULT_PREFS: Prefs = {
   density: "comfortable",
@@ -23,6 +30,8 @@ export const DEFAULT_PREFS: Prefs = {
   reminderLeadKm: 300,
   reminderLeadDays: 7,
   showDepreciation: true,
+  shareMessage: DEFAULT_SHARE_MESSAGE,
+  shareUrl: DEFAULT_SHARE_URL,
 };
 
 export function getPrefs(): Prefs {

@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   Star,
   Github,
+  Share2,
   X,
 } from "lucide-react";
 import {
@@ -31,6 +32,8 @@ import {
   savePrefs,
   clearLocalData,
   DEFAULT_PREFS,
+  DEFAULT_SHARE_MESSAGE,
+  DEFAULT_SHARE_URL,
   type Prefs,
 } from "@/lib/prefs";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -419,8 +422,51 @@ function SettingsPage() {
             </Row>
           </Section>
 
+          {/* Share */}
+          <Section
+            icon={Share2}
+            title="Share"
+            subtitle="Customize the message and link used when you tap Share."
+          >
+            <Field label="Share message">
+              <textarea
+                value={prefs.shareMessage}
+                onChange={(e) => updatePrefs({ shareMessage: e.target.value })}
+                rows={3}
+                maxLength={280}
+                placeholder={DEFAULT_SHARE_MESSAGE}
+                className="w-full resize-none rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
+              />
+            </Field>
+            <Field label="Deep link back to OdoLog">
+              <input
+                type="url"
+                value={prefs.shareUrl}
+                onChange={(e) => updatePrefs({ shareUrl: e.target.value })}
+                placeholder={DEFAULT_SHARE_URL}
+                className="w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
+              />
+            </Field>
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <p className="text-[11px] text-muted-foreground">
+                Preview: <span className="text-foreground">{(prefs.shareMessage || DEFAULT_SHARE_MESSAGE).trim()} {(prefs.shareUrl || DEFAULT_SHARE_URL).trim()}</span>
+              </p>
+              <button
+                type="button"
+                onClick={() =>
+                  updatePrefs({
+                    shareMessage: DEFAULT_SHARE_MESSAGE,
+                    shareUrl: DEFAULT_SHARE_URL,
+                  })
+                }
+                className="press rounded-full px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+              >
+                Reset to default
+              </button>
+            </div>
+          </Section>
 
-          {/* Data */}
+
           <Section icon={Database} title="Data & privacy" subtitle="Export, clear, or sign out.">
             <button
               onClick={handleExport}
