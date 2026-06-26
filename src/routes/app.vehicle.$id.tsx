@@ -15,10 +15,12 @@ import {
   Wallet,
   Droplet,
   Pencil,
-  
   Wrench,
   AlertTriangle,
   BellRing,
+  ShieldCheck,
+  Leaf,
+  TrendingDown,
 } from "lucide-react";
 import {
   LineChart,
