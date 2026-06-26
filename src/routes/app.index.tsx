@@ -411,6 +411,35 @@ function Dashboard() {
 
 const ONBOARD_KEY = "odolog.cityOnboarded";
 
+const CITY_SUGGESTIONS = [
+  "Delhi",
+  "Mumbai",
+  "Bangalore",
+  "Bengaluru",
+  "Chennai",
+  "Kolkata",
+  "Hyderabad",
+  "Pune",
+  "Ahmedabad",
+  "Jaipur",
+  "Lucknow",
+  "Kochi",
+  "Thiruvananthapuram",
+  "Chandigarh",
+  "Coimbatore",
+  "Indore",
+  "Bhopal",
+  "Nagpur",
+  "Surat",
+  "Vadodara",
+  "Visakhapatnam",
+];
+
+function matchSuggestion(value: string): string {
+  const v = value.trim().toLowerCase();
+  return CITY_SUGGESTIONS.find((c) => c.toLowerCase() === v) ?? "";
+}
+
 function FirstRunCityModal({
   profileLoaded,
   currentCity,
@@ -422,7 +451,7 @@ function FirstRunCityModal({
 }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [city, setCity] = useState("");
+  const [city, setCity] = useState("Delhi");
   const [displayName, setDisplayName] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -430,7 +459,7 @@ function FirstRunCityModal({
     if (!profileLoaded) return;
     if (typeof window === "undefined") return;
     if (window.localStorage.getItem(ONBOARD_KEY)) return;
-    setCity(currentCity || "");
+    setCity(matchSuggestion(currentCity) || "Delhi");
     setDisplayName(currentName || "");
     setOpen(true);
   }, [profileLoaded, currentCity, currentName]);
