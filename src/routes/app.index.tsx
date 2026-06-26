@@ -33,7 +33,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
 import { VehicleAvatar } from "@/components/vehicle-avatar";
 import { searchCatalog, type CatalogEntry } from "@/lib/vehicle-catalog";
-import { WeatherChip } from "@/components/weather-chip";
+import { WeatherChip, WeatherAdvisory } from "@/components/weather-chip";
 
 export const Route = createFileRoute("/app/")({
   component: Dashboard,
