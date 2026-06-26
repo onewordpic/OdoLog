@@ -553,7 +553,7 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
               Fuel type
             </span>
             <div className="mt-1 grid grid-cols-2 gap-2">
-              {(["petrol", "diesel"] as const).map((f) => (
+              {(["petrol", "diesel", "cng"] as const).map((f) => (
                 <button
                   key={f}
                   type="button"
