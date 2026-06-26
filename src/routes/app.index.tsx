@@ -123,11 +123,12 @@ function Dashboard() {
     <main className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-10 text-foreground">
       {/* Top bar */}
       <header className="mb-8 flex items-center justify-between animate-fade-in-up">
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-display font-bold tracking-tight">
-            .odolog<span className="text-[var(--mint-accent)]">_</span>
+        <Link to="/app" className="flex items-center gap-2 group">
+          <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[var(--mint-accent)] text-[#0c1410] soft-shadow group-hover:scale-105 transition">
+            <Fuel className="h-4 w-4" strokeWidth={2.5} />
           </span>
-        </div>
+          <span className="text-lg font-display font-bold tracking-tight">OdoLog</span>
+        </Link>
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
           <Link
