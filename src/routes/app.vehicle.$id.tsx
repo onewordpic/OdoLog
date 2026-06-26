@@ -555,19 +555,23 @@ function EditVehicleModal({
 function AddRefuelModal({
   vehicle,
   onClose,
+  editing,
 }: {
   vehicle: Vehicle;
   onClose: () => void;
+  editing?: Refuel | null;
 }) {
   const qc = useQueryClient();
   const fetchPrice = useServerFn(fetchFuelPrice);
   const today = new Date().toISOString().slice(0, 10);
 
-  const [date, setDate] = useState(today);
-  const [amount, setAmount] = useState("");
-  const [rate, setRate] = useState("");
-  const [odo, setOdo] = useState("");
-  const [fullTank, setFullTank] = useState(vehicle.fuel_type === "cng");
+  const [date, setDate] = useState(editing?.refuel_date ?? today);
+  const [amount, setAmount] = useState(editing ? String(editing.amount_inr) : "");
+  const [rate, setRate] = useState(editing ? String(editing.rate_per_litre) : "");
+  const [odo, setOdo] = useState(editing?.odo_km != null ? String(editing.odo_km) : "");
+  const [fullTank, setFullTank] = useState(
+    editing ? editing.full_tank : vehicle.fuel_type === "cng",
+  );
   const [fetchingRate, setFetchingRate] = useState(false);
   const [city, setCity] = useState("");
 
