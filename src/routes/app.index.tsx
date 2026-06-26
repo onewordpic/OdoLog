@@ -404,7 +404,115 @@ function Dashboard() {
       <ServiceAlerts authed={authed} />
 
       {showAdd && <AddVehicleModal onClose={() => setShowAdd(false)} />}
+      <FirstRunCityModal profileLoaded={profile.isSuccess} currentCity={profile.data?.default_city ?? ""} currentName={name} />
     </main>
+  );
+}
+
+const ONBOARD_KEY = "odolog.cityOnboarded";
+
+function FirstRunCityModal({
+  profileLoaded,
+  currentCity,
+  currentName,
+}: {
+  profileLoaded: boolean;
+  currentCity: string;
+  currentName: string;
+}) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [city, setCity] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!profileLoaded) return;
+    if (typeof window === "undefined") return;
+    if (window.localStorage.getItem(ONBOARD_KEY)) return;
+    setCity(currentCity || "");
+    setDisplayName(currentName || "");
+    setOpen(true);
+  }, [profileLoaded, currentCity, currentName]);
+
+  async function save(skip = false) {
+    setSaving(true);
+    try {
+      if (!skip) {
+        const { saveProfile } = await import("@/lib/data-store");
+        await saveProfile({
+          display_name: displayName.trim() || currentName,
+          default_city: (city.trim() || currentCity || "delhi").toLowerCase(),
+        });
+        qc.invalidateQueries({ queryKey: ["profile"] });
+        toast.success("Welcome to OdoLog");
+      }
+      window.localStorage.setItem(ONBOARD_KEY, "1");
+      setOpen(false);
+    } catch (e: any) {
+      toast.error(e.message ?? "Could not save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-[55] flex items-center justify-center bg-black/50 backdrop-blur-md px-4 animate-fade-in">
+      <div className="glass w-full max-w-sm rounded-3xl p-6 animate-slide-up">
+        <h3 className="font-display text-xl font-bold">Welcome to OdoLog</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Tell us your city — we'll auto-fetch local fuel rates when you log refuels.
+        </p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            save(false);
+          }}
+          className="mt-4 space-y-3"
+        >
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">Your name (optional)</span>
+            <input
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="e.g. Safwan"
+              maxLength={60}
+              className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2.5 text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">City</span>
+            <input
+              autoFocus
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="e.g. Mumbai, Bengaluru, Thiruvananthapuram"
+              maxLength={60}
+              required
+              className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2.5 text-sm"
+            />
+          </label>
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => save(true)}
+              disabled={saving}
+              className="press flex-1 rounded-xl glass-subtle glass-hover py-2.5 text-sm font-medium"
+            >
+              Skip
+            </button>
+            <button
+              type="submit"
+              disabled={saving || !city.trim()}
+              className="press flex-1 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
