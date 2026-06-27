@@ -328,6 +328,7 @@ function VehiclePage() {
               value={summary.totalKm != null ? `${summary.totalKm.toFixed(0)} km` : "—"}
             />
           </section>
+          <NextRefuelEstimate refuels={refuels.data ?? []} summary={summary} />
 
           {vehicle.data && (() => {
             const claimed = claimedMileage(vehicle.data.name, vehicle.data.make);
