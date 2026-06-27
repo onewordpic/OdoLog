@@ -533,6 +533,10 @@ function VehiclePage() {
       </section>
       )}
 
+      <MaintenanceSection vehicleId={id} latestOdo={summary.latestOdo} isEV={!!isEV} />
+
+
+
 
       {showAdd && vehicle.data && (
         <AddRefuelModal
