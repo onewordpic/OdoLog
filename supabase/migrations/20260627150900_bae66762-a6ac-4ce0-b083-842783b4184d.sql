@@ -1,0 +1,1 @@
+ALTER TABLE public.vehicles ADD COLUMN IF NOT EXISTS is_guest boolean NOT NULL DEFAULT false; ALTER TABLE public.vehicles ADD COLUMN IF NOT EXISTS owner_name text;

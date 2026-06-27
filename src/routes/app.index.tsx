@@ -27,6 +27,7 @@ import {
   listAllRefuels,
   listAllMaintenance,
   getProfile,
+  saveProfile,
   type VehicleIcon as VIcon,
 } from "@/lib/data-store";
 import { PREFS_EVENT, getPrefs, type Prefs } from "@/lib/prefs";
@@ -53,7 +54,7 @@ function greetingFor(name: string) {
     "Good night";
   const flavours = ["Happy riding", "Safe travels", "Drive safe"];
   const flavour = flavours[new Date().getDate() % flavours.length];
-  const who = name ? `, ${name}` : "";
+  const who = name ? `, ${name}` : ", User";
   // Alternate greeting style across the day for variety.
   return (h % 2 === 0 ? slot : flavour) + who;
 }
@@ -236,6 +237,7 @@ function Dashboard() {
       </div>
 
       <WeatherAdvisory city={profile.data?.default_city ?? ""} />
+      <NameNudge hasName={!!name} />
 
       {authed === false && (
         <div className="mb-4 rounded-2xl border border-foreground/10 bg-foreground/5 px-4 py-2.5 text-xs animate-fade-in">
@@ -384,32 +386,61 @@ function Dashboard() {
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
           ) : vehicles.data && vehicles.data.length > 0 ? (
-            <div className="space-y-2 overflow-y-auto max-h-[420px] pr-1 -mr-1">
-              {vehicles.data.map((v) => {
-                const color = accentFor(v.id);
+            <div className="space-y-4 overflow-y-auto max-h-[460px] pr-1 -mr-1">
+              {(["mine", "guest"] as const).map((group) => {
+                const list = (vehicles.data ?? []).filter((v) =>
+                  group === "guest" ? v.is_guest : !v.is_guest,
+                );
+                if (list.length === 0) return null;
                 return (
-                  <Link
-                    key={v.id}
-                    to="/app/vehicle/$id"
-                    params={{ id: v.id }}
-                    className="press flex items-center justify-between p-2.5 hover:bg-foreground/5 rounded-2xl transition"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div
-                        className="h-10 w-10 rounded-full flex items-center justify-center shrink-0"
-                        style={{ background: color, color: "#0c1410" }}
-                      >
-                        <VehicleIcon icon={v.icon ?? "car"} className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold truncate">
-                          {v.make ? `${v.make} ${v.name}` : v.name}
-                        </div>
-                        <div className="text-[11px] capitalize text-[var(--cockpit-text-mute)]">{v.fuel_type}</div>
-                      </div>
+                  <div key={group}>
+                    <div className="mb-1.5 flex items-center gap-2">
+                      <span className="text-[10px] uppercase tracking-[0.18em] font-semibold text-[var(--cockpit-text-mute)]">
+                        {group === "guest" ? "Guest Garage" : "My Garage"}
+                      </span>
+                      {group === "guest" && (
+                        <span className="text-[10px] text-[var(--cockpit-text-mute)] italic">
+                          Borrowed wheels, full receipts
+                        </span>
+                      )}
                     </div>
-                    <ChevronRight className="h-4 w-4 text-[var(--cockpit-text-mute)] shrink-0" />
-                  </Link>
+                    <div className="space-y-2">
+                      {list.map((v) => {
+                        const color = accentFor(v.id);
+                        return (
+                          <Link
+                            key={v.id}
+                            to="/app/vehicle/$id"
+                            params={{ id: v.id }}
+                            className="press flex items-center justify-between p-2.5 hover:bg-foreground/5 rounded-2xl transition"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div
+                                className="h-10 w-10 rounded-full flex items-center justify-center shrink-0"
+                                style={{ background: color, color: "#0c1410" }}
+                              >
+                                <VehicleIcon icon={v.icon ?? "car"} className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-sm font-semibold truncate flex items-center gap-1.5">
+                                  {v.make ? `${v.make} ${v.name}` : v.name}
+                                  {v.is_guest && (
+                                    <span className="rounded-full bg-foreground/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[var(--cockpit-text-soft)]">
+                                      Borrowed
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] capitalize text-[var(--cockpit-text-mute)] truncate">
+                                  {v.is_guest && v.owner_name ? `${v.owner_name}'s · ` : ""}{v.fuel_type}
+                                </div>
+                              </div>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-[var(--cockpit-text-mute)] shrink-0" />
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
                 );
               })}
             </div>
@@ -665,6 +696,9 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
     [name],
   );
 
+  const [isGuest, setIsGuest] = useState(false);
+  const [ownerName, setOwnerName] = useState("");
+
   const mut = useMutation({
     mutationFn: () =>
       addVehicle({
@@ -675,6 +709,8 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
         model_year: year ? Number(year) : null,
         reg_number: reg.trim() ? reg.trim().toUpperCase() : null,
         image_url: imageUrl.trim() || null,
+        is_guest: isGuest,
+        owner_name: isGuest ? (ownerName.trim() || null) : null,
       }),
     onSuccess: () => {
       toast.success("Vehicle added");
@@ -928,6 +964,35 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
             </div>
           )}
 
+          <div className="rounded-2xl glass-subtle p-3 space-y-2">
+            <label className="flex items-center justify-between gap-3 cursor-pointer">
+              <div className="min-w-0">
+                <div className="text-sm font-semibold flex items-center gap-1.5">
+                  🤝 Guest Garage
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  Borrowed wheels for a trip — track fuel without owning it.
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={isGuest}
+                onChange={(e) => setIsGuest(e.target.checked)}
+                className="h-4 w-4 accent-primary"
+              />
+            </label>
+            {isGuest && (
+              <input
+                value={ownerName}
+                onChange={(e) => setOwnerName(e.target.value)}
+                placeholder="Owner's name (e.g. Arjun)"
+                maxLength={40}
+                className="w-full rounded-xl glass-input glass-input-focus px-4 py-2 text-sm"
+              />
+            )}
+          </div>
+
+
           <div className="flex gap-2 pt-2">
             <button
               type="button"
@@ -1140,5 +1205,85 @@ function ServiceAlerts({ authed }: { authed: boolean | null }) {
         ))}
       </div>
     </section>
+  );
+}
+
+// ---------- Name nudge: occasionally invite anonymous users to set a name ----------
+
+function NameNudge({ hasName }: { hasName: boolean }) {
+  const [show, setShow] = useState(false);
+  const [val, setVal] = useState("");
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    if (hasName) return;
+    try {
+      const dismissedAt = Number(localStorage.getItem("odolog.name-nudge.dismissed") || "0");
+      const days = (Date.now() - dismissedAt) / (1000 * 60 * 60 * 24);
+      // Show on first visit; after dismiss, re-surface only after ~3 days.
+      if (!dismissedAt || days >= 3) setShow(true);
+    } catch {
+      setShow(true);
+    }
+  }, [hasName]);
+
+  const save = useMutation({
+    mutationFn: async (name: string) => {
+      const cur = await getProfile();
+      await saveProfile({ display_name: name, default_city: cur.default_city || "thiruvananthapuram" });
+    },
+    onSuccess: () => {
+      try { localStorage.setItem("odolog.name-nudge.dismissed", String(Date.now())); } catch {}
+      qc.invalidateQueries({ queryKey: ["profile"] });
+      setShow(false);
+    },
+  });
+
+  function dismiss() {
+    try { localStorage.setItem("odolog.name-nudge.dismissed", String(Date.now())); } catch {}
+    setShow(false);
+  }
+
+  if (hasName || !show) return null;
+
+  return (
+    <div className="mt-4 glass rounded-2xl p-3.5 flex items-center gap-3 animate-fade-in-up">
+      <div className="text-xl">👋</div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-semibold leading-tight">What should we call you?</div>
+        <div className="text-[11px] text-muted-foreground">We'll use it for greetings — totally optional.</div>
+      </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const n = val.trim();
+          if (n) save.mutate(n);
+        }}
+        className="flex items-center gap-1.5 shrink-0"
+      >
+        <input
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          placeholder="Your name"
+          maxLength={30}
+          className="w-28 sm:w-36 rounded-xl glass-input glass-input-focus px-3 py-1.5 text-sm"
+        />
+        <button
+          type="submit"
+          disabled={!val.trim() || save.isPending}
+          className="press rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+        >
+          Save
+        </button>
+        <button
+          type="button"
+          onClick={dismiss}
+          aria-label="Dismiss"
+          className="press rounded-xl glass-subtle glass-hover px-2 py-1.5 text-xs"
+        >
+          ✕
+        </button>
+      </form>
+    </div>
   );
 }

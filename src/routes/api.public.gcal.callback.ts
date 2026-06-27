@@ -15,9 +15,13 @@ export const Route = createFileRoute("/api/public/gcal/callback")({
           );
         }
 
-        const [userId, origin] = state.split(":");
-        if (!userId || !origin) {
-          return htmlResponse("<h2>Invalid state</h2>");
+        // State is `${userId}|${origin}` — must split on the first "|" only,
+        // because origin contains "https://" (a plain split(":") would mangle it).
+        const sep = state.indexOf("|");
+        const userId = sep > 0 ? state.slice(0, sep) : "";
+        const origin = sep > 0 ? state.slice(sep + 1) : "";
+        if (!userId || !origin || !/^https?:\/\//.test(origin)) {
+          return htmlResponse(`<h2>Invalid state</h2><p>Could not parse callback state. Try connecting again.</p>`);
         }
 
         const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;

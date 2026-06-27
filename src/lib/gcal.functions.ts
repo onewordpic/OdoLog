@@ -19,7 +19,8 @@ export const startGcalOAuth = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
     if (!clientId) throw new Error("Google OAuth not configured");
-    const state = `${context.userId}:${data.origin}`;
+    // Separator must not appear in URLs/UUIDs — ":" breaks because origin contains "https://".
+    const state = `${context.userId}|${data.origin}`;
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: redirectUri(data.origin),
