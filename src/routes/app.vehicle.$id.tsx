@@ -1052,7 +1052,38 @@ function AddRefuelModal({
             </div>
           )}
 
-          <div>
+          {vehicle.fuel_type === "petrol" && (
+            <div>
+              <span className="text-xs font-medium text-muted-foreground">
+                Petrol variant
+              </span>
+              <div className="mt-1 grid grid-cols-4 gap-2">
+                {[
+                  { v: "normal", l: "Normal" },
+                  { v: "e20", l: "E20" },
+                  { v: "xp95", l: "XP95" },
+                  { v: "xp100", l: "XP100" },
+                ].map((o) => (
+                  <button
+                    key={o.v}
+                    type="button"
+                    onClick={() => setFuelSubtype(o.v as any)}
+                    className={`press rounded-xl px-2 py-2 text-xs font-medium transition ${
+                      fuelSubtype === o.v
+                        ? "bg-[var(--mint-accent)] text-stone-900"
+                        : "glass-subtle text-muted-foreground"
+                    }`}
+                  >
+                    {o.l}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1 px-1 text-[10px] text-muted-foreground">
+                E20 = 20% ethanol blend · XP95/XP100 = premium octane
+              </p>
+            </div>
+          )}
+
             <NumField
               label="Odometer (km)"
               value={odo}
