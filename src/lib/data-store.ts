@@ -71,6 +71,7 @@ const LS_VEHICLES = "odolog.vehicles";
 const LS_REFUELS = "odolog.refuels";
 const LS_MAINT = "odolog.maintenance";
 const LS_PROFILE = "odolog.profile";
+const LS_TRIPS = "odolog.trips";
 
 const LEGACY_KEYS: Record<string, string> = {
   [LS_VEHICLES]: "fuelogue.vehicles",
