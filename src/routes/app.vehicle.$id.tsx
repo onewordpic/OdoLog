@@ -880,7 +880,11 @@ function AddRefuelModal({
   const [fullTank, setFullTank] = useState(
     editing ? editing.full_tank : vehicle.fuel_type === "cng",
   );
+  const [fuelSubtype, setFuelSubtype] = useState<"normal" | "e20" | "xp95" | "xp100">(
+    (editing?.fuel_subtype as any) ?? "normal",
+  );
   const [fetchingRate, setFetchingRate] = useState(false);
+
   const [city, setCity] = useState("");
 
   // Highest odo reading among other refuels (exclude the entry being edited).
