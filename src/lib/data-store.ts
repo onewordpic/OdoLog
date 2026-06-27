@@ -22,6 +22,8 @@ export type Vehicle = {
 };
 
 
+export type FuelSubtype = "normal" | "e20" | "xp95" | "xp100" | null;
+
 export type Refuel = {
   id: string;
   vehicle_id: string;
@@ -32,8 +34,10 @@ export type Refuel = {
   odo_km: number | null;
   full_tank: boolean;
   notes: string | null;
+  fuel_subtype: FuelSubtype;
   created_at: string;
 };
+
 
 export type MaintenanceLog = {
   id: string;
