@@ -332,6 +332,7 @@ function VehiclePage() {
             />
           </section>
           <NextRefuelEstimate refuels={refuels.data ?? []} summary={summary} />
+          <CostProjection refuels={refuels.data ?? []} />
 
           {vehicle.data && (() => {
             const claimed = claimedMileage(vehicle.data.name, vehicle.data.make);
