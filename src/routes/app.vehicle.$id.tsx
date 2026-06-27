@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { TripSection } from "@/components/trip-section";
+import { TripAnalytics } from "@/components/trip-analytics";
+
 import { fetchFuelPrice } from "@/lib/fuel-price.functions";
 import { toast } from "sonner";
 import {
