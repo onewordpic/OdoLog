@@ -27,6 +27,7 @@ import {
   listAllRefuels,
   listAllMaintenance,
   getProfile,
+  updateProfile,
   type VehicleIcon as VIcon,
 } from "@/lib/data-store";
 import { PREFS_EVENT, getPrefs, type Prefs } from "@/lib/prefs";
