@@ -96,6 +96,8 @@ function SettingsPage() {
   const [name, setName] = useState("");
   const [city, setCity] = useState("thiruvananthapuram");
   const [showStar, setShowStar] = useState(false);
+  const [showJsonImport, setShowJsonImport] = useState(false);
+
 
   useEffect(() => {
     if (typeof window === "undefined") return;
