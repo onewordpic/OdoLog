@@ -695,6 +695,9 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
     [name],
   );
 
+  const [isGuest, setIsGuest] = useState(false);
+  const [ownerName, setOwnerName] = useState("");
+
   const mut = useMutation({
     mutationFn: () =>
       addVehicle({
@@ -705,6 +708,8 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
         model_year: year ? Number(year) : null,
         reg_number: reg.trim() ? reg.trim().toUpperCase() : null,
         image_url: imageUrl.trim() || null,
+        is_guest: isGuest,
+        owner_name: isGuest ? (ownerName.trim() || null) : null,
       }),
     onSuccess: () => {
       toast.success("Vehicle added");
