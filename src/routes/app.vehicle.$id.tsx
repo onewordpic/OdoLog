@@ -22,6 +22,7 @@ import {
   Leaf,
   TrendingDown,
 } from "lucide-react";
+import { CountdownRing } from "@/components/countdown-ring";
 import {
   LineChart,
   Line,
