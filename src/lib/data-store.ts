@@ -307,6 +307,48 @@ export async function listRecentRefuels(limit = 10): Promise<
   });
 }
 
+export async function listAllRefuels(): Promise<
+  (Refuel & { vehicle_name: string; vehicle_icon: VehicleIcon })[]
+> {
+  const userId = await getUserId();
+  let refuels: Refuel[] = [];
+  let vehicles: Vehicle[] = [];
+
+  if (userId) {
+    const [r, v] = await Promise.all([
+      supabase
+        .from("refuels")
+        .select("*")
+        .order("refuel_date", { ascending: false })
+        .order("created_at", { ascending: false }),
+      supabase.from("vehicles").select("*"),
+    ]);
+    if (r.error) throw r.error;
+    if (v.error) throw v.error;
+    refuels = r.data as Refuel[];
+    vehicles = (v.data as any[]).map((x) => ({ ...x, icon: normIcon(x.icon) })) as Vehicle[];
+  } else {
+    refuels = lsRead<Refuel[]>(LS_REFUELS, []).sort((a, b) => {
+      const d = b.refuel_date.localeCompare(a.refuel_date);
+      return d !== 0 ? d : b.created_at.localeCompare(a.created_at);
+    });
+    vehicles = lsRead<Vehicle[]>(LS_VEHICLES, []).map((v) => ({
+      ...v,
+      icon: normIcon((v as any).icon),
+    }));
+  }
+
+  const byId = new Map(vehicles.map((v) => [v.id, v]));
+  return refuels.map((r) => {
+    const v = byId.get(r.vehicle_id);
+    return {
+      ...r,
+      vehicle_name: v?.name ?? "Unknown",
+      vehicle_icon: v?.icon ?? "car",
+    };
+  });
+}
+
 export async function addRefuel(input: {
   vehicle_id: string;
   refuel_date: string;
