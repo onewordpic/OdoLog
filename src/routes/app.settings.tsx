@@ -18,7 +18,9 @@ import {
   Star,
   Github,
   Share2,
+  Upload,
   X,
+
 } from "lucide-react";
 import {
   getProfile,
