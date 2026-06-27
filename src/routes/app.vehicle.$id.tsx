@@ -567,8 +567,8 @@ function VehiclePage() {
         <EcoCard
           vehicle={vehicle.data}
           refuels={refuels.data ?? []}
-          actualKmpl={summary.kmpl ?? null}
-          claimedKmpl={summary.claimedKmpl ?? null}
+          actualKmpl={summary.kmPerL ?? null}
+          claimedKmpl={claimedMileage(vehicle.data.name, vehicle.data.make) ?? null}
         />
       )}
 
