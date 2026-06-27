@@ -236,6 +236,7 @@ function Dashboard() {
       </div>
 
       <WeatherAdvisory city={profile.data?.default_city ?? ""} />
+      <NameNudge hasName={!!name} />
 
       {authed === false && (
         <div className="mb-4 rounded-2xl border border-foreground/10 bg-foreground/5 px-4 py-2.5 text-xs animate-fade-in">
