@@ -58,6 +58,7 @@ import {
 import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
 import { VehicleAvatar } from "@/components/vehicle-avatar";
 import { VehicleHealthScore, NextRefuelEstimate, CostProjection } from "@/components/vehicle-insights";
+import { EcoCard } from "@/components/eco-card";
 import { searchCatalog, claimedMileage, type CatalogEntry } from "@/lib/vehicle-catalog";
 import { getPrefs, PREFS_EVENT, type Prefs } from "@/lib/prefs";
 
@@ -562,6 +563,15 @@ function VehiclePage() {
 
       <TripSection vehicleId={id} costPerKm={summary.costPerKm} />
       <TripAnalytics vehicleId={id} costPerKm={summary.costPerKm} />
+      {!isEV && vehicle.data && (
+        <EcoCard
+          vehicle={vehicle.data}
+          refuels={refuels.data ?? []}
+          actualKmpl={summary.kmPerL ?? null}
+          claimedKmpl={claimedMileage(vehicle.data.name, vehicle.data.make) ?? null}
+        />
+      )}
+
 
     </main>
   );

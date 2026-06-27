@@ -18,6 +18,7 @@ import {
   BarChart3,
   Wrench,
   CalendarDays,
+  Sparkles,
 } from "lucide-react";
 import {
   listVehicles,
@@ -195,6 +196,15 @@ function Dashboard() {
           >
             <CalendarDays className="h-4 w-4" />
           </Link>
+          {authed && (
+            <Link
+              to="/app/insights"
+              className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
+              aria-label="AI insights"
+            >
+              <Sparkles className="h-4 w-4" />
+            </Link>
+          )}
           <Link
             to="/app/settings"
             className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
