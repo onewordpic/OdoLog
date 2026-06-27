@@ -36,7 +36,7 @@ export const Route = createFileRoute("/g/$handle")({
 
 function PublicGarageView() {
   const params = Route.useParams();
-  const d = Route.useLoaderData();
+  const d = Route.useLoaderData() as PublicGarage;
   const totalKm = d.vehicles.reduce((s, v) => s + (v.lifetime_km ?? 0), 0);
   const totalSpend = d.vehicles.reduce((s, v) => s + v.total_spend, 0);
   const totalCo2 = d.vehicles.reduce((s, v) => s + v.co2_kg, 0);
