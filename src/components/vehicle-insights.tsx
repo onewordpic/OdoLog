@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listMaintenance, type Vehicle, type Refuel } from "@/lib/data-store";
-import { HeartPulse, Fuel } from "lucide-react";
+import { HeartPulse, Fuel, TrendingUp } from "lucide-react";
 
 // ---------- Vehicle Health Score ----------
 
