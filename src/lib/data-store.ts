@@ -50,6 +50,18 @@ export type MaintenanceLog = {
 };
 
 
+export type Trip = {
+  id: string;
+  vehicle_id: string;
+  start_odo_km: number | null;
+  end_odo_km: number | null;
+  purpose: string | null;
+  tolls_inr: number | null;
+  notes: string | null;
+  trip_date: string;
+  created_at: string;
+};
+
 export type Profile = {
   display_name: string;
   default_city: string;
