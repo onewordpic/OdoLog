@@ -384,16 +384,14 @@ export type PublicGarage = {
 export const fetchPublicGarage = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => HandleParam.parse(data))
   .handler(async ({ data }): Promise<PublicGarage | null> => {
-    const { createClient } = await import("@supabase/supabase-js");
-    const sb = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_PUBLISHABLE_KEY!,
-      { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
-    );
+    // Use the admin client server-side: the underlying RPCs are SECURITY DEFINER
+    // and EXECUTE is now restricted to service_role. The RPCs themselves only
+    // return data explicitly marked public by the owner.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const handle = data.handle.toLowerCase();
     const [garageRes, statsRes] = await Promise.all([
-      sb.rpc("get_public_garage", { _handle: handle }),
-      sb.rpc("get_public_garage_stats", { _handle: handle }),
+      supabaseAdmin.rpc("get_public_garage", { _handle: handle }),
+      supabaseAdmin.rpc("get_public_garage_stats", { _handle: handle }),
     ]);
     if (garageRes.error) throw new Error(garageRes.error.message);
     const row = (garageRes.data ?? [])[0];
