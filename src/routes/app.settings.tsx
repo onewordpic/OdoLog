@@ -576,9 +576,11 @@ function SettingsPage() {
           </footer>
         </div>
       )}
+      <JsonImportModal open={showJsonImport} onClose={() => setShowJsonImport(false)} />
     </main>
   );
 }
+
 
 function Section({
   icon: Icon,
