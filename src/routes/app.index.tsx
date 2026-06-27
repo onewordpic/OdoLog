@@ -963,6 +963,35 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
             </div>
           )}
 
+          <div className="rounded-2xl glass-subtle p-3 space-y-2">
+            <label className="flex items-center justify-between gap-3 cursor-pointer">
+              <div className="min-w-0">
+                <div className="text-sm font-semibold flex items-center gap-1.5">
+                  🤝 Guest Garage
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  Borrowed wheels for a trip — track fuel without owning it.
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={isGuest}
+                onChange={(e) => setIsGuest(e.target.checked)}
+                className="h-4 w-4 accent-primary"
+              />
+            </label>
+            {isGuest && (
+              <input
+                value={ownerName}
+                onChange={(e) => setOwnerName(e.target.value)}
+                placeholder="Owner's name (e.g. Arjun)"
+                maxLength={40}
+                className="w-full rounded-xl glass-input glass-input-focus px-4 py-2 text-sm"
+              />
+            )}
+          </div>
+
+
           <div className="flex gap-2 pt-2">
             <button
               type="button"
