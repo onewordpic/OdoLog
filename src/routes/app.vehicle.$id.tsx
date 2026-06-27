@@ -957,7 +957,9 @@ function AddRefuelModal({
         litres: Number(litres.toFixed(3)),
         odo_km: odo ? parseFloat(odo) : null,
         full_tank: fullTank,
+        fuel_subtype: vehicle.fuel_type === "petrol" ? fuelSubtype : null,
       };
+
       if (editing) {
         await updateRefuel(editing.id, payload);
       } else {
