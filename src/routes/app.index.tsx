@@ -24,6 +24,7 @@ import {
   addVehicle,
   dashboardStats,
   listRecentRefuels,
+  listAllRefuels,
   listAllMaintenance,
   getProfile,
   type VehicleIcon as VIcon,
@@ -101,7 +102,50 @@ function Dashboard() {
     navigate({ to: "/app" });
   }
 
-  const totalSpent = stats.data?.spend ?? 0;
+  const allRefuels = useQuery({
+    queryKey: ["all-refuels", authed],
+    queryFn: listAllRefuels,
+    enabled: authed !== null,
+  });
+
+  const [spendRange, setSpendRange] = useState<"all" | "year" | "month" | "30d">("all");
+  const spendBuckets = useMemo(() => {
+    const list = allRefuels.data ?? [];
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const cutoff30 = Date.now() - 30 * 24 * 3600 * 1000;
+    let all = 0, year = 0, month = 0, last30 = 0, firstTs: number | null = null;
+    for (const r of list) {
+      const amt = Number(r.amount_inr) || 0;
+      all += amt;
+      const d = new Date(r.refuel_date);
+      const ts = d.getTime();
+      if (!Number.isNaN(ts)) {
+        if (firstTs === null || ts < firstTs) firstTs = ts;
+        if (d.getFullYear() === y) year += amt;
+        if (d.getFullYear() === y && d.getMonth() === m) month += amt;
+        if (ts >= cutoff30) last30 += amt;
+      }
+    }
+    return { all, year, month, last30, firstTs };
+  }, [allRefuels.data]);
+
+  const totalSpent =
+    spendRange === "year" ? spendBuckets.year :
+    spendRange === "month" ? spendBuckets.month :
+    spendRange === "30d" ? spendBuckets.last30 :
+    (stats.data?.spend ?? spendBuckets.all);
+  const spentSinceLabel = (() => {
+    if (spendRange === "year") return `in ${new Date().getFullYear()}`;
+    if (spendRange === "month") return new Date().toLocaleString("en-IN", { month: "long", year: "numeric" });
+    if (spendRange === "30d") return "last 30 days";
+    if (spendBuckets.firstTs) {
+      const d = new Date(spendBuckets.firstTs);
+      return `since ${d.toLocaleString("en-IN", { month: "short", year: "numeric" })}`;
+    }
+    return "all time";
+  })();
   const totalLitres = stats.data?.litres ?? 0;
   const refuelCount = stats.data?.count ?? 0;
   const vehicleCount = vehicles.data?.length ?? 0;
@@ -206,9 +250,9 @@ function Dashboard() {
         {/* Total spent (hero) */}
         <div className="md:col-span-7 rounded-[2rem] p-7 md:p-9 border border-foreground/10 bg-[var(--cockpit-card)] flex flex-col justify-between min-h-[220px] stagger"
              style={{ animationDelay: "0ms" }}>
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between gap-2">
             <span className="text-[11px] uppercase tracking-[0.18em] font-semibold text-[var(--cockpit-text-mute)]">
-              Total spent
+              Total spent · {spentSinceLabel}
             </span>
             <button
               onClick={() => setShowAdd(true)}
@@ -217,7 +261,27 @@ function Dashboard() {
               <Plus className="h-3 w-3" /> Vehicle
             </button>
           </div>
-          <div className="mt-6">
+          <div className="mt-1 flex flex-wrap gap-1">
+            {([
+              ["all", "All time"],
+              ["year", "This year"],
+              ["month", "This month"],
+              ["30d", "30 days"],
+            ] as const).map(([k, label]) => (
+              <button
+                key={k}
+                onClick={() => setSpendRange(k)}
+                className={`press rounded-full px-2.5 py-1 text-[10px] font-semibold transition border ${
+                  spendRange === k
+                    ? "bg-[var(--mint-accent)] text-white border-transparent"
+                    : "border-foreground/10 bg-foreground/5 hover:bg-foreground/10 text-[var(--cockpit-text-soft)]"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="mt-4">
             <div className="font-display text-5xl md:text-6xl font-bold tracking-tight">
               ₹{totalSpent.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
             </div>
