@@ -548,6 +548,12 @@ function VehiclePage() {
           onClose={() => setEditing(null)}
         />
       )}
+      <CsvImportModal
+        vehicleId={id}
+        open={showImport}
+        onClose={() => setShowImport(false)}
+      />
+
 
       <TripSection vehicleId={id} costPerKm={summary.costPerKm} />
       <TripAnalytics vehicleId={id} costPerKm={summary.costPerKm} />
