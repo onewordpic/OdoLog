@@ -554,7 +554,7 @@ function SettingsPage() {
                 safwan.online
               </a>
             </p>
-            <p>OdoLog · v1 · {authed ? "synced to cloud" : "guest mode"}</p>
+            <p>OdoLog · v2 · {authed ? "synced to cloud" : "guest mode"}</p>
           </footer>
         </div>
       )}
