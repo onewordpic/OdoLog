@@ -169,6 +169,8 @@ export async function addVehicle(input: {
   puc_expiry?: string | null;
   purchase_date?: string | null;
   purchase_price_inr?: number | null;
+  is_guest?: boolean;
+  owner_name?: string | null;
 }): Promise<Vehicle> {
   const icon = normIcon(input.icon);
   const extras = {
@@ -180,6 +182,8 @@ export async function addVehicle(input: {
     puc_expiry: input.puc_expiry ?? null,
     purchase_date: input.purchase_date ?? null,
     purchase_price_inr: input.purchase_price_inr ?? null,
+    is_guest: input.is_guest ?? false,
+    owner_name: input.owner_name ?? null,
   };
   const userId = await getUserId();
   if (userId) {
