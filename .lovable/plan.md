@@ -1,48 +1,64 @@
-## Goal
+## OdoLog v2.1 — three new pillars
 
-Keep `/api/public/gcal/callback` (required by Google's OAuth redirect) but stop it from rendering as a bare, unstyled black page. Turn it into a small branded status screen that clearly tells the user what happened.
+Building on your picks: **Carbon footprint & eco score**, **Monthly AI summary**, and **Public garage profile**.
 
-## Why we can't delete it
+---
 
-- Google Calendar OAuth posts the user back to this exact URL with `?code=...&state=...`.
-- The handler in `src/routes/api.public.gcal.callback.ts` exchanges the code for tokens and stores them so the "Sync to Google Calendar" feature in Settings works.
-- Removing the route breaks calendar connect entirely.
+### 1. Carbon footprint & eco score
 
-## What changes
+A per-vehicle and garage-wide CO₂ tracker that turns your refuel logs into a tangible "how green am I" number.
 
-Rewrite the HTML responses in `src/routes/api.public.gcal.callback.ts` so every branch renders the same themed shell instead of raw `<h2>` tags on a black page.
+- New `EcoCard` on each vehicle page + a garage-total card on the dashboard.
+- Computes kg CO₂ per refuel using standard emission factors (petrol 2.31 kg/L, diesel 2.68, CNG 2.75 kg/kg). EVs show grid-mix estimate based on city (India avg 0.71 kg/kWh) once we add kWh logging — for now EVs show "Zero tailpipe ✅".
+- **Eco Score 0–100** per vehicle = blended mileage-vs-ARAI delta + monthly km trend + fuel type weighting. Letter grade A–E with a friendly one-liner ("Cleaner than 72% of similar bikes").
+- **Trees-to-offset** widget: kg CO₂ ÷ 21 (avg tree absorption/yr) with a small leaf animation.
+- Monthly + lifetime totals, sparkline of last 6 months.
 
-Three states to handle:
+### 2. Monthly AI summary
 
-1. **Direct visit / no params** — friendly "Nothing to do here" card explaining this page is only used during Google Calendar connect, with a button back to Settings.
-2. **Success** — green check, "Google Calendar connected", auto-close after 2s (if opened as popup) or "Back to OdoLog settings" link.
-3. **Error** (invalid state, token exchange failed, missing user) — red icon, short human message, the raw error in a collapsed `<details>` for debugging, "Try again" link to `/app/settings`.
+End-of-month digest powered by Lovable AI (`google/gemini-3-flash-preview`, free on Lovable Cloud).
 
-## Visual shell
+- New route `/app/insights` with a month picker.
+- Server function `generateMonthlySummary` pulls refuels, trips, maintenance, and eco data for the selected month and returns a structured JSON (highlights, spend breakdown, mileage trend, anomalies, 3 tips, next-month projection).
+- Rendered as a magazine-style card stack: "This month at a glance", "Where your money went", "What changed vs last month", "OdoLog suggests".
+- "Regenerate" + "Copy as text" + "Share to garage" buttons.
+- Auto-triggered on the 1st of each month via `pg_cron` → `/api/public/hooks/monthly-digest` that pre-generates summaries so opening the tab is instant. Cached in a new `ai_summaries` table keyed by (user, vehicle_id|null, month).
 
-- Dark gradient background matching OdoLog's cockpit theme (stone-900 → mint accent), not pure black.
-- Centered glass card (max-width ~420px), rounded-3xl, subtle border.
-- OdoLog wordmark at top.
-- System font stack inline (route returns raw HTML, can't use Tailwind classes — use a small `<style>` block with CSS variables that mirror the app tokens).
-- Mobile-safe padding.
+### 3. Public garage profile
 
-## Technical details
+A shareable read-only page like `odolog.app/g/safwan` showing your garage as a clean portfolio.
 
-```text
-src/routes/api.public.gcal.callback.ts
-  - extract `renderShell(title, bodyHtml, variant)` helper
-  - variant: 'success' | 'error' | 'idle' -> picks accent color + icon
-  - replace every `htmlResponse('<h2>...')` call with renderShell(...)
-  - success branch: include a tiny <script> that does
-      if (window.opener) { window.opener.postMessage({type:'gcal-connected'}, '*'); window.close(); }
-    so popup flows close themselves cleanly
-  - idle branch (no code & no error): render "This page is part of the Google
-    Calendar connect flow. You can close it." with link to /app/settings
-```
+- New `public_handle` column on `profiles` (unique, slug-validated, claimable in Settings).
+- New `garage_visibility` per-vehicle ('private' | 'public') — defaults private.
+- Public route `/g/$handle` (no auth) renders: avatar, display name, city, total km, total ₹ spent, eco score, vehicle cards (photo, name, year, lifetime mileage, eco grade). No refuel-level data, no PII (reg number / insurance / PUC hidden).
+- SSR'd via a server publishable client (anon SELECT policy on a narrow view), so it gets proper OG tags + share image per garage.
+- "Share my garage" button in dashboard → copies link + native share sheet.
+- Settings toggle: claim handle, per-vehicle visibility switches, "remove from public garage" kill switch.
 
-No DB changes, no other files touched.
+---
 
-## Out of scope
+### Technical notes
 
-- Changing the OAuth flow itself (state parsing, token exchange) — that was fixed last turn.
-- Wiring the popup `postMessage` listener in Settings (can be a follow-up if you want auto-refresh after connect).
+- **DB migrations**
+  - `ai_summaries(user_id, vehicle_id null, month date, payload jsonb, created_at)` — RLS user-scoped + `anon SELECT` denied.
+  - `profiles.public_handle text unique`, `profiles.public_bio text`.
+  - `vehicles.garage_visibility text default 'private'`.
+  - Public read view `public.garage_public_v` exposing only safe columns; `GRANT SELECT ... TO anon` with handle-based filter via RLS on underlying tables (or SECURITY DEFINER function returning the row).
+- **Server functions** (`src/lib/insights.functions.ts`)
+  - `generateMonthlySummary({ month, vehicleId? })` — `requireSupabaseAuth`, calls Lovable AI Gateway with structured Output schema (Zod), persists to `ai_summaries`.
+  - `claimHandle({ handle })` — uniqueness + slug regex.
+- **Server route** `src/routes/api/public/hooks/monthly-digest.ts` — `apikey` header auth, pg_cron monthly on the 1st at 03:00 IST, iterates users with ≥1 refuel last month, generates & stores summaries.
+- **Eco math** lives in `src/lib/eco.ts` (pure functions, fully tested by reuse).
+- **Public garage page** `src/routes/g.$handle.tsx` — SSR via server publishable client; per-route `head()` sets `<title>{name}'s Garage · OdoLog</title>`, og:image = first vehicle photo or generated gradient.
+
+### Out of scope (saved for later)
+
+Receipt OCR, voice log, anomaly alerts, station map, document vault, resale helper, multi-driver, fuel budget. We can pick these up in v2.2.
+
+### Suggested build order
+
+1. Eco score (lowest risk, no new infra).
+2. Public garage profile (DB + new public route).
+3. Monthly AI summary (AI + cron, depends on eco numbers being available).
+
+Approve and I'll start with the eco card.
