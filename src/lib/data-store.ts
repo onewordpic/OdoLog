@@ -229,6 +229,8 @@ export async function updateVehicle(
     puc_expiry?: string | null;
     purchase_date?: string | null;
     purchase_price_inr?: number | null;
+    is_guest?: boolean;
+    owner_name?: string | null;
   },
 ): Promise<void> {
   const userId = await getUserId();
