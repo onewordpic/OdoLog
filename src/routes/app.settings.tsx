@@ -38,6 +38,8 @@ import {
 } from "@/lib/prefs";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ShareCard } from "@/components/share-button";
+import { GoogleCalendarCard } from "@/components/google-calendar-card";
+
 import { useAuthed } from "@/lib/use-authed";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -263,6 +265,10 @@ function SettingsPage() {
           )}
 
           <ShareCard />
+
+          <GoogleCalendarCard />
+
+
 
 
 

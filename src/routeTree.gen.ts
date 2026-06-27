@@ -16,6 +16,7 @@ import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppReportsRouteImport } from './routes/app.reports'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppVehicleIdRouteImport } from './routes/app.vehicle.$id'
+import { Route as ApiPublicGcalCallbackRouteImport } from './routes/api.public.gcal.callback'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -52,6 +53,11 @@ const AppVehicleIdRoute = AppVehicleIdRouteImport.update({
   path: '/app/vehicle/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicGcalCallbackRoute = ApiPublicGcalCallbackRouteImport.update({
+  id: '/api/public/gcal/callback',
+  path: '/api/public/gcal/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
   '/app/vehicle/$id': typeof AppVehicleIdRoute
+  '/api/public/gcal/callback': typeof ApiPublicGcalCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByTo {
   '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
   '/app/vehicle/$id': typeof AppVehicleIdRoute
+  '/api/public/gcal/callback': typeof ApiPublicGcalCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +88,7 @@ export interface FileRoutesById {
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
   '/app/vehicle/$id': typeof AppVehicleIdRoute
+  '/api/public/gcal/callback': typeof ApiPublicGcalCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +100,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/'
     | '/app/vehicle/$id'
+    | '/api/public/gcal/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +110,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app'
     | '/app/vehicle/$id'
+    | '/api/public/gcal/callback'
   id:
     | '__root__'
     | '/'
@@ -109,6 +120,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/'
     | '/app/vehicle/$id'
+    | '/api/public/gcal/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +131,7 @@ export interface RootRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppVehicleIdRoute: typeof AppVehicleIdRoute
+  ApiPublicGcalCallbackRoute: typeof ApiPublicGcalCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -172,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppVehicleIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/gcal/callback': {
+      id: '/api/public/gcal/callback'
+      path: '/api/public/gcal/callback'
+      fullPath: '/api/public/gcal/callback'
+      preLoaderRoute: typeof ApiPublicGcalCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -183,6 +203,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppVehicleIdRoute: AppVehicleIdRoute,
+  ApiPublicGcalCallbackRoute: ApiPublicGcalCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

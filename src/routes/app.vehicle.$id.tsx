@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { TripSection } from "@/components/trip-section";
+import { TripAnalytics } from "@/components/trip-analytics";
+
 import { fetchFuelPrice } from "@/lib/fuel-price.functions";
 import { toast } from "sonner";
 import {
@@ -533,6 +535,8 @@ function VehiclePage() {
       )}
 
       <TripSection vehicleId={id} costPerKm={summary.costPerKm} />
+      <TripAnalytics vehicleId={id} costPerKm={summary.costPerKm} />
+
     </main>
   );
 }
@@ -880,7 +884,11 @@ function AddRefuelModal({
   const [fullTank, setFullTank] = useState(
     editing ? editing.full_tank : vehicle.fuel_type === "cng",
   );
+  const [fuelSubtype, setFuelSubtype] = useState<"normal" | "e20" | "xp95" | "xp100">(
+    (editing?.fuel_subtype as any) ?? "normal",
+  );
   const [fetchingRate, setFetchingRate] = useState(false);
+
   const [city, setCity] = useState("");
 
   // Highest odo reading among other refuels (exclude the entry being edited).
@@ -953,7 +961,9 @@ function AddRefuelModal({
         litres: Number(litres.toFixed(3)),
         odo_km: odo ? parseFloat(odo) : null,
         full_tank: fullTank,
+        fuel_subtype: vehicle.fuel_type === "petrol" ? fuelSubtype : null,
       };
+
       if (editing) {
         await updateRefuel(editing.id, payload);
       } else {
@@ -1046,8 +1056,41 @@ function AddRefuelModal({
             </div>
           )}
 
+          {vehicle.fuel_type === "petrol" && (
+            <div>
+              <span className="text-xs font-medium text-muted-foreground">
+                Petrol variant
+              </span>
+              <div className="mt-1 grid grid-cols-4 gap-2">
+                {[
+                  { v: "normal", l: "Normal" },
+                  { v: "e20", l: "E20" },
+                  { v: "xp95", l: "XP95" },
+                  { v: "xp100", l: "XP100" },
+                ].map((o) => (
+                  <button
+                    key={o.v}
+                    type="button"
+                    onClick={() => setFuelSubtype(o.v as any)}
+                    className={`press rounded-xl px-2 py-2 text-xs font-medium transition ${
+                      fuelSubtype === o.v
+                        ? "bg-[var(--mint-accent)] text-stone-900"
+                        : "glass-subtle text-muted-foreground"
+                    }`}
+                  >
+                    {o.l}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1 px-1 text-[10px] text-muted-foreground">
+                E20 = 20% ethanol blend · XP95/XP100 = premium octane
+              </p>
+            </div>
+          )}
+
           <div>
             <NumField
+
               label="Odometer (km)"
               value={odo}
               onChange={setOdo}
