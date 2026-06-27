@@ -18,6 +18,8 @@ export type Vehicle = {
   puc_expiry: string | null;
   purchase_date: string | null;
   purchase_price_inr: number | null;
+  is_guest: boolean;
+  owner_name: string | null;
   created_at: string;
 };
 
