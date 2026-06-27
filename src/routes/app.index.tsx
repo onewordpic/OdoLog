@@ -18,6 +18,7 @@ import {
   BarChart3,
   Wrench,
   CalendarDays,
+  Sparkles,
 } from "lucide-react";
 import {
   listVehicles,
