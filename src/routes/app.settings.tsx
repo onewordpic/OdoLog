@@ -275,6 +275,9 @@ function SettingsPage() {
 
           <GoogleCalendarCard />
 
+          {authed && <PublicGarageCard />}
+
+
 
 
 
