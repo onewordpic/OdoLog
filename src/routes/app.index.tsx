@@ -102,7 +102,50 @@ function Dashboard() {
     navigate({ to: "/app" });
   }
 
-  const totalSpent = stats.data?.spend ?? 0;
+  const allRefuels = useQuery({
+    queryKey: ["all-refuels", authed],
+    queryFn: listAllRefuels,
+    enabled: authed !== null,
+  });
+
+  const [spendRange, setSpendRange] = useState<"all" | "year" | "month" | "30d">("all");
+  const spendBuckets = useMemo(() => {
+    const list = allRefuels.data ?? [];
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const cutoff30 = Date.now() - 30 * 24 * 3600 * 1000;
+    let all = 0, year = 0, month = 0, last30 = 0, firstTs: number | null = null;
+    for (const r of list) {
+      const amt = Number(r.amount_inr) || 0;
+      all += amt;
+      const d = new Date(r.refuel_date);
+      const ts = d.getTime();
+      if (!Number.isNaN(ts)) {
+        if (firstTs === null || ts < firstTs) firstTs = ts;
+        if (d.getFullYear() === y) year += amt;
+        if (d.getFullYear() === y && d.getMonth() === m) month += amt;
+        if (ts >= cutoff30) last30 += amt;
+      }
+    }
+    return { all, year, month, last30, firstTs };
+  }, [allRefuels.data]);
+
+  const totalSpent =
+    spendRange === "year" ? spendBuckets.year :
+    spendRange === "month" ? spendBuckets.month :
+    spendRange === "30d" ? spendBuckets.last30 :
+    (stats.data?.spend ?? spendBuckets.all);
+  const spentSinceLabel = (() => {
+    if (spendRange === "year") return `in ${new Date().getFullYear()}`;
+    if (spendRange === "month") return new Date().toLocaleString("en-IN", { month: "long", year: "numeric" });
+    if (spendRange === "30d") return "last 30 days";
+    if (spendBuckets.firstTs) {
+      const d = new Date(spendBuckets.firstTs);
+      return `since ${d.toLocaleString("en-IN", { month: "short", year: "numeric" })}`;
+    }
+    return "all time";
+  })();
   const totalLitres = stats.data?.litres ?? 0;
   const refuelCount = stats.data?.count ?? 0;
   const vehicleCount = vehicles.data?.length ?? 0;
