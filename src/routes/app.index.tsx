@@ -250,9 +250,9 @@ function Dashboard() {
         {/* Total spent (hero) */}
         <div className="md:col-span-7 rounded-[2rem] p-7 md:p-9 border border-foreground/10 bg-[var(--cockpit-card)] flex flex-col justify-between min-h-[220px] stagger"
              style={{ animationDelay: "0ms" }}>
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between gap-2">
             <span className="text-[11px] uppercase tracking-[0.18em] font-semibold text-[var(--cockpit-text-mute)]">
-              Total spent
+              Total spent · {spentSinceLabel}
             </span>
             <button
               onClick={() => setShowAdd(true)}
@@ -261,7 +261,27 @@ function Dashboard() {
               <Plus className="h-3 w-3" /> Vehicle
             </button>
           </div>
-          <div className="mt-6">
+          <div className="mt-1 flex flex-wrap gap-1">
+            {([
+              ["all", "All time"],
+              ["year", "This year"],
+              ["month", "This month"],
+              ["30d", "30 days"],
+            ] as const).map(([k, label]) => (
+              <button
+                key={k}
+                onClick={() => setSpendRange(k)}
+                className={`press rounded-full px-2.5 py-1 text-[10px] font-semibold transition border ${
+                  spendRange === k
+                    ? "bg-[var(--mint-accent)] text-white border-transparent"
+                    : "border-foreground/10 bg-foreground/5 hover:bg-foreground/10 text-[var(--cockpit-text-soft)]"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="mt-4">
             <div className="font-display text-5xl md:text-6xl font-bold tracking-tight">
               ₹{totalSpent.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
             </div>
