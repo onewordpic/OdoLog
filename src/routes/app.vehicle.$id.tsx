@@ -50,6 +50,7 @@ import {
 } from "@/lib/data-store";
 import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
 import { VehicleAvatar } from "@/components/vehicle-avatar";
+import { VehicleHealthScore, NextRefuelEstimate } from "@/components/vehicle-insights";
 import { searchCatalog, claimedMileage, type CatalogEntry } from "@/lib/vehicle-catalog";
 import { getPrefs, PREFS_EVENT, type Prefs } from "@/lib/prefs";
 
@@ -288,6 +289,9 @@ function VehiclePage() {
           </p>
         </div>
       )}
+      {vehicle.data && (
+        <VehicleHealthScore vehicle={vehicle.data} latestOdo={summary.latestOdo} />
+      )}
 
 
 
@@ -327,6 +331,7 @@ function VehiclePage() {
               value={summary.totalKm != null ? `${summary.totalKm.toFixed(0)} km` : "—"}
             />
           </section>
+          <NextRefuelEstimate refuels={refuels.data ?? []} summary={summary} />
 
           {vehicle.data && (() => {
             const claimed = claimedMileage(vehicle.data.name, vehicle.data.make);
