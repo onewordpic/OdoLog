@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      google_calendar_tokens: {
+        Row: {
+          access_token: string
+          calendar_id: string | null
+          created_at: string
+          expires_at: string
+          refresh_token: string
+          scope: string | null
+          sync_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          calendar_id?: string | null
+          created_at?: string
+          expires_at: string
+          refresh_token: string
+          scope?: string | null
+          sync_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          calendar_id?: string | null
+          created_at?: string
+          expires_at?: string
+          refresh_token?: string
+          scope?: string | null
+          sync_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       maintenance_logs: {
         Row: {
           condition: string | null
@@ -98,6 +134,7 @@ export type Database = {
         Row: {
           amount_inr: number
           created_at: string
+          fuel_subtype: string | null
           full_tank: boolean
           id: string
           litres: number
@@ -111,6 +148,7 @@ export type Database = {
         Insert: {
           amount_inr: number
           created_at?: string
+          fuel_subtype?: string | null
           full_tank?: boolean
           id?: string
           litres: number
@@ -124,6 +162,7 @@ export type Database = {
         Update: {
           amount_inr?: number
           created_at?: string
+          fuel_subtype?: string | null
           full_tank?: boolean
           id?: string
           litres?: number
