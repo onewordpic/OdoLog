@@ -36,6 +36,7 @@ import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
 import { VehicleAvatar } from "@/components/vehicle-avatar";
 import { searchCatalog, type CatalogEntry } from "@/lib/vehicle-catalog";
 import { WeatherChip, WeatherAdvisory } from "@/components/weather-chip";
+import { AchievementBadges } from "@/components/achievement-badges";
 
 export const Route = createFileRoute("/app/")({
   component: Dashboard,
@@ -410,6 +411,8 @@ function Dashboard() {
         </div>
 
       </div>
+
+      <AchievementBadges />
 
       <ServiceAlerts authed={authed} />
 

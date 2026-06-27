@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listMaintenance, type Vehicle, type Refuel } from "@/lib/data-store";
-import { HeartPulse, Fuel } from "lucide-react";
+import { HeartPulse, Fuel, TrendingUp } from "lucide-react";
 
 // ---------- Vehicle Health Score ----------
 
@@ -165,6 +165,57 @@ export function NextRefuelEstimate({
           </span>{" "}
           · ~{estimate.projectedKm.toFixed(0)} km from now (based on{" "}
           {estimate.avgLitres.toFixed(1)} L avg)
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Cost Projection ----------
+
+export function CostProjection({ refuels }: { refuels: Refuel[] }) {
+  const projection = useMemo(() => {
+    if (refuels.length < 2) return null;
+    const asc = [...refuels].sort((a, b) =>
+      a.refuel_date.localeCompare(b.refuel_date),
+    );
+    const first = new Date(asc[0].refuel_date);
+    const last = new Date(asc[asc.length - 1].refuel_date);
+    const months = Math.max(
+      1,
+      Math.ceil((last.getTime() - first.getTime()) / (30 * 86400000)),
+    );
+    const totalSpend = refuels.reduce(
+      (s, r) => s + Number(r.amount_inr),
+      0,
+    );
+    const avgMonthly = totalSpend / months;
+    const yearly = avgMonthly * 12;
+    return { avgMonthly, yearly, months };
+  }, [refuels]);
+
+  if (!projection) return null;
+
+  const fmt = (n: number) =>
+    `₹${Math.round(n).toLocaleString("en-IN")}`;
+
+  return (
+    <div className="mt-3 glass rounded-2xl p-4 flex items-center gap-3 animate-fade-in">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+        <TrendingUp className="h-4 w-4 text-primary" />
+      </div>
+      <div className="min-w-0">
+        <div className="text-sm font-medium">Projected yearly spend</div>
+        <p className="text-xs text-muted-foreground">
+          Around{" "}
+          <span className="font-semibold text-foreground tabular-nums">
+            {fmt(projection.yearly)}
+          </span>{" "}
+          · avg{" "}
+          <span className="font-semibold tabular-nums">
+            {fmt(projection.avgMonthly)}
+          </span>{" "}
+          / mo (over {projection.months} mo)
         </p>
       </div>
     </div>
