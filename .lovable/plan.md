@@ -1,60 +1,64 @@
-## Why your import fails today
+# Plan: Add CHANGELOG.md for OdoLog v2
 
-The current `JsonImportModal` only understands two shapes: `{ vehicles: [{ refuels: [...] }] }` or `{ refuels: [...] }`. Your backup is shaped like:
+Create a single `CHANGELOG.md` at the project root documenting every change shipped since v1, following Keep-a-Changelog conventions.
 
-```text
-{ version, timestamp, data: {
-    vehicles: [ { id, make, model, year, licensePlate, fuelType, odometer, ... } ],
-    fuelLogs: [ { vehicleId, date, odometer, fuelAmount, cost, filled, ... } ],
-    maintenanceLogs: [...],
-    insurances:     [ { vehicleId, expiryDate, ... } ],
-    puccs:          [ { vehicleId, expiryDate, ... } ]
-} }
+## File
+
+`CHANGELOG.md` (new, project root)
+
+## Structure
+
+```
+# Changelog
+
+## [2.0.0] — 2026-06-27
+
+### Added
+- Trip Logger with per-trip cost, distance, purpose, notes
+- Trip Analytics (total distance, avg cost/trip, top purposes, next-trip prediction)
+- Petrol subtypes in refuel form (Normal, E20, XP95, XP100)
+- CSV import (Hammond, Fuelio, Drivvo, aCar) with column auto-detect + manual remap
+- JSON import with multi-vehicle wizard, supports wrapped `{data:{...}}` backups with flat fuelLogs/maintenanceLogs/insurances/puccs
+- Google Calendar OAuth + sync for maintenance / PUC / insurance reminders
+- EV flow: scooters & bikes block on "electric" with savings popup; EV cars allowed with EV-only maintenance presets (no oil)
+- Weather chip + contextual safety advisory (Open-Meteo) on home
+- 15-year fitness-test reminder (13–15 yr vehicles)
+- Insurance + PUC expiry tracking with ≤90/≤30/lapsed badges and countdown ring
+- Depreciation card (reducing-balance, toggle in Settings)
+- Vehicle Health Score, refuel estimates, achievement badges
+- Reports route (`/app/reports`)
+- CNG fuel option for cars
+- Share button to spread the word
+- Running cost per vehicle on Analytics tab
+- Petrol-vs-Diesel single-city comparison + 12-month price history
+- ARAI claimed mileage vs actual delta on vehicle page
+- First-run onboarding (name + city, Kerala capital default)
+- GitHub star nudge in Settings
+- "Made with love in India by Safwan" credits + X/website links
+- Delete-all-data with double confirmation
+- Edit refuel logs; ODO validation (must be strictly greater than last)
+- Liquid glass elements, accent + gradient theming in Settings
+- PWA manifest + installable
+- v2 label in Settings footer
+
+### Changed
+- Vehicle page order: Refuel log first, Maintenance below
+- Full-tank toggle defaults OFF (ON only for CNG)
+- Refuel history table overhaul (ODO segments, cost/km chips)
+- Light mode rebuilt (warm stone/aurora); dark mode unchanged
+- Garage list scrolls past 4 vehicles (cap removed)
+- Mobile-first refinements across app
+- Reverted brand-initial logos; car/bike/scooter icons restored
+- Renamed app: Fuel Buddy → PitStop → OdoBay → **OdoLog**
+
+### Fixed
+- Cost/km & mileage now compute reliably via ODO segments with diagnostic alerts for missing data
+- City alias handling (e.g. Thiruvananthapuram)
+- SEO: single H1 on home; aria-labels on icon-only buttons
 ```
 
-So the importer:
-1. Never unwraps `data`, so it treats the whole object as one anonymous vehicle.
-2. Doesn't know `fuelAmount` = litres, `cost` = amount, `filled` = full_tank.
-3. Doesn't group the flat `fuelLogs` by `vehicleId` back onto each vehicle.
-4. Throws away `insurances` / `puccs` / `maintenanceLogs`.
+## Notes
 
-## Fix
-
-Edit only `src/components/json-import-modal.tsx` (no DB / no other UI changes).
-
-### 1. Unwrap and detect shape
-
-In `detectVehicles(raw)`:
-- If `raw.data` is an object, use that as the root.
-- If the root has both `vehicles[]` and `fuelLogs[]` (or `refuels[]` / `logs[]` / `fills[]`) as siblings, group the flat logs by `vehicleId` / `vehicle_id` / `vehicle` and attach them to the matching vehicle's `refuels` before mapping. Logs whose `vehicleId` matches nothing get attached to an "Unassigned" synthetic vehicle so the user can still rescue them.
-
-### 2. Expand field synonyms
-
-Extend the key arrays:
-- `LTR_KEYS`: add `fuelAmount`, `fuel_amount`.
-- `AMT_KEYS`: add `cost`, `total_cost`, `totalCost`.
-- `FULL_KEYS`: add `filled`, `is_filled`.
-- Vehicle level: read `licensePlate` → `reg_number`; `year` → `model_year`; `fuelType` → `fuel_type`; derive display `name` from `make + " " + model` when `name` is absent.
-- Normalise `fuelType` values: lowercase, map `gas`/`gasoline` → `petrol`; unknown → `petrol`.
-
-### 3. Carry over insurance / PUC expiry (best-effort)
-
-After grouping, for each vehicle look up the latest entry in `insurances[]` and `puccs[]` matching `vehicleId` and stash `insurance_expiry` / `puc_expiry` (ISO date from `expiryDate`/`endDate`) on the detected vehicle. Pass these through to `addVehicle({...})` so renewal reminders work straight after import.
-
-### 4. Optional maintenance import
-
-If `maintenanceLogs[]` exists, group by `vehicleId`, normalise into `{ service_type, service_date, odo_km, cost_inr, notes }` (synonyms: `description`/`type` → service_type, `date` → service_date, `odometer` → odo_km, `cost` → cost_inr), and after the refuels loop call `addMaintenance({...vehicle_id})` for each. If `addMaintenance` isn't yet exported from `@/lib/data-store`, skip this step rather than block the import, and surface the count as "X maintenance logs skipped — not yet supported" in the toast.
-
-### 5. UX touches in the confirm step
-
-- Show a small badge per vehicle: `N refuels · M maintenance · insurance ✓ · PUC ✓`.
-- If any logs landed in the "Unassigned" bucket, render that card first with an amber warning explaining the user can rename it or delete it before importing.
-- Update the example JSON in the `<details>` block to also show the wrapped `{ data: { vehicles, fuelLogs } }` shape so the help matches reality.
-
-### 6. Verify
-
-After the edit, run a typecheck and a quick smoke: paste the uploaded sample, confirm both KTM Duke 390 and Honda Unicorn 160 appear with their fuel logs grouped, model year, registration, and (if present) insurance / PUC dates pre-filled.
-
-## Not changing
-
-- Database schema, server functions, CSV importer, vehicle page, settings layout. Purely a parser/UI upgrade inside the JSON modal.
+- Pure documentation file; no code/route changes.
+- Dates and version pulled from current Settings footer (`v2`) and today's date.
+- If you'd like, I can also link this from Settings later — not included in this plan.
