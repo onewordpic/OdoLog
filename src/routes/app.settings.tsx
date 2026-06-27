@@ -42,6 +42,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { ShareCard } from "@/components/share-button";
 import { GoogleCalendarCard } from "@/components/google-calendar-card";
 import { JsonImportModal } from "@/components/json-import-modal";
+import { PublicGarageCard } from "@/components/public-garage-card";
 
 
 import { useAuthed } from "@/lib/use-authed";
