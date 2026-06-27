@@ -1206,3 +1206,82 @@ function ServiceAlerts({ authed }: { authed: boolean | null }) {
     </section>
   );
 }
+
+// ---------- Name nudge: occasionally invite anonymous users to set a name ----------
+
+function NameNudge({ hasName }: { hasName: boolean }) {
+  const [show, setShow] = useState(false);
+  const [val, setVal] = useState("");
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    if (hasName) return;
+    try {
+      const dismissedAt = Number(localStorage.getItem("odolog.name-nudge.dismissed") || "0");
+      const days = (Date.now() - dismissedAt) / (1000 * 60 * 60 * 24);
+      // Show on first visit; after dismiss, re-surface only after ~3 days.
+      if (!dismissedAt || days >= 3) setShow(true);
+    } catch {
+      setShow(true);
+    }
+  }, [hasName]);
+
+  const save = useMutation({
+    mutationFn: async (name: string) => {
+      await updateProfile({ display_name: name });
+    },
+    onSuccess: () => {
+      try { localStorage.setItem("odolog.name-nudge.dismissed", String(Date.now())); } catch {}
+      qc.invalidateQueries({ queryKey: ["profile"] });
+      setShow(false);
+    },
+  });
+
+  function dismiss() {
+    try { localStorage.setItem("odolog.name-nudge.dismissed", String(Date.now())); } catch {}
+    setShow(false);
+  }
+
+  if (hasName || !show) return null;
+
+  return (
+    <div className="mt-4 glass rounded-2xl p-3.5 flex items-center gap-3 animate-fade-in-up">
+      <div className="text-xl">👋</div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-semibold leading-tight">What should we call you?</div>
+        <div className="text-[11px] text-muted-foreground">We'll use it for greetings — totally optional.</div>
+      </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const n = val.trim();
+          if (n) save.mutate(n);
+        }}
+        className="flex items-center gap-1.5 shrink-0"
+      >
+        <input
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          placeholder="Your name"
+          maxLength={30}
+          className="w-28 sm:w-36 rounded-xl glass-input glass-input-focus px-3 py-1.5 text-sm"
+        />
+        <button
+          type="submit"
+          disabled={!val.trim() || save.isPending}
+          className="press rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+        >
+          Save
+        </button>
+        <button
+          type="button"
+          onClick={dismiss}
+          aria-label="Dismiss"
+          className="press rounded-xl glass-subtle glass-hover px-2 py-1.5 text-xs"
+        >
+          ✕
+        </button>
+      </form>
+    </div>
+  );
+}
