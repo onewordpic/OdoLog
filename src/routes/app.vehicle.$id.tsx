@@ -24,8 +24,11 @@ import {
   ShieldCheck,
   Leaf,
   TrendingDown,
+  Upload,
 } from "lucide-react";
 import { CountdownRing } from "@/components/countdown-ring";
+import { CsvImportModal } from "@/components/csv-import-modal";
+
 import {
   LineChart,
   Line,
