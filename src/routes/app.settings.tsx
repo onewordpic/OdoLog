@@ -41,6 +41,8 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ShareCard } from "@/components/share-button";
 import { GoogleCalendarCard } from "@/components/google-calendar-card";
+import { JsonImportModal } from "@/components/json-import-modal";
+
 
 import { useAuthed } from "@/lib/use-authed";
 import { supabase } from "@/integrations/supabase/client";
