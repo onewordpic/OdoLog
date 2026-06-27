@@ -1,80 +1,60 @@
-OdoLog v2 Feature Plan
-======================
+## Why your import fails today
 
-Goals
------
-- Make OdoLog feel like a true companion, not just a logbook.
-- Add automation so users never miss a service, expiry, or price drop.
-- Add lightweight social features (trips, sharing) without complexity.
-- Double down on mobile PWA experience (offline, gestures, haptics).
-- Everything stays 100% free.
+The current `JsonImportModal` only understands two shapes: `{ vehicles: [{ refuels: [...] }] }` or `{ refuels: [...] }`. Your backup is shaped like:
 
-New Features by Pillar
-----------------------
+```text
+{ version, timestamp, data: {
+    vehicles: [ { id, make, model, year, licensePlate, fuelType, odometer, ... } ],
+    fuelLogs: [ { vehicleId, date, odometer, fuelAmount, cost, filled, ... } ],
+    maintenanceLogs: [...],
+    insurances:     [ { vehicleId, expiryDate, ... } ],
+    puccs:          [ { vehicleId, expiryDate, ... } ]
+} }
+```
 
-### 1. Deeper Data Insights
-- Monthly / Yearly Report Card
-  - One-tap summary of total spend, total km, average mileage, cost/km for any month or year.
-  - Export as a clean shareable image (like a receipt) + CSV.
-- Fuel Efficiency Scorecard
-  - Compare actual mileage against ARAI claimed mileage with a simple "You're getting 87% of claimed" score.
-- Cost Projection
-  - "At your current rate, you'll spend ~₹X,XXX on fuel this year."
-- Vehicle Health Score
-  - Derived from maintenance gaps, overdue services, tyre condition age, and oil change delays. Shown as a 0-100 ring on the vehicle card.
+So the importer:
+1. Never unwraps `data`, so it treats the whole object as one anonymous vehicle.
+2. Doesn't know `fuelAmount` = litres, `cost` = amount, `filled` = full_tank.
+3. Doesn't group the flat `fuelLogs` by `vehicleId` back onto each vehicle.
+4. Throws away `insurances` / `puccs` / `maintenanceLogs`.
 
-### 2. Smart Automation
-- Push Notification Reminders (via Web Push)
-  - Service due (ODO or date approaching)
-  - Insurance / PUC / Fitness test expiring in 90, 30, and 7 days
-  - Optional: fuel price changed in your city today
-- Smart "Next Refuel" Estimate
-  - Based on your consumption pattern and last ODO, suggest an approximate km when you'll need fuel again.
-- Document Expiry Countdown
-  - Visual countdown rings on the vehicle page for Insurance, PUC, and Fitness.
-- Auto Fuel Price Suggestion
-  - On the refuel form, auto-suggest today's rate for the user's saved city (they can still override).
+## Fix
 
-### 3. Trips & Social
-- Trip Logger
-  - Log a trip with start/end ODO, purpose, tolls, parking costs.
-  - Auto-compute trip mileage and cost.
-- Trip Cost Splitter
-  - Add co-passengers and split toll/fuel costs evenly or by percentage.
-- Garage Sharing (Invite Link)
-  - Generate a read-only or collaborative invite link for a vehicle.
-  - Viewers see refuel history, maintenance, and cost/km (great for family cars or fleets).
-- Achievement Badges
-  - Hypermiler (exceed ARAI mileage)
-  - Consistent Logger (log 10 refuels in a row without gaps)
-  - Maintenance Pro (all services on time for 1 year)
-  - Saver (EV owner — displayed with a leaf icon)
+Edit only `src/components/json-import-modal.tsx` (no DB / no other UI changes).
 
-### 4. Mobile PWA Polish
-- Offline Refuel Queue
-  - Save a refuel even with no signal; it queues locally and syncs when connection returns.
-- Swipe Actions on History
-  - Swipe a refuel or maintenance row left to edit, right to delete.
-- Pull-to-Refresh
-  - On the dashboard and vehicle pages.
-- Haptic Feedback
-  - Light vibration on successful save, delete, and badge unlock.
-- Bottom Sheet Modals
-  - Add refuel, add maintenance, and add trip open as bottom sheets on mobile instead of center dialogs.
-- Quick-Add Widget (Home Screen Shortcut)
-  - Long-press app icon → "Log Refuel" jumps straight to the form pre-filled for your primary vehicle.
+### 1. Unwrap and detect shape
 
-Schema Changes Required
------------------------
-- `trips` table: vehicle_id, start_odo, end_odo, date, purpose, tolls_inr, parking_inr, notes
-- `trip_splits` table: trip_id, participant_name, share_percent
-- `user_achievements` table: user_id, badge_key, unlocked_at
-- `notification_subscriptions` table: user_id, endpoint, p256dh, auth (for web push)
+In `detectVehicles(raw)`:
+- If `raw.data` is an object, use that as the root.
+- If the root has both `vehicles[]` and `fuelLogs[]` (or `refuels[]` / `logs[]` / `fills[]`) as siblings, group the flat logs by `vehicleId` / `vehicle_id` / `vehicle` and attach them to the matching vehicle's `refuels` before mapping. Logs whose `vehicleId` matches nothing get attached to an "Unassigned" synthetic vehicle so the user can still rescue them.
 
-No monetization or paywalls are introduced in v2. Everything above is available to guest and signed-in users alike.
+### 2. Expand field synonyms
 
----
+Extend the key arrays:
+- `LTR_KEYS`: add `fuelAmount`, `fuel_amount`.
+- `AMT_KEYS`: add `cost`, `total_cost`, `totalCost`.
+- `FULL_KEYS`: add `filled`, `is_filled`.
+- Vehicle level: read `licensePlate` → `reg_number`; `year` → `model_year`; `fuelType` → `fuel_type`; derive display `name` from `make + " " + model` when `name` is absent.
+- Normalise `fuelType` values: lowercase, map `gas`/`gasoline` → `petrol`; unknown → `petrol`.
 
-Next Step
----------
-Once you approve this direction, I can break it into sprints and start building. Pick any specific feature you want to tackle first, or approve the full plan and I'll begin with the highest-impact items (push notifications + offline queue + monthly report card).
+### 3. Carry over insurance / PUC expiry (best-effort)
+
+After grouping, for each vehicle look up the latest entry in `insurances[]` and `puccs[]` matching `vehicleId` and stash `insurance_expiry` / `puc_expiry` (ISO date from `expiryDate`/`endDate`) on the detected vehicle. Pass these through to `addVehicle({...})` so renewal reminders work straight after import.
+
+### 4. Optional maintenance import
+
+If `maintenanceLogs[]` exists, group by `vehicleId`, normalise into `{ service_type, service_date, odo_km, cost_inr, notes }` (synonyms: `description`/`type` → service_type, `date` → service_date, `odometer` → odo_km, `cost` → cost_inr), and after the refuels loop call `addMaintenance({...vehicle_id})` for each. If `addMaintenance` isn't yet exported from `@/lib/data-store`, skip this step rather than block the import, and surface the count as "X maintenance logs skipped — not yet supported" in the toast.
+
+### 5. UX touches in the confirm step
+
+- Show a small badge per vehicle: `N refuels · M maintenance · insurance ✓ · PUC ✓`.
+- If any logs landed in the "Unassigned" bucket, render that card first with an amber warning explaining the user can rename it or delete it before importing.
+- Update the example JSON in the `<details>` block to also show the wrapped `{ data: { vehicles, fuelLogs } }` shape so the help matches reality.
+
+### 6. Verify
+
+After the edit, run a typecheck and a quick smoke: paste the uploaded sample, confirm both KTM Duke 390 and Honda Unicorn 160 appear with their fuel logs grouped, model year, registration, and (if present) insurance / PUC dates pre-filled.
+
+## Not changing
+
+- Database schema, server functions, CSV importer, vehicle page, settings layout. Purely a parser/UI upgrade inside the JSON modal.
