@@ -412,6 +412,8 @@ function Dashboard() {
 
       </div>
 
+      <AchievementBadges />
+
       <ServiceAlerts authed={authed} />
 
       {showAdd && <AddVehicleModal onClose={() => setShowAdd(false)} />}
