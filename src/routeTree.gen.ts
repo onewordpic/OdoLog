@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppReportsRouteImport } from './routes/app.reports'
+import { Route as AppInsightsRouteImport } from './routes/app.insights'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppVehicleIdRouteImport } from './routes/app.vehicle.$id'
 import { Route as ApiPublicGcalCallbackRouteImport } from './routes/api.public.gcal.callback'
@@ -43,6 +44,11 @@ const AppReportsRoute = AppReportsRouteImport.update({
   path: '/app/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppInsightsRoute = AppInsightsRouteImport.update({
+  id: '/app/insights',
+  path: '/app/insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
   id: '/app/analytics',
   path: '/app/analytics',
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/analytics': typeof AppAnalyticsRoute
+  '/app/insights': typeof AppInsightsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/analytics': typeof AppAnalyticsRoute
+  '/app/insights': typeof AppInsightsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/analytics': typeof AppAnalyticsRoute
+  '/app/insights': typeof AppInsightsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app/analytics'
+    | '/app/insights'
     | '/app/reports'
     | '/app/settings'
     | '/app/'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app/analytics'
+    | '/app/insights'
     | '/app/reports'
     | '/app/settings'
     | '/app'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app/analytics'
+    | '/app/insights'
     | '/app/reports'
     | '/app/settings'
     | '/app/'
@@ -127,6 +139,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   AppAnalyticsRoute: typeof AppAnalyticsRoute
+  AppInsightsRoute: typeof AppInsightsRoute
   AppReportsRoute: typeof AppReportsRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -171,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/insights': {
+      id: '/app/insights'
+      path: '/app/insights'
+      fullPath: '/app/insights'
+      preLoaderRoute: typeof AppInsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/analytics': {
       id: '/app/analytics'
       path: '/app/analytics'
@@ -199,6 +219,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   AppAnalyticsRoute: AppAnalyticsRoute,
+  AppInsightsRoute: AppInsightsRoute,
   AppReportsRoute: AppReportsRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
