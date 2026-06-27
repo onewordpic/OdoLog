@@ -535,6 +535,8 @@ function VehiclePage() {
       )}
 
       <TripSection vehicleId={id} costPerKm={summary.costPerKm} />
+      <TripAnalytics vehicleId={id} costPerKm={summary.costPerKm} />
+
     </main>
   );
 }
