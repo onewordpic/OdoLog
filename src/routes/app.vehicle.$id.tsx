@@ -289,6 +289,9 @@ function VehiclePage() {
           </p>
         </div>
       )}
+      {vehicle.data && (
+        <VehicleHealthScore vehicle={vehicle.data} latestOdo={summary.latestOdo} />
+      )}
 
 
 
