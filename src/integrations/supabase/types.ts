@@ -144,6 +144,56 @@ export type Database = {
           },
         ]
       }
+      trips: {
+        Row: {
+          created_at: string
+          end_odo_km: number | null
+          id: string
+          notes: string | null
+          purpose: string | null
+          start_odo_km: number | null
+          tolls_inr: number | null
+          trip_date: string
+          updated_at: string
+          user_id: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_odo_km?: number | null
+          id?: string
+          notes?: string | null
+          purpose?: string | null
+          start_odo_km?: number | null
+          tolls_inr?: number | null
+          trip_date?: string
+          updated_at?: string
+          user_id: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          end_odo_km?: number | null
+          id?: string
+          notes?: string | null
+          purpose?: string | null
+          start_odo_km?: number | null
+          tolls_inr?: number | null
+          trip_date?: string
+          updated_at?: string
+          user_id?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trips_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicles: {
         Row: {
           created_at: string

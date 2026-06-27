@@ -50,6 +50,18 @@ export type MaintenanceLog = {
 };
 
 
+export type Trip = {
+  id: string;
+  vehicle_id: string;
+  start_odo_km: number | null;
+  end_odo_km: number | null;
+  purpose: string | null;
+  tolls_inr: number | null;
+  notes: string | null;
+  trip_date: string;
+  created_at: string;
+};
+
 export type Profile = {
   display_name: string;
   default_city: string;
@@ -59,6 +71,7 @@ const LS_VEHICLES = "odolog.vehicles";
 const LS_REFUELS = "odolog.refuels";
 const LS_MAINT = "odolog.maintenance";
 const LS_PROFILE = "odolog.profile";
+const LS_TRIPS = "odolog.trips";
 
 const LEGACY_KEYS: Record<string, string> = {
   [LS_VEHICLES]: "fuelogue.vehicles",
@@ -626,5 +639,65 @@ export async function deleteMaintenance(id: string): Promise<void> {
   lsWrite(
     LS_MAINT,
     lsRead<MaintenanceLog[]>(LS_MAINT, []).filter((m) => m.id !== id),
+  );
+}
+
+export async function listTrips(vehicleId: string): Promise<Trip[]> {
+  const userId = await getUserId();
+  if (userId) {
+    const { data, error } = await supabase
+      .from("trips")
+      .select("*")
+      .eq("vehicle_id", vehicleId)
+      .order("trip_date", { ascending: false })
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as Trip[];
+  }
+  const all = lsRead<Trip[]>(LS_TRIPS, [])
+    .filter((t) => t.vehicle_id === vehicleId)
+    .sort((a, b) => {
+      const d = b.trip_date.localeCompare(a.trip_date);
+      return d !== 0 ? d : b.created_at.localeCompare(a.created_at);
+    });
+  return all;
+}
+
+export async function addTrip(input: {
+  vehicle_id: string;
+  start_odo_km: number | null;
+  end_odo_km: number | null;
+  purpose: string | null;
+  tolls_inr: number | null;
+  notes: string | null;
+  trip_date: string;
+}): Promise<void> {
+  const userId = await getUserId();
+  if (userId) {
+    const { error } = await supabase.from("trips").insert({ ...input, user_id: userId });
+    if (error) throw error;
+    return;
+  }
+  const t: Trip = {
+    id: uid(),
+    ...input,
+    tolls_inr: input.tolls_inr ?? 0,
+    created_at: new Date().toISOString(),
+  };
+  const all = lsRead<Trip[]>(LS_TRIPS, []);
+  all.push(t);
+  lsWrite(LS_TRIPS, all);
+}
+
+export async function deleteTrip(id: string): Promise<void> {
+  const userId = await getUserId();
+  if (userId) {
+    const { error } = await supabase.from("trips").delete().eq("id", id);
+    if (error) throw error;
+    return;
+  }
+  lsWrite(
+    LS_TRIPS,
+    lsRead<Trip[]>(LS_TRIPS, []).filter((t) => t.id !== id),
   );
 }
