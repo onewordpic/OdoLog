@@ -1229,7 +1229,8 @@ function NameNudge({ hasName }: { hasName: boolean }) {
 
   const save = useMutation({
     mutationFn: async (name: string) => {
-      await updateProfile({ display_name: name });
+      const cur = await getProfile();
+      await saveProfile({ display_name: name, default_city: cur.default_city || "thiruvananthapuram" });
     },
     onSuccess: () => {
       try { localStorage.setItem("odolog.name-nudge.dismissed", String(Date.now())); } catch {}
