@@ -237,11 +237,12 @@ function VehiclePage() {
             return (
               <div
                 key={r.kind}
-                className={`glass flex items-start gap-3 rounded-2xl border p-4 ${tone}`}
+                className={`glass flex items-center gap-3 rounded-2xl border p-4 ${tone}`}
               >
-                <Icon className="mt-0.5 h-5 w-5 shrink-0" />
-                <div className="min-w-0 text-xs">
-                  <div className="text-sm font-medium text-foreground">
+                <CountdownRing daysLeft={r.daysLeft} size={52} stroke={4} />
+                <div className="min-w-0 flex-1 text-xs">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <Icon className="h-4 w-4 shrink-0" />
                     {label} {expired ? "expired" : "renewal due"}
                   </div>
                   <p className="mt-0.5 text-muted-foreground">
