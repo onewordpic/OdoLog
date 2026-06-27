@@ -562,6 +562,8 @@ function VehiclePage() {
 
       <TripSection vehicleId={id} costPerKm={summary.costPerKm} />
       <TripAnalytics vehicleId={id} costPerKm={summary.costPerKm} />
+      {!isEV && <EcoCard vehicleId={id} fuelType={vehicle.fuel_type} />}
+
 
     </main>
   );
