@@ -385,32 +385,61 @@ function Dashboard() {
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
           ) : vehicles.data && vehicles.data.length > 0 ? (
-            <div className="space-y-2 overflow-y-auto max-h-[420px] pr-1 -mr-1">
-              {vehicles.data.map((v) => {
-                const color = accentFor(v.id);
+            <div className="space-y-4 overflow-y-auto max-h-[460px] pr-1 -mr-1">
+              {(["mine", "guest"] as const).map((group) => {
+                const list = (vehicles.data ?? []).filter((v) =>
+                  group === "guest" ? v.is_guest : !v.is_guest,
+                );
+                if (list.length === 0) return null;
                 return (
-                  <Link
-                    key={v.id}
-                    to="/app/vehicle/$id"
-                    params={{ id: v.id }}
-                    className="press flex items-center justify-between p-2.5 hover:bg-foreground/5 rounded-2xl transition"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div
-                        className="h-10 w-10 rounded-full flex items-center justify-center shrink-0"
-                        style={{ background: color, color: "#0c1410" }}
-                      >
-                        <VehicleIcon icon={v.icon ?? "car"} className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold truncate">
-                          {v.make ? `${v.make} ${v.name}` : v.name}
-                        </div>
-                        <div className="text-[11px] capitalize text-[var(--cockpit-text-mute)]">{v.fuel_type}</div>
-                      </div>
+                  <div key={group}>
+                    <div className="mb-1.5 flex items-center gap-2">
+                      <span className="text-[10px] uppercase tracking-[0.18em] font-semibold text-[var(--cockpit-text-mute)]">
+                        {group === "guest" ? "Guest Garage" : "My Garage"}
+                      </span>
+                      {group === "guest" && (
+                        <span className="text-[10px] text-[var(--cockpit-text-mute)] italic">
+                          Borrowed wheels, full receipts
+                        </span>
+                      )}
                     </div>
-                    <ChevronRight className="h-4 w-4 text-[var(--cockpit-text-mute)] shrink-0" />
-                  </Link>
+                    <div className="space-y-2">
+                      {list.map((v) => {
+                        const color = accentFor(v.id);
+                        return (
+                          <Link
+                            key={v.id}
+                            to="/app/vehicle/$id"
+                            params={{ id: v.id }}
+                            className="press flex items-center justify-between p-2.5 hover:bg-foreground/5 rounded-2xl transition"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div
+                                className="h-10 w-10 rounded-full flex items-center justify-center shrink-0"
+                                style={{ background: color, color: "#0c1410" }}
+                              >
+                                <VehicleIcon icon={v.icon ?? "car"} className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-sm font-semibold truncate flex items-center gap-1.5">
+                                  {v.make ? `${v.make} ${v.name}` : v.name}
+                                  {v.is_guest && (
+                                    <span className="rounded-full bg-foreground/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[var(--cockpit-text-soft)]">
+                                      Borrowed
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] capitalize text-[var(--cockpit-text-mute)] truncate">
+                                  {v.is_guest && v.owner_name ? `${v.owner_name}'s · ` : ""}{v.fuel_type}
+                                </div>
+                              </div>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-[var(--cockpit-text-mute)] shrink-0" />
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
                 );
               })}
             </div>
