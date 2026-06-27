@@ -241,9 +241,11 @@ export type Database = {
           id: string
           image_url: string | null
           insurance_expiry: string | null
+          is_guest: boolean
           make: string | null
           model_year: number | null
           name: string
+          owner_name: string | null
           puc_expiry: string | null
           purchase_date: string | null
           purchase_price_inr: number | null
@@ -257,9 +259,11 @@ export type Database = {
           id?: string
           image_url?: string | null
           insurance_expiry?: string | null
+          is_guest?: boolean
           make?: string | null
           model_year?: number | null
           name: string
+          owner_name?: string | null
           puc_expiry?: string | null
           purchase_date?: string | null
           purchase_price_inr?: number | null
@@ -273,9 +277,11 @@ export type Database = {
           id?: string
           image_url?: string | null
           insurance_expiry?: string | null
+          is_guest?: boolean
           make?: string | null
           model_year?: number | null
           name?: string
+          owner_name?: string | null
           puc_expiry?: string | null
           purchase_date?: string | null
           purchase_price_inr?: number | null
