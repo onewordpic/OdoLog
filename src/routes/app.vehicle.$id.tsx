@@ -50,7 +50,7 @@ import {
 } from "@/lib/data-store";
 import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
 import { VehicleAvatar } from "@/components/vehicle-avatar";
-import { VehicleHealthScore, NextRefuelEstimate } from "@/components/vehicle-insights";
+import { VehicleHealthScore, NextRefuelEstimate, CostProjection } from "@/components/vehicle-insights";
 import { searchCatalog, claimedMileage, type CatalogEntry } from "@/lib/vehicle-catalog";
 import { getPrefs, PREFS_EVENT, type Prefs } from "@/lib/prefs";
 
