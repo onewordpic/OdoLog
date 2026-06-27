@@ -416,13 +416,23 @@ function VehiclePage() {
           <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
             Refuel log
           </h2>
-          <button
-            onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1 rounded-full bg-foreground px-3 py-1.5 text-xs font-medium text-background hover:opacity-90"
-          >
-            <Plus className="h-3.5 w-3.5" /> Add refuel
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowImport(true)}
+              className="flex items-center gap-1 rounded-full glass-subtle px-3 py-1.5 text-xs font-medium hover:opacity-90"
+              title="Import from CSV (Hammond, Fuelio, etc.)"
+            >
+              <Upload className="h-3.5 w-3.5" /> Import CSV
+            </button>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="flex items-center gap-1 rounded-full bg-foreground px-3 py-1.5 text-xs font-medium text-background hover:opacity-90"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add refuel
+            </button>
+          </div>
         </div>
+
 
         {refuels.isLoading ? (
           <div className="glass flex h-24 items-center justify-center rounded-2xl">
