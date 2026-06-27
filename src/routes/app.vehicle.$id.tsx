@@ -409,7 +409,8 @@ function VehiclePage() {
         </>
       )}
 
-      <MaintenanceSection vehicleId={id} latestOdo={summary.latestOdo} isEV={!!isEV} />
+
+
 
 
 
