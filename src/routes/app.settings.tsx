@@ -264,6 +264,10 @@ function SettingsPage() {
 
           <ShareCard />
 
+          <GoogleCalendarCard />
+
+
+
 
 
           {/* Profile */}
