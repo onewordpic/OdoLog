@@ -531,6 +531,8 @@ function VehiclePage() {
           onClose={() => setEditing(null)}
         />
       )}
+
+      <TripSection vehicleId={id} costPerKm={summary.costPerKm} />
     </main>
   );
 }
