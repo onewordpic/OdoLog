@@ -24,6 +24,7 @@ import {
   addVehicle,
   dashboardStats,
   listRecentRefuels,
+  listAllRefuels,
   listAllMaintenance,
   getProfile,
   type VehicleIcon as VIcon,
