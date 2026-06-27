@@ -53,7 +53,7 @@ function greetingFor(name: string) {
     "Good night";
   const flavours = ["Happy riding", "Safe travels", "Drive safe"];
   const flavour = flavours[new Date().getDate() % flavours.length];
-  const who = name ? `, ${name}` : "";
+  const who = name ? `, ${name}` : ", User";
   // Alternate greeting style across the day for variety.
   return (h % 2 === 0 ? slot : flavour) + who;
 }
