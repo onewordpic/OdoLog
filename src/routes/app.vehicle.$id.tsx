@@ -409,7 +409,8 @@ function VehiclePage() {
         </>
       )}
 
-      <MaintenanceSection vehicleId={id} latestOdo={summary.latestOdo} isEV={!!isEV} />
+
+
 
 
 
@@ -531,6 +532,10 @@ function VehiclePage() {
         )}
       </section>
       )}
+
+      <MaintenanceSection vehicleId={id} latestOdo={summary.latestOdo} isEV={!!isEV} />
+
+
 
 
       {showAdd && vehicle.data && (

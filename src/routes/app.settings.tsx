@@ -18,7 +18,9 @@ import {
   Star,
   Github,
   Share2,
+  Upload,
   X,
+
 } from "lucide-react";
 import {
   getProfile,
@@ -39,6 +41,8 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ShareCard } from "@/components/share-button";
 import { GoogleCalendarCard } from "@/components/google-calendar-card";
+import { JsonImportModal } from "@/components/json-import-modal";
+
 
 import { useAuthed } from "@/lib/use-authed";
 import { supabase } from "@/integrations/supabase/client";
@@ -92,6 +96,8 @@ function SettingsPage() {
   const [name, setName] = useState("");
   const [city, setCity] = useState("thiruvananthapuram");
   const [showStar, setShowStar] = useState(false);
+  const [showJsonImport, setShowJsonImport] = useState(false);
+
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -473,7 +479,18 @@ function SettingsPage() {
           </Section>
 
 
-          <Section icon={Database} title="Data & privacy" subtitle="Export, clear, or sign out.">
+          <Section icon={Database} title="Data & privacy" subtitle="Import, export, clear, or sign out.">
+            <button
+              onClick={() => setShowJsonImport(true)}
+              className="press flex w-full items-center justify-between gap-2 rounded-xl glass-subtle px-4 py-3 text-sm font-medium hover:bg-foreground/5"
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <Upload className="h-4 w-4 shrink-0" />
+                <span className="truncate">Import from JSON</span>
+              </span>
+              <span className="shrink-0 text-xs text-muted-foreground">multi-vehicle</span>
+            </button>
+
             <button
               onClick={handleExport}
               className="press flex w-full items-center justify-between gap-2 rounded-xl glass-subtle px-4 py-3 text-sm font-medium hover:bg-foreground/5"
@@ -484,6 +501,7 @@ function SettingsPage() {
               </span>
               <span className="shrink-0 text-xs text-muted-foreground">all vehicles</span>
             </button>
+
 
             <button
               onClick={handleClear}
@@ -558,9 +576,11 @@ function SettingsPage() {
           </footer>
         </div>
       )}
+      <JsonImportModal open={showJsonImport} onClose={() => setShowJsonImport(false)} />
     </main>
   );
 }
+
 
 function Section({
   icon: Icon,
