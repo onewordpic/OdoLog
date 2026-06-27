@@ -374,11 +374,14 @@ export async function addRefuel(input: {
   litres: number;
   odo_km: number | null;
   full_tank: boolean;
+  fuel_subtype?: FuelSubtype;
 }): Promise<void> {
   const userId = await getUserId();
+  const subtype = input.fuel_subtype ?? null;
   if (userId) {
     const { error } = await supabase.from("refuels").insert({
       ...input,
+      fuel_subtype: subtype,
       user_id: userId,
     });
     if (error) throw error;
@@ -387,6 +390,7 @@ export async function addRefuel(input: {
   const r: Refuel = {
     id: uid(),
     ...input,
+    fuel_subtype: subtype,
     notes: null,
     created_at: new Date().toISOString(),
   };
@@ -404,6 +408,7 @@ export async function updateRefuel(
     litres: number;
     odo_km: number | null;
     full_tank: boolean;
+    fuel_subtype?: FuelSubtype;
   },
 ): Promise<void> {
   const userId = await getUserId();
@@ -418,6 +423,7 @@ export async function updateRefuel(
   all[idx] = { ...all[idx], ...patch };
   lsWrite(LS_REFUELS, all);
 }
+
 
 export async function deleteRefuel(id: string): Promise<void> {
   const userId = await getUserId();
