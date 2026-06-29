@@ -48,8 +48,22 @@ function parseTripText(text: string): {
 } | null {
   const t = text.trim();
   if (!t) return null;
-  const roundTrip = /\b(and\s+back|round\s*trip|return)\b/i.test(t);
-  const cleaned = t.replace(/\b(and\s+back|round\s*trip|return)\b/i, "").trim();
+  // Detect explicit return phrasing.
+  const backMatch = t.match(/\bback\s+to\s+([^,.]+?)(?:[.,]|$)/i);
+  const roundTrip =
+    !!backMatch ||
+    /\b(and\s+back|round\s*trip|return)\b/i.test(t);
+
+  // Strip filler clauses we don't need to geocode (sightseeing, via X, etc.)
+  let cleaned = t
+    .replace(/\bback\s+to\s+[^,.]+/gi, "")
+    .replace(/\b(and\s+)?(some\s+)?(sight\s*seeing|sightseeing|sights|exploring|stops?)\b[^,.]*/gi, "")
+    .replace(/\b(and\s+back|round\s*trip|return)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^and\s+/i, "")
+    .replace(/\s+and\s*$/i, "");
+
   // Patterns: "A to B", "from A to B", "A → B", "A - B"
   const m =
     cleaned.match(/^(?:from\s+)?([^,–\->]+?)\s+(?:to|→|->|-|–)\s+(.+?)\.?$/i) ??
