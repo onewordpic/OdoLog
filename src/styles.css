@@ -318,3 +318,31 @@
 @utility stagger {
   animation: fade-in-up 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
+
+/* ---- Glass surface mode overrides (Settings → Display) ---- */
+html[data-glass="solid"] .glass,
+html[data-glass="solid"] .glass-subtle,
+html[data-glass="solid"] .liquid-glass {
+  background: var(--card) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html[data-glass="solid"] .liquid-glass::before { display: none; }
+
+html[data-glass="liquid"] .glass {
+  background:
+    linear-gradient(135deg,
+      color-mix(in oklab, var(--glass) 92%, white 8%),
+      var(--glass)) !important;
+  backdrop-filter: blur(28px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in oklab, white 55%, transparent),
+    inset 0 -1px 0 0 color-mix(in oklab, black 8%, transparent),
+    0 22px 60px -28px color-mix(in oklab, black 30%, transparent);
+}
+html[data-glass="liquid"] .glass-subtle {
+  background: color-mix(in oklab, var(--glass) 70%, white 6%) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+}
