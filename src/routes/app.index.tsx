@@ -328,8 +328,12 @@ function Dashboard() {
         </div>
 
         {/* Featured vehicle — mint accent hero */}
-        <div className="md:col-span-7 rounded-[2rem] p-7 relative overflow-hidden group stagger min-h-[200px]"
+        <div className="md:col-span-7 rounded-[2rem] p-7 relative overflow-hidden group stagger min-h-[200px] shadow-[0_10px_40px_-12px_rgba(0,0,0,0.25)] ring-1 ring-white/15"
              style={{ background: "var(--mint-accent)", color: "#0c1410", animationDelay: "180ms" }}>
+          {/* Apple-style inner gloss + hairline */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[2rem] bg-gradient-to-br from-white/25 via-white/5 to-transparent mix-blend-overlay" />
+          <div aria-hidden className="pointer-events-none absolute inset-x-6 top-0 h-px bg-white/40" />
+
           <div className="relative z-10 flex flex-col h-full justify-between gap-6">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-[0.18em] opacity-70">
