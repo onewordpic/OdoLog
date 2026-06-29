@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Fuel, Route as RouteIcon, X, ChevronRight, Cog } from "lucide-react";
+import { Fuel, Route as RouteIcon, X, ChevronRight, LayoutGrid } from "lucide-react";
 import { listVehicles, type Vehicle } from "@/lib/data-store";
 import { useQuery } from "@tanstack/react-query";
 import { VehicleIcon } from "@/components/vehicle-icon";
