@@ -253,9 +253,7 @@ function Dashboard() {
           <div className="mt-1 flex flex-wrap gap-1">
             {([
               ["all", "All time"],
-              ["year", "This year"],
               ["month", "This month"],
-              ["30d", "30 days"],
             ] as const).map(([k, label]) => (
               <button
                 key={k}
@@ -292,11 +290,7 @@ function Dashboard() {
               <div className="font-display text-3xl font-bold tracking-tight">
                 {totalLitres.toFixed(1)}<span className="text-sm ml-1 text-[var(--cockpit-text-mute)]">L</span>
               </div>
-              <div className="mt-3 flex items-end gap-1 h-6">
-                {[40, 65, 30, 80, 55, 90, 70].map((h, i) => (
-                  <div key={i} className="flex-1 rounded-sm bg-[var(--mint-accent)]/70" style={{ height: `${h}%` }} />
-                ))}
-              </div>
+              <p className="text-[11px] mt-2 text-[var(--cockpit-text-soft)]">total fuel</p>
             </div>
           </div>
           <div className="rounded-[2rem] p-5 border border-foreground/10 bg-[var(--cockpit-card)] flex flex-col justify-between stagger"
