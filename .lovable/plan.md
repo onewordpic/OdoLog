@@ -1,51 +1,65 @@
-## Goal
+# Mobile-first redesign, fuel brand, and Trip Planner
 
-The UI has grown crowded — too many top-bar icons, nudges, advisory cards, and bento tiles. Slim it down to the essentials and fully remove the Public Garage feature (page, settings card, vehicle visibility toggles, server functions, DB columns).
+Three focused changes, no scope creep.
 
-## 1. Remove Public Garage
+## 1. Mobile UI overhaul (vehicle dashboard + home)
 
-- Delete files:
-  - `src/routes/g.$handle.tsx` (public page)
-  - `src/components/public-garage-card.tsx` (settings card)
-- `src/routes/app.settings.tsx`: remove the `PublicGarageCard` import and its section.
-- `src/lib/insights.functions.ts`: remove `fetchPublicGarage`, `setPublicHandle`, `setPublicBio`, `setVehicleVisibility`, and the `PublicGarage` type. Keep `generateMonthlySummary` (AI insights stays).
-- `.lovable/plan.md`: drop the "Public garage profile" pillar so future passes don't re-suggest it.
-- DB migration to drop public-garage surface:
-  - `DROP FUNCTION IF EXISTS public.get_public_garage(text), public.get_public_garage_stats(text);`
-  - `ALTER TABLE public.profiles DROP COLUMN IF EXISTS public_handle, DROP COLUMN IF EXISTS public_bio;`
-  - `ALTER TABLE public.vehicles DROP COLUMN IF EXISTS garage_visibility;`
-- Routes file `src/routeTree.gen.ts` is auto-regenerated — no manual edit.
+Goal: on phones, the primary action is **Log Fuel**, with key stats glanceable above the fold. "Add Vehicle" moves out of the top bar.
 
-## 2. Trim the dashboard (`src/routes/app.index.tsx`)
+**Home (`src/routes/app.index.tsx`) — mobile (<768px) only, desktop unchanged:**
+- Top bar: greeting + theme/settings only. Remove the prominent "Add vehicle" CTA from the top.
+- Hero stat strip (compact): Total spent (toggle All/Month), Total litres, Avg ₹/km — single horizontal scroll row of glass chips.
+- Vehicle picker becomes a **horizontal snap carousel** of vehicle cards (avatar + name + last odo). Tapping a card selects it as "active vehicle".
+- **Sticky bottom action bar** (mobile only): big primary "⛽ Log Fuel" button (opens refuel modal pre-filled with active vehicle) + secondary "＋ Trip" and a small "＋ Vehicle" text link tucked into an overflow menu.
+- Move "Add vehicle" into: (a) overflow menu in bottom bar, (b) empty-state CTA, (c) a "+" tile at the end of the vehicle carousel.
 
-Top bar — collapse 7 buttons to 4:
-- Keep: ThemeToggle, Analytics, Settings, Sign-in/out.
-- Remove from header: ShareIconButton, Reports icon, AI-Insights icon. (Reports and Insights remain reachable from Analytics page / direct URLs; we can surface them as text links inside Analytics later if needed.)
+**Vehicle page (`src/routes/app.vehicle.$id.tsx`) — mobile:**
+- Collapse header (smaller avatar, single-line title, badges wrap below).
+- Stat tiles reflow to 2-col compact grid; secondary cards (depreciation, insights) collapse into expandable sections.
+- Floating "⛽ Log Fuel" FAB bottom-right (hidden for EV).
+- Refuel form opens as a **bottom sheet** (`vaul` Drawer already in deps) instead of inline expand.
 
-Body cleanup:
-- Remove `<WeatherAdvisory />` (keep the compact `<WeatherChip />` in the title row).
-- Remove `<NameNudge />` (occasional name prompt). The greeting already falls back to "User".
-- Drop the decorative bar-chart sparkline inside the "Litres" tile (purely cosmetic).
-- Remove the standalone `<AchievementBadges />` block if rendered further down (verify in remainder of file; remove if present).
+Desktop layout untouched; gated via `useIsMobile()`.
 
-Spend hero stays, but the 4-pill range toggle (`All / Year / Month / 30d`) collapses to 2 pills: `All time` and `This month`. Simpler default, less visual noise.
+## 2. Fuel provider selector
 
-## 3. Trim the vehicle page (`src/routes/app.vehicle.$id.tsx`)
+Add fuel brand choice per refuel: **Indian Oil, Bharat Petroleum, Hindustan Petroleum, Nayara, Reliance Jio-bp, Shell, Other**.
 
-- Remove the `EcoCard` import + render (eco grade tile is heavy and not part of core "fuel + odo" loop). Delete `src/components/eco-card.tsx` and `src/lib/eco.ts` since nothing else imports them.
-- Keep insurance/PUC countdown, refuel log, maintenance, trips, insights — these are core.
+- DB: add nullable `fuel_brand text` column to `refuels` (migration).
+- `data-store.ts`: include `fuel_brand` in Refuel type + add/edit paths + localStorage shape.
+- Refuel form: brand chip selector below fuel type (remembers last used per vehicle via `localStorage`).
+- History row: small brand chip next to the fuel subtype.
+- Analytics: optional "spend by brand" mini-breakdown (single donut row, only if >1 brand used). Defer if it inflates scope — flag as v-next.
+- No price differentiation by brand for now (rates API stays city-based); brand is metadata.
 
-## 4. Settings cleanup (`src/routes/app.settings.tsx`)
+## 3. Trip Planner with estimates
 
-- Remove `PublicGarageCard` section (covered above).
-- No other changes — settings is already opt-in dense.
+New entry point: "Plan a trip" button on home (in the bottom bar overflow) and on the vehicle page.
 
-## 5. Verify
+**Flow (bottom-sheet modal, `src/components/trip-planner-modal.tsx`):**
+1. Free-text input: "Describe your trip" (e.g. "Trivandrum to Munnar and back").
+2. Parse with light regex: extract origin, destination, detect "and back"/"return"/"round trip" → roundTrip flag. If parse fails, show two manual fields.
+3. Distance estimate: use **OSRM public routing API** (`router.project-osrm.org`) via a `createServerFn` (`src/lib/trip-estimate.functions.ts`) — geocode with **Nominatim** (OpenStreetMap), then route. Both are free, no key. Double the distance if round trip.
+4. Vehicle picker: chip row of user's vehicles (skip EVs from fuel cost but show kWh estimate if we have it — otherwise just distance for EV).
+5. Estimate card shows:
+   - Distance (km)
+   - Estimated fuel (L) = distance / mileage
+   - Estimated cost (₹) = litres × latest city fuel rate for that fuel type
+   - Mileage source label: **"Your logs (last 5 refuels avg)"** if ≥2 full-tank segments exist, else **"ARAI claimed"** from `vehicle-catalog.ts`, else **"Generic default"** (petrol 18, diesel 22, CNG 25 km/kg).
+6. Persistent disclaimer chip: *"Estimates only — actual usage varies with traffic, AC, terrain & driving style."*
+7. CTA: **"Save as planned trip"** → inserts into existing `trips` table with `start_odo_km`/`end_odo_km` null and `notes` = parsed description + estimated km (reuse existing schema, no migration).
 
-After edits: `tsgo` typecheck should pass; visit `/`, `/app`, `/app/settings`, `/app/vehicle/:id`, `/app/analytics` and confirm no broken imports or empty sections.
+**Files:**
+- New: `src/components/trip-planner-modal.tsx`, `src/lib/trip-estimate.functions.ts`.
+- Edit: `src/routes/app.index.tsx` (entry), `src/routes/app.vehicle.$id.tsx` (entry next to Trip section).
+
+## Out of scope (not in this plan)
+- Per-brand price tracking, loyalty points, brand-themed visuals.
+- Multi-stop trips, live traffic, elevation-based mileage.
+- Desktop layout changes (only mobile is redesigned).
 
 ## Technical notes
-
-- Dropping `profiles.public_handle/public_bio` and `vehicles.garage_visibility` is destructive but the feature is brand new and unused in production data flows; acceptable.
-- `insights.functions.ts` still exports `generateMonthlySummary` used by `/app/insights` — that page stays.
-- No new dependencies.
+- All mobile changes guarded by `useIsMobile()` to preserve desktop.
+- OSRM/Nominatim called server-side (`createServerFn`) so we set a proper User-Agent (Nominatim requires it) and avoid CORS.
+- Cache geocode + route results in-memory per server instance keyed by normalized query (cheap LRU, ~50 entries).
+- Migration is additive + nullable → no breaking change for existing refuels.
