@@ -50,12 +50,16 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   ACCENTS,
   GRADIENTS,
+  GLASS_MODES,
   getAccent,
   getGradient,
+  getGlassMode,
   applyAccent,
   applyGradient,
+  applyGlassMode,
   type Accent,
   type Gradient,
+  type GlassMode,
 } from "@/lib/theming";
 
 export const Route = createFileRoute("/app/settings")({
@@ -126,9 +130,11 @@ function SettingsPage() {
     setPrefs(getPrefs());
     setAccent(getAccent());
     setGradient(getGradient());
+    setGlass(getGlassMode());
   }, []);
   const [accent, setAccent] = useState<Accent>("mint");
   const [gradient, setGradient] = useState<Gradient>("aurora");
+  const [glass, setGlass] = useState<GlassMode>("glass");
 
   const saveProf = useMutation({
     mutationFn: () => saveProfile({ display_name: name, default_city: city }),
