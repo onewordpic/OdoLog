@@ -1,64 +1,51 @@
-## OdoLog v2.1 — three new pillars
+## Goal
 
-Building on your picks: **Carbon footprint & eco score**, **Monthly AI summary**, and **Public garage profile**.
+The UI has grown crowded — too many top-bar icons, nudges, advisory cards, and bento tiles. Slim it down to the essentials and fully remove the Public Garage feature (page, settings card, vehicle visibility toggles, server functions, DB columns).
 
----
+## 1. Remove Public Garage
 
-### 1. Carbon footprint & eco score
+- Delete files:
+  - `src/routes/g.$handle.tsx` (public page)
+  - `src/components/public-garage-card.tsx` (settings card)
+- `src/routes/app.settings.tsx`: remove the `PublicGarageCard` import and its section.
+- `src/lib/insights.functions.ts`: remove `fetchPublicGarage`, `setPublicHandle`, `setPublicBio`, `setVehicleVisibility`, and the `PublicGarage` type. Keep `generateMonthlySummary` (AI insights stays).
+- `.lovable/plan.md`: drop the "Public garage profile" pillar so future passes don't re-suggest it.
+- DB migration to drop public-garage surface:
+  - `DROP FUNCTION IF EXISTS public.get_public_garage(text), public.get_public_garage_stats(text);`
+  - `ALTER TABLE public.profiles DROP COLUMN IF EXISTS public_handle, DROP COLUMN IF EXISTS public_bio;`
+  - `ALTER TABLE public.vehicles DROP COLUMN IF EXISTS garage_visibility;`
+- Routes file `src/routeTree.gen.ts` is auto-regenerated — no manual edit.
 
-A per-vehicle and garage-wide CO₂ tracker that turns your refuel logs into a tangible "how green am I" number.
+## 2. Trim the dashboard (`src/routes/app.index.tsx`)
 
-- New `EcoCard` on each vehicle page + a garage-total card on the dashboard.
-- Computes kg CO₂ per refuel using standard emission factors (petrol 2.31 kg/L, diesel 2.68, CNG 2.75 kg/kg). EVs show grid-mix estimate based on city (India avg 0.71 kg/kWh) once we add kWh logging — for now EVs show "Zero tailpipe ✅".
-- **Eco Score 0–100** per vehicle = blended mileage-vs-ARAI delta + monthly km trend + fuel type weighting. Letter grade A–E with a friendly one-liner ("Cleaner than 72% of similar bikes").
-- **Trees-to-offset** widget: kg CO₂ ÷ 21 (avg tree absorption/yr) with a small leaf animation.
-- Monthly + lifetime totals, sparkline of last 6 months.
+Top bar — collapse 7 buttons to 4:
+- Keep: ThemeToggle, Analytics, Settings, Sign-in/out.
+- Remove from header: ShareIconButton, Reports icon, AI-Insights icon. (Reports and Insights remain reachable from Analytics page / direct URLs; we can surface them as text links inside Analytics later if needed.)
 
-### 2. Monthly AI summary
+Body cleanup:
+- Remove `<WeatherAdvisory />` (keep the compact `<WeatherChip />` in the title row).
+- Remove `<NameNudge />` (occasional name prompt). The greeting already falls back to "User".
+- Drop the decorative bar-chart sparkline inside the "Litres" tile (purely cosmetic).
+- Remove the standalone `<AchievementBadges />` block if rendered further down (verify in remainder of file; remove if present).
 
-End-of-month digest powered by Lovable AI (`google/gemini-3-flash-preview`, free on Lovable Cloud).
+Spend hero stays, but the 4-pill range toggle (`All / Year / Month / 30d`) collapses to 2 pills: `All time` and `This month`. Simpler default, less visual noise.
 
-- New route `/app/insights` with a month picker.
-- Server function `generateMonthlySummary` pulls refuels, trips, maintenance, and eco data for the selected month and returns a structured JSON (highlights, spend breakdown, mileage trend, anomalies, 3 tips, next-month projection).
-- Rendered as a magazine-style card stack: "This month at a glance", "Where your money went", "What changed vs last month", "OdoLog suggests".
-- "Regenerate" + "Copy as text" + "Share to garage" buttons.
-- Auto-triggered on the 1st of each month via `pg_cron` → `/api/public/hooks/monthly-digest` that pre-generates summaries so opening the tab is instant. Cached in a new `ai_summaries` table keyed by (user, vehicle_id|null, month).
+## 3. Trim the vehicle page (`src/routes/app.vehicle.$id.tsx`)
 
-### 3. Public garage profile
+- Remove the `EcoCard` import + render (eco grade tile is heavy and not part of core "fuel + odo" loop). Delete `src/components/eco-card.tsx` and `src/lib/eco.ts` since nothing else imports them.
+- Keep insurance/PUC countdown, refuel log, maintenance, trips, insights — these are core.
 
-A shareable read-only page like `odolog.app/g/safwan` showing your garage as a clean portfolio.
+## 4. Settings cleanup (`src/routes/app.settings.tsx`)
 
-- New `public_handle` column on `profiles` (unique, slug-validated, claimable in Settings).
-- New `garage_visibility` per-vehicle ('private' | 'public') — defaults private.
-- Public route `/g/$handle` (no auth) renders: avatar, display name, city, total km, total ₹ spent, eco score, vehicle cards (photo, name, year, lifetime mileage, eco grade). No refuel-level data, no PII (reg number / insurance / PUC hidden).
-- SSR'd via a server publishable client (anon SELECT policy on a narrow view), so it gets proper OG tags + share image per garage.
-- "Share my garage" button in dashboard → copies link + native share sheet.
-- Settings toggle: claim handle, per-vehicle visibility switches, "remove from public garage" kill switch.
+- Remove `PublicGarageCard` section (covered above).
+- No other changes — settings is already opt-in dense.
 
----
+## 5. Verify
 
-### Technical notes
+After edits: `tsgo` typecheck should pass; visit `/`, `/app`, `/app/settings`, `/app/vehicle/:id`, `/app/analytics` and confirm no broken imports or empty sections.
 
-- **DB migrations**
-  - `ai_summaries(user_id, vehicle_id null, month date, payload jsonb, created_at)` — RLS user-scoped + `anon SELECT` denied.
-  - `profiles.public_handle text unique`, `profiles.public_bio text`.
-  - `vehicles.garage_visibility text default 'private'`.
-  - Public read view `public.garage_public_v` exposing only safe columns; `GRANT SELECT ... TO anon` with handle-based filter via RLS on underlying tables (or SECURITY DEFINER function returning the row).
-- **Server functions** (`src/lib/insights.functions.ts`)
-  - `generateMonthlySummary({ month, vehicleId? })` — `requireSupabaseAuth`, calls Lovable AI Gateway with structured Output schema (Zod), persists to `ai_summaries`.
-  - `claimHandle({ handle })` — uniqueness + slug regex.
-- **Server route** `src/routes/api/public/hooks/monthly-digest.ts` — `apikey` header auth, pg_cron monthly on the 1st at 03:00 IST, iterates users with ≥1 refuel last month, generates & stores summaries.
-- **Eco math** lives in `src/lib/eco.ts` (pure functions, fully tested by reuse).
-- **Public garage page** `src/routes/g.$handle.tsx` — SSR via server publishable client; per-route `head()` sets `<title>{name}'s Garage · OdoLog</title>`, og:image = first vehicle photo or generated gradient.
+## Technical notes
 
-### Out of scope (saved for later)
-
-Receipt OCR, voice log, anomaly alerts, station map, document vault, resale helper, multi-driver, fuel budget. We can pick these up in v2.2.
-
-### Suggested build order
-
-1. Eco score (lowest risk, no new infra).
-2. Public garage profile (DB + new public route).
-3. Monthly AI summary (AI + cron, depends on eco numbers being available).
-
-Approve and I'll start with the eco card.
+- Dropping `profiles.public_handle/public_bio` and `vehicles.garage_visibility` is destructive but the feature is brand new and unused in production data flows; acceptable.
+- `insights.functions.ts` still exports `generateMonthlySummary` used by `/app/insights` — that page stays.
+- No new dependencies.
