@@ -94,7 +94,7 @@ export function MobileActionBar({
       >
         <div className="mx-auto max-w-md px-3 pb-3 pointer-events-auto">
           <div
-            className="rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.35)] flex items-center gap-1.5 p-1.5 bg-stone-900 text-stone-50 dark:bg-stone-50 dark:text-stone-900 ring-1 ring-black/10 dark:ring-white/10"
+            className="rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.4)] flex items-center gap-1.5 p-1.5 bg-stone-900/85 text-stone-50 dark:bg-stone-900/85 dark:text-stone-50 backdrop-blur-2xl ring-1 ring-white/10"
           >
             {handed === "left"
               ? [primary, secondary]
