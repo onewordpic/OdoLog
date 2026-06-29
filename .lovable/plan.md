@@ -1,35 +1,24 @@
-## Plan
+## Fix
 
-### 1. Distinct bottom bar color
-In `src/components/mobile-action-bar.tsx`, force the bar surface to always contrast with the mint "Active Vehicle" card:
-- Switch container to `bg-stone-900 text-stone-50 dark:bg-stone-50 dark:text-stone-900` (inverted neutral) with a subtle ring, so it's never the same hue as any vehicle card regardless of accent.
-- Keep "Log fuel" as the mint accent pill (now sits on dark surface → high contrast).
-- Secondary buttons use translucent same-tone-as-bar (`bg-white/10` / `bg-black/10`) instead of `foreground/5`.
+**Problem:** With the Sky accent active, the "Empty garage" hero card AND the "Log fuel" pill in the bottom bar are both the same accent blue → no visual hierarchy. Earlier fix only inverted the bar surface (stone) but kept the pill on accent, so when the card behind is also on accent they collide.
 
-### 2. Reports visible on mobile
-Currently Reports is only reachable from a top-bar shortcut on `app.index.tsx` which is hidden/cramped on mobile.
-- Add a "Reports" entry to the mobile surface. Two options — I'll go with **(a)** since the bar already holds primary actions:
-  - (a) Add a compact "Reports" link in the dashboard's mobile header row (visible `md:hidden`), next to Settings/Analytics icons, so it's one tap away.
-  - Also add it to `/app/garage` header for parity.
-- No change to the bottom bar (keeps the 3-button design the user approved).
+**Approach:** Decouple the primary pill from the active accent. The pill becomes a fixed "Apple-blue-on-dark" tone (or always-light pill on dark bar) regardless of accent, so it never matches any accent-tinted card. The Empty garage card stays accent.
 
-### 3. Non-annoying install prompt
-New `src/components/install-prompt.tsx`:
-- Listens for `beforeinstallprompt` (Chrome/Edge/Android) and detects iOS Safari separately.
-- Shows a small dismissible glass toast above the bottom bar **only when**:
-  - Not running standalone (`display-mode: standalone` / `navigator.standalone`).
-  - Not on a Lovable preview host.
-  - User has visited at least 2 sessions (tracked via `odolog.visitCount`).
-  - Not dismissed in the last 14 days (`odolog.installPromptDismissedAt`).
-- "Install" button calls the saved `prompt()` event; iOS shows a one-liner with the share→Add to Home Screen hint.
-- "Not now" sets the 14-day snooze. After 3 dismissals, never show again.
-- Mount once in `src/routes/__root.tsx` so it appears app-wide without per-page wiring.
+### Changes
+
+1. **`src/components/mobile-action-bar.tsx`**
+   - Primary "Log fuel" pill: remove `bg-[var(--mint-accent)]`. Replace with a **white pill on the dark bar** (`bg-white text-stone-900` in light mode, `bg-stone-900 text-stone-50` in dark) — Apple control center style. Always contrasts with any accent card behind it.
+   - Add a subtle inner highlight (`shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]`) and a soft outer shadow for that pressed-glass Apple feel.
+   - Bar container: keep the inverted neutral surface but add `backdrop-blur-2xl` + translucent (`bg-stone-900/85`) so background hints through — more iOS-tab-bar like.
+
+2. **Apple-like polish (small, contained)**
+   - Bar: increase corner radius feel via taller pill (`h-12`), tighten gap, add `ring-1 ring-white/10 dark:ring-black/10` for that hairline edge.
+   - Secondary icon buttons: switch to circular `bg-white/15` with `backdrop-blur` and `active:scale-95` haptic-style press (already via `.press`).
+   - Add SF-style symbol weight: bump icon stroke to `strokeWidth={2.25}` on the three icons.
+   - "Empty garage" hero (`src/routes/app.index.tsx`): soften with a subtle inner gradient overlay (`bg-gradient-to-br from-white/10 to-transparent`) and a top hairline (`ring-1 ring-white/20 inset`) so the flat blue gets depth without changing the accent.
 
 ### Files
-- edit `src/components/mobile-action-bar.tsx` — bar surface + secondary buttons
-- edit `src/routes/app.index.tsx` — mobile header Reports link
-- edit `src/routes/app.garage.tsx` — mobile header Reports link
-- create `src/components/install-prompt.tsx`
-- edit `src/routes/__root.tsx` — mount InstallPrompt
+- edit `src/components/mobile-action-bar.tsx` — pill becomes neutral white/dark, bar gets blur + hairline ring, icons get SF-weight strokes.
+- edit `src/routes/app.index.tsx` — add inner-gradient + hairline ring overlay on the Empty/Active garage hero card for Apple-style depth.
 
-No backend or business-logic changes.
+No logic changes, no token changes (accent stays user-selectable).
