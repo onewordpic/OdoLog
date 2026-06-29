@@ -14,7 +14,9 @@ export const Route = createFileRoute("/app/garage")({
 function GaragePage() {
   const vehicles = useQuery({ queryKey: ["vehicles"], queryFn: listVehicles });
   const refuels = useQuery({ queryKey: ["refuels-all"], queryFn: listAllRefuels });
-  const [showAdd, setShowAdd] = useState(false);
+  // Add-vehicle UI lives on the main dashboard; we link there instead of
+  // duplicating the modal.
+
 
   const summaries = useMemo(() => {
     const map = new Map<string, VehicleSummary>();
@@ -42,18 +44,20 @@ function GaragePage() {
             </p>
           </div>
         </div>
-        <button
-          onClick={() => setShowAdd(true)}
+        <Link
+          to="/app"
+          hash="add"
           className="press flex items-center gap-1.5 rounded-full bg-foreground text-background px-3.5 py-2 text-xs font-semibold"
         >
           <Plus className="h-3.5 w-3.5" /> Add
-        </button>
+        </Link>
       </header>
 
       {vehicles.isLoading ? (
         <div className="glass h-24 rounded-2xl animate-pulse" />
       ) : (vehicles.data?.length ?? 0) === 0 ? (
-        <EmptyState onAdd={() => setShowAdd(true)} />
+        <EmptyStateLink />
+
       ) : (
         <ul className="space-y-3">
           {vehicles.data!.map((v) => (
