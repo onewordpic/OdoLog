@@ -1,47 +1,89 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Fuel, Route as RouteIcon, X, Plus, ChevronRight } from "lucide-react";
+import { Fuel, Route as RouteIcon, X, ChevronRight, LayoutGrid } from "lucide-react";
 import { listVehicles, type Vehicle } from "@/lib/data-store";
 import { useQuery } from "@tanstack/react-query";
 import { VehicleIcon } from "@/components/vehicle-icon";
 import { TripPlannerModal } from "@/components/trip-planner-modal";
+import { getPrefs, PREFS_EVENT } from "@/lib/prefs";
 
 /**
- * Sticky mobile action bar — keeps the most-used flows (log fuel,
- * plan a trip) one tap away on phones. Hidden on md+.
+ * Sticky mobile action bar — three actions only:
+ *  - Log fuel (primary, mint pill)
+ *  - Trip insight (secondary, icon-only)
+ *  - Garage (secondary, icon-only)
+ *
+ * Uses a neutral surface so it never blends into the green "Active
+ * vehicle" hero card. The primary pill can be pinned left or right via
+ * the user's `handed` preference.
  */
 export function MobileActionBar({
-  onAddVehicle,
+  onAddVehicle: _onAddVehicle,
 }: {
-  onAddVehicle: () => void;
+  // Kept for backwards-compat; bar no longer triggers add-vehicle directly.
+  onAddVehicle?: () => void;
 }) {
   const navigate = useNavigate();
   const vehicles = useQuery({ queryKey: ["vehicles"], queryFn: listVehicles });
   const [picker, setPicker] = useState(false);
   const [trip, setTrip] = useState(false);
+  const [handed, setHanded] = useState<"left" | "right">("right");
+
+  useEffect(() => {
+    const sync = () => setHanded(getPrefs().handed);
+    sync();
+    window.addEventListener(PREFS_EVENT, sync);
+    return () => window.removeEventListener(PREFS_EVENT, sync);
+  }, []);
 
   function logFuel() {
-    const list = vehicles.data ?? [];
+    const list = (vehicles.data ?? []).filter((v) => v.fuel_type !== "electric");
     if (list.length === 0) {
-      onAddVehicle();
+      // No fuelable vehicle — send them to Garage to add one.
+      navigate({ to: "/app/garage" });
       return;
     }
-    // Skip EV-only garages from "Log fuel"
-    const fuelable = list.filter((v) => v.fuel_type !== "electric");
-    if (fuelable.length === 0) {
-      onAddVehicle();
-      return;
-    }
-    if (fuelable.length === 1) {
+    if (list.length === 1) {
       navigate({
         to: "/app/vehicle/$id",
-        params: { id: fuelable[0].id },
+        params: { id: list[0].id },
         search: { refuel: 1 } as any,
       });
       return;
     }
     setPicker(true);
   }
+
+  const primary = (
+    <button
+      key="log"
+      type="button"
+      onClick={logFuel}
+      className="press flex-1 flex items-center justify-center gap-2 rounded-full bg-[var(--mint-accent)] text-stone-900 py-2.5 text-sm font-semibold shadow-sm"
+    >
+      <Fuel className="h-4 w-4" /> Log fuel
+    </button>
+  );
+
+  const secondary = (
+    <div key="secondary" className="flex items-center gap-1.5 shrink-0">
+      <button
+        type="button"
+        onClick={() => setTrip(true)}
+        aria-label="Trip insight"
+        className="press flex h-11 w-11 items-center justify-center rounded-full bg-foreground/8 hover:bg-foreground/15 text-foreground"
+      >
+        <RouteIcon className="h-4 w-4" />
+      </button>
+      <Link
+        to="/app/garage"
+        aria-label="Garage"
+        className="press flex h-11 w-11 items-center justify-center rounded-full bg-foreground/8 hover:bg-foreground/15 text-foreground"
+      >
+        <LayoutGrid className="h-4 w-4" />
+      </Link>
+    </div>
+  );
 
   return (
     <>
@@ -50,30 +92,12 @@ export function MobileActionBar({
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0)" }}
       >
         <div className="mx-auto max-w-md px-3 pb-3 pointer-events-auto">
-          <div className="liquid-glass rounded-full border border-foreground/10 shadow-xl flex items-center gap-1.5 p-1.5 backdrop-blur-xl">
-            <button
-              type="button"
-              onClick={logFuel}
-              className="press flex-1 flex items-center justify-center gap-2 rounded-full bg-[var(--mint-accent)] text-stone-900 py-2.5 text-sm font-semibold"
-            >
-              <Fuel className="h-4 w-4" /> Log fuel
-            </button>
-            <button
-              type="button"
-              onClick={() => setTrip(true)}
-              aria-label="Trip insight"
-              className="press flex h-11 w-11 items-center justify-center rounded-full bg-foreground/5 hover:bg-foreground/10"
-            >
-              <RouteIcon className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={onAddVehicle}
-              aria-label="Add vehicle"
-              className="press flex h-11 w-11 items-center justify-center rounded-full bg-foreground/5 hover:bg-foreground/10"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
+          <div
+            className="rounded-full border border-foreground/10 shadow-[0_8px_30px_rgba(0,0,0,0.18)] flex items-center gap-1.5 p-1.5 bg-[var(--background)]/95 supports-[backdrop-filter]:bg-[var(--background)]/75 supports-[backdrop-filter]:backdrop-blur-xl ring-1 ring-foreground/5"
+          >
+            {handed === "left"
+              ? [primary, secondary]
+              : [secondary, primary]}
           </div>
         </div>
       </div>
