@@ -1,36 +1,35 @@
-## Mobile bottom bar redesign + Garage page
+## Plan
 
-### Problems
-- Active Vehicle card and bottom action bar are both mint green — they blend together visually.
-- Bottom bar has a "+" Add Vehicle button that isn't needed daily.
-- No single place to scan all vehicles with a quick summary.
+### 1. Distinct bottom bar color
+In `src/components/mobile-action-bar.tsx`, force the bar surface to always contrast with the mint "Active Vehicle" card:
+- Switch container to `bg-stone-900 text-stone-50 dark:bg-stone-50 dark:text-stone-900` (inverted neutral) with a subtle ring, so it's never the same hue as any vehicle card regardless of accent.
+- Keep "Log fuel" as the mint accent pill (now sits on dark surface → high contrast).
+- Secondary buttons use translucent same-tone-as-bar (`bg-white/10` / `bg-black/10`) instead of `foreground/5`.
 
-### Changes
+### 2. Reports visible on mobile
+Currently Reports is only reachable from a top-bar shortcut on `app.index.tsx` which is hidden/cramped on mobile.
+- Add a "Reports" entry to the mobile surface. Two options — I'll go with **(a)** since the bar already holds primary actions:
+  - (a) Add a compact "Reports" link in the dashboard's mobile header row (visible `md:hidden`), next to Settings/Analytics icons, so it's one tap away.
+  - Also add it to `/app/garage` header for parity.
+- No change to the bottom bar (keeps the 3-button design the user approved).
 
-**1. Bottom action bar (`src/components/mobile-action-bar.tsx`)**
-- Three actions only: **Log fuel** (prominent), **Trip insight**, **Garage**.
-- Drop the "+" Add Vehicle button (still reachable from Garage page and dashboard).
-- Log fuel = full pill with mint fill + fuel icon + label. The other two = compact icon-only circular buttons (neutral glass, no mint fill) so the primary action stands alone.
-- Add a handedness toggle: Log fuel pinned **left** or **right**; the two secondary icons sit on the opposite side. Order flips via flex-direction.
-- Persist choice in `localStorage` key `odolog.handed` (`left` | `right`, default `right` so it stays where it is today).
+### 3. Non-annoying install prompt
+New `src/components/install-prompt.tsx`:
+- Listens for `beforeinstallprompt` (Chrome/Edge/Android) and detects iOS Safari separately.
+- Shows a small dismissible glass toast above the bottom bar **only when**:
+  - Not running standalone (`display-mode: standalone` / `navigator.standalone`).
+  - Not on a Lovable preview host.
+  - User has visited at least 2 sessions (tracked via `odolog.visitCount`).
+  - Not dismissed in the last 14 days (`odolog.installPromptDismissedAt`).
+- "Install" button calls the saved `prompt()` event; iOS shows a one-liner with the share→Add to Home Screen hint.
+- "Not now" sets the 14-day snooze. After 3 dismissals, never show again.
+- Mount once in `src/routes/__root.tsx` so it appears app-wide without per-page wiring.
 
-**2. Visual separation from Active Vehicle card**
-- Switch the bar's surface from mint-tinted glass to a neutral dark/light glass pill (uses existing `--background` + border tokens), so it reads as chrome, not content.
-- Keep mint only inside the Log fuel pill itself.
-- Add a stronger shadow + subtle outline ring so it floats above the green card.
+### Files
+- edit `src/components/mobile-action-bar.tsx` — bar surface + secondary buttons
+- edit `src/routes/app.index.tsx` — mobile header Reports link
+- edit `src/routes/app.garage.tsx` — mobile header Reports link
+- create `src/components/install-prompt.tsx`
+- edit `src/routes/__root.tsx` — mount InstallPrompt
 
-**3. New Garage page (`src/routes/app.garage.tsx`)**
-- Route: `/app/garage`.
-- Lists every vehicle (owned + guest garage) as cards, each showing: icon/photo, name + make, fuel type chip, last odo, last refuel date, lifetime ₹ spent, ₹/km, mileage.
-- Tap card → existing `/app/vehicle/$id`.
-- "Add vehicle" button lives at top of this page (replacing the bottom-bar "+").
-
-**4. Settings (`src/routes/app.settings.tsx`)**
-- New "Bottom bar position" segmented control: Left / Right. Writes to the same `odolog.handed` key. Reads on mount.
-
-### Files touched
-- edit: `src/components/mobile-action-bar.tsx`, `src/routes/app.settings.tsx`, `src/routes/app.index.tsx` (pass/remove `onAddVehicle` since bar no longer needs it; keep for backward compat but unused), `src/lib/prefs.ts` (add `getHanded`/`setHanded`).
-- add: `src/routes/app.garage.tsx`.
-
-### Out of scope
-- No DB changes. No changes to refuel/maintenance flows or desktop nav.
+No backend or business-logic changes.
