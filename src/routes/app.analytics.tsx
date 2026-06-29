@@ -32,6 +32,7 @@ import {
 import { fetchFuelPrice } from "@/lib/fuel-price.functions";
 import { useAuthed } from "@/lib/use-authed";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AchievementBadges } from "@/components/achievement-badges";
 
 export const Route = createFileRoute("/app/analytics")({
   component: AnalyticsPage,
