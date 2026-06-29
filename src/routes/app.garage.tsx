@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ChevronRight, Plus, Fuel, Gauge } from "lucide-react";
+import { ArrowLeft, ChevronRight, Plus, Fuel, Gauge, FileText } from "lucide-react";
 import { useMemo } from "react";
 import { listVehicles, listAllRefuels, type Vehicle, type Refuel } from "@/lib/data-store";
 import { VehicleIcon } from "@/components/vehicle-icon";
@@ -44,13 +44,22 @@ function GaragePage() {
             </p>
           </div>
         </div>
-        <Link
-          to="/app"
-          hash="add"
-          className="press flex items-center gap-1.5 rounded-full bg-foreground text-background px-3.5 py-2 text-xs font-semibold"
-        >
-          <Plus className="h-3.5 w-3.5" /> Add
-        </Link>
+        <div className="flex items-center gap-1.5">
+          <Link
+            to="/app/reports"
+            aria-label="Reports"
+            className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
+          >
+            <FileText className="h-4 w-4" />
+          </Link>
+          <Link
+            to="/app"
+            hash="add"
+            className="press flex items-center gap-1.5 rounded-full bg-foreground text-background px-3.5 py-2 text-xs font-semibold"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add
+          </Link>
+        </div>
       </header>
 
       {vehicles.isLoading ? (

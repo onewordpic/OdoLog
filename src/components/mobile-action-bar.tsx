@@ -71,14 +71,14 @@ export function MobileActionBar({
         type="button"
         onClick={() => setTrip(true)}
         aria-label="Trip insight"
-        className="press flex h-11 w-11 items-center justify-center rounded-full bg-foreground/8 hover:bg-foreground/15 text-foreground"
+        className="press flex h-11 w-11 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 dark:bg-black/10 dark:hover:bg-black/20 text-current"
       >
         <RouteIcon className="h-4 w-4" />
       </button>
       <Link
         to="/app/garage"
         aria-label="Garage"
-        className="press flex h-11 w-11 items-center justify-center rounded-full bg-foreground/8 hover:bg-foreground/15 text-foreground"
+        className="press flex h-11 w-11 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 dark:bg-black/10 dark:hover:bg-black/20 text-current"
       >
         <LayoutGrid className="h-4 w-4" />
       </Link>
@@ -93,7 +93,7 @@ export function MobileActionBar({
       >
         <div className="mx-auto max-w-md px-3 pb-3 pointer-events-auto">
           <div
-            className="rounded-full border border-foreground/10 shadow-[0_8px_30px_rgba(0,0,0,0.18)] flex items-center gap-1.5 p-1.5 bg-[var(--background)]/95 supports-[backdrop-filter]:bg-[var(--background)]/75 supports-[backdrop-filter]:backdrop-blur-xl ring-1 ring-foreground/5"
+            className="rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.35)] flex items-center gap-1.5 p-1.5 bg-stone-900 text-stone-50 dark:bg-stone-50 dark:text-stone-900 ring-1 ring-black/10 dark:ring-white/10"
           >
             {handed === "left"
               ? [primary, secondary]

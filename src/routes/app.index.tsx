@@ -199,7 +199,7 @@ function Dashboard() {
           </Link>
           <Link
             to="/app/reports"
-            className="press hidden sm:flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
+            className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
             aria-label="Reports"
           >
             <FileText className="h-4 w-4" />
