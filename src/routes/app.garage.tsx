@@ -180,22 +180,23 @@ function Stat({
   );
 }
 
-function EmptyState({ onAdd }: { onAdd: () => void }) {
+function EmptyStateLink() {
   return (
     <div className="glass rounded-3xl p-8 text-center">
       <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-foreground/5">
-        <LayoutIcon />
+        <Fuel className="h-5 w-5 text-muted-foreground" />
       </div>
       <h2 className="text-lg font-semibold">No vehicles yet</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Add your first vehicle to start tracking fuel and maintenance.
       </p>
-      <button
-        onClick={onAdd}
+      <Link
+        to="/app"
+        hash="add"
         className="press mt-4 inline-flex items-center gap-2 rounded-full bg-foreground text-background px-4 py-2 text-sm font-semibold"
       >
         <Plus className="h-4 w-4" /> Add vehicle
-      </button>
+      </Link>
     </div>
   );
 }
