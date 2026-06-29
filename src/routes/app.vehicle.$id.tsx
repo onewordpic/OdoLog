@@ -25,6 +25,7 @@ import {
   Leaf,
   TrendingDown,
   Upload,
+  Fuel,
 } from "lucide-react";
 import { CountdownRing } from "@/components/countdown-ring";
 import { CsvImportModal } from "@/components/csv-import-modal";
