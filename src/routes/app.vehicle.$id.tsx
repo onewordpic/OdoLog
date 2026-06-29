@@ -61,6 +61,9 @@ import { VehicleHealthScore, NextRefuelEstimate, CostProjection } from "@/compon
 
 import { searchCatalog, claimedMileage, type CatalogEntry } from "@/lib/vehicle-catalog";
 import { getPrefs, PREFS_EVENT, type Prefs } from "@/lib/prefs";
+import { FUEL_BRANDS, brandLabel, rememberBrand, recallBrand, type FuelBrandId } from "@/lib/fuel-brands";
+import { TripPlannerModal } from "@/components/trip-planner-modal";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 export const Route = createFileRoute("/app/vehicle/$id")({
