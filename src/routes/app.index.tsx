@@ -64,6 +64,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const authed = useAuthed();
   const [showAdd, setShowAdd] = useState(false);
+  const [showTrip, setShowTrip] = useState(false);
 
   const vehicles = useQuery({
     queryKey: ["vehicles", authed],
