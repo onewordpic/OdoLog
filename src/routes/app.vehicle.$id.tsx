@@ -25,6 +25,7 @@ import {
   Leaf,
   TrendingDown,
   Upload,
+  Fuel,
 } from "lucide-react";
 import { CountdownRing } from "@/components/countdown-ring";
 import { CsvImportModal } from "@/components/csv-import-modal";
@@ -61,19 +62,36 @@ import { VehicleHealthScore, NextRefuelEstimate, CostProjection } from "@/compon
 
 import { searchCatalog, claimedMileage, type CatalogEntry } from "@/lib/vehicle-catalog";
 import { getPrefs, PREFS_EVENT, type Prefs } from "@/lib/prefs";
+import { FUEL_BRANDS, brandLabel, rememberBrand, recallBrand, type FuelBrandId } from "@/lib/fuel-brands";
+import { TripPlannerModal } from "@/components/trip-planner-modal";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 export const Route = createFileRoute("/app/vehicle/$id")({
   component: VehiclePage,
+  validateSearch: (s: Record<string, unknown>) => ({
+    refuel: s.refuel === 1 || s.refuel === "1" ? 1 : undefined,
+  }),
 });
 
 function VehiclePage() {
   const { id } = Route.useParams();
+  const search = Route.useSearch();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [editing, setEditing] = useState<Refuel | null>(null);
+
+  // Auto-open refuel modal when arriving via the mobile "Log fuel" button.
+  useEffect(() => {
+    if (search.refuel === 1) {
+      setShowAdd(true);
+      navigate({ to: "/app/vehicle/$id", params: { id }, search: {}, replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.refuel]);
+
 
 
   const vehicle = useQuery({
@@ -163,7 +181,7 @@ function VehiclePage() {
 
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 md:px-6 animate-fade-in">
+    <main className="mx-auto max-w-3xl px-4 pt-8 pb-28 md:px-6 md:pb-8 animate-fade-in">
       <header className="mb-6 flex items-center justify-between">
         <Link
           to="/app"
@@ -463,11 +481,18 @@ function VehiclePage() {
                   >
                     <div className="col-span-6 md:col-span-2">
                       <div className="font-medium">{formatDate(r.refuel_date)}</div>
-                      {!r.full_tank && (
-                        <span className="mt-0.5 inline-block rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-medium uppercase text-accent-foreground">
-                          Partial
-                        </span>
-                      )}
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1">
+                        {!r.full_tank && (
+                          <span className="inline-block rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-medium uppercase text-accent-foreground">
+                            Partial
+                          </span>
+                        )}
+                        {r.fuel_brand && (
+                          <span className="inline-block rounded-full bg-foreground/5 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            {brandLabel(r.fuel_brand)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="col-span-6 text-right md:col-span-2 md:text-left tabular-nums">
                       {r.odo_km != null ? Number(r.odo_km).toFixed(0) : "—"}
@@ -565,6 +590,18 @@ function VehiclePage() {
       <TripAnalytics vehicleId={id} costPerKm={summary.costPerKm} />
 
 
+
+      {!isEV && (
+        <button
+          type="button"
+          onClick={() => setShowAdd(true)}
+          aria-label="Log refuel"
+          className="fixed z-40 right-4 md:hidden press flex items-center gap-2 rounded-full bg-[var(--mint-accent)] text-stone-900 px-5 py-3 text-sm font-bold shadow-xl"
+          style={{ bottom: "calc(env(safe-area-inset-bottom, 0) + 1rem)" }}
+        >
+          <Fuel className="h-4 w-4" /> Log fuel
+        </button>
+      )}
     </main>
   );
 }
@@ -915,6 +952,11 @@ function AddRefuelModal({
   const [fuelSubtype, setFuelSubtype] = useState<"normal" | "e20" | "xp95" | "xp100">(
     (editing?.fuel_subtype as any) ?? "normal",
   );
+  const [brand, setBrand] = useState<FuelBrandId | "">(
+    (editing?.fuel_brand as FuelBrandId | undefined) ??
+      recallBrand(vehicle.id) ??
+      "",
+  );
   const [fetchingRate, setFetchingRate] = useState(false);
 
   const [city, setCity] = useState("");
@@ -990,7 +1032,9 @@ function AddRefuelModal({
         odo_km: odo ? parseFloat(odo) : null,
         full_tank: fullTank,
         fuel_subtype: vehicle.fuel_type === "petrol" ? fuelSubtype : null,
+        fuel_brand: brand || null,
       };
+      if (brand) rememberBrand(vehicle.id, brand as FuelBrandId);
 
       if (editing) {
         await updateRefuel(editing.id, payload);
@@ -1115,6 +1159,34 @@ function AddRefuelModal({
               </p>
             </div>
           )}
+
+          {vehicle.fuel_type !== "electric" && (
+            <div>
+              <span className="text-xs font-medium text-muted-foreground">
+                Fuel station (optional)
+              </span>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {FUEL_BRANDS.map((b) => {
+                  const active = brand === b.id;
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => setBrand(active ? "" : b.id)}
+                      className={`press rounded-full px-3 py-1.5 text-[11px] font-medium transition ${
+                        active
+                          ? "bg-[var(--mint-accent)] text-stone-900"
+                          : "glass-subtle text-muted-foreground"
+                      }`}
+                    >
+                      {b.short}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
 
           <div>
             <NumField

@@ -36,6 +36,9 @@ import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
 import { VehicleAvatar } from "@/components/vehicle-avatar";
 import { searchCatalog, type CatalogEntry } from "@/lib/vehicle-catalog";
 import { WeatherChip } from "@/components/weather-chip";
+import { MobileActionBar } from "@/components/mobile-action-bar";
+import { TripPlannerModal } from "@/components/trip-planner-modal";
+import { Route as RouteIcon } from "lucide-react";
 
 export const Route = createFileRoute("/app/")({
   component: Dashboard,
@@ -61,6 +64,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const authed = useAuthed();
   const [showAdd, setShowAdd] = useState(false);
+  const [showTrip, setShowTrip] = useState(false);
 
   const vehicles = useQuery({
     queryKey: ["vehicles", authed],
@@ -166,7 +170,7 @@ function Dashboard() {
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-10 text-foreground">
+    <main className="mx-auto max-w-6xl px-4 pt-6 pb-28 md:px-8 md:py-10 md:pb-10 text-foreground">
       {/* Top bar */}
       <header className="mb-8 flex items-center justify-between animate-fade-in-up">
         <Link to="/app" className="flex items-center gap-2 group">
@@ -177,6 +181,14 @@ function Dashboard() {
         </Link>
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
+          <button
+            type="button"
+            onClick={() => setShowTrip(true)}
+            className="press hidden sm:inline-flex h-9 items-center gap-1.5 rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 px-3 text-xs font-semibold transition"
+            aria-label="Trip insight"
+          >
+            <RouteIcon className="h-3.5 w-3.5" /> Trip insight
+          </button>
           <Link
             to="/app/analytics"
             className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
@@ -245,7 +257,7 @@ function Dashboard() {
             </span>
             <button
               onClick={() => setShowAdd(true)}
-              className="press inline-flex items-center gap-1.5 rounded-full border border-foreground/10 bg-foreground/5 hover:bg-foreground/10 px-3 py-1.5 text-[11px] font-semibold transition"
+              className="press hidden md:inline-flex items-center gap-1.5 rounded-full border border-foreground/10 bg-foreground/5 hover:bg-foreground/10 px-3 py-1.5 text-[11px] font-semibold transition"
             >
               <Plus className="h-3 w-3" /> Vehicle
             </button>
@@ -493,7 +505,9 @@ function Dashboard() {
       <ServiceAlerts authed={authed} />
 
       {showAdd && <AddVehicleModal onClose={() => setShowAdd(false)} />}
+      <TripPlannerModal open={showTrip} onClose={() => setShowTrip(false)} />
       <FirstRunCityModal profileLoaded={profile.isSuccess} currentCity={profile.data?.default_city ?? ""} currentName={name} />
+      <MobileActionBar onAddVehicle={() => setShowAdd(true)} />
     </main>
   );
 }
