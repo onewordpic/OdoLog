@@ -589,6 +589,18 @@ function VehiclePage() {
       <TripAnalytics vehicleId={id} costPerKm={summary.costPerKm} />
 
 
+
+      {!isEV && (
+        <button
+          type="button"
+          onClick={() => setShowAdd(true)}
+          aria-label="Log refuel"
+          className="fixed z-40 right-4 md:hidden press flex items-center gap-2 rounded-full bg-[var(--mint-accent)] text-stone-900 px-5 py-3 text-sm font-bold shadow-xl"
+          style={{ bottom: "calc(env(safe-area-inset-bottom, 0) + 1rem)" }}
+        >
+          <Fuel className="h-4 w-4" /> Log fuel
+        </button>
+      )}
     </main>
   );
 }
