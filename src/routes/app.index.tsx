@@ -17,8 +17,6 @@ import {
   BellRing,
   BarChart3,
   Wrench,
-  CalendarDays,
-  Sparkles,
 } from "lucide-react";
 import {
   listVehicles,
@@ -1197,5 +1195,4 @@ function ServiceAlerts({ authed }: { authed: boolean | null }) {
   );
 }
 
-// ---------- Name nudge: occasionally invite anonymous users to set a name ----------
 
