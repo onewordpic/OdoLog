@@ -998,7 +998,9 @@ function AddRefuelModal({
         odo_km: odo ? parseFloat(odo) : null,
         full_tank: fullTank,
         fuel_subtype: vehicle.fuel_type === "petrol" ? fuelSubtype : null,
+        fuel_brand: brand || null,
       };
+      if (brand) rememberBrand(vehicle.id, brand as FuelBrandId);
 
       if (editing) {
         await updateRefuel(editing.id, payload);
