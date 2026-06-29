@@ -466,11 +466,18 @@ function VehiclePage() {
                   >
                     <div className="col-span-6 md:col-span-2">
                       <div className="font-medium">{formatDate(r.refuel_date)}</div>
-                      {!r.full_tank && (
-                        <span className="mt-0.5 inline-block rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-medium uppercase text-accent-foreground">
-                          Partial
-                        </span>
-                      )}
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1">
+                        {!r.full_tank && (
+                          <span className="inline-block rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-medium uppercase text-accent-foreground">
+                            Partial
+                          </span>
+                        )}
+                        {r.fuel_brand && (
+                          <span className="inline-block rounded-full bg-foreground/5 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            {brandLabel(r.fuel_brand)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="col-span-6 text-right md:col-span-2 md:text-left tabular-nums">
                       {r.odo_km != null ? Number(r.odo_km).toFixed(0) : "—"}
