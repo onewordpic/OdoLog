@@ -257,7 +257,7 @@ function Dashboard() {
             </span>
             <button
               onClick={() => setShowAdd(true)}
-              className="press inline-flex items-center gap-1.5 rounded-full border border-foreground/10 bg-foreground/5 hover:bg-foreground/10 px-3 py-1.5 text-[11px] font-semibold transition"
+              className="press hidden md:inline-flex items-center gap-1.5 rounded-full border border-foreground/10 bg-foreground/5 hover:bg-foreground/10 px-3 py-1.5 text-[11px] font-semibold transition"
             >
               <Plus className="h-3 w-3" /> Vehicle
             </button>
