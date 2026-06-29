@@ -918,6 +918,11 @@ function AddRefuelModal({
   const [fuelSubtype, setFuelSubtype] = useState<"normal" | "e20" | "xp95" | "xp100">(
     (editing?.fuel_subtype as any) ?? "normal",
   );
+  const [brand, setBrand] = useState<FuelBrandId | "">(
+    (editing?.fuel_brand as FuelBrandId | undefined) ??
+      recallBrand(vehicle.id) ??
+      "",
+  );
   const [fetchingRate, setFetchingRate] = useState(false);
 
   const [city, setCity] = useState("");
