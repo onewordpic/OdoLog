@@ -2,11 +2,14 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { listTrips, addTrip, deleteTrip, type Trip } from "@/lib/data-store";
 import { toast } from "sonner";
-import { Plus, Trash2, Route, CalendarDays, IndianRupee } from "lucide-react";
+import { Plus, Trash2, Route, CalendarDays, IndianRupee, Leaf } from "lucide-react";
+import { co2FromTrip, gradeColor, gradeFromKgPerKm, type FuelType } from "@/lib/eco";
 
 interface TripSectionProps {
   vehicleId: string;
   costPerKm: number | null;
+  fuelType?: FuelType;
+  kmPerL?: number | null;
 }
 
 function formatShortDate(iso: string) {
@@ -16,7 +19,7 @@ function formatShortDate(iso: string) {
   });
 }
 
-export function TripSection({ vehicleId, costPerKm }: TripSectionProps) {
+export function TripSection({ vehicleId, costPerKm, fuelType = "petrol", kmPerL = null }: TripSectionProps) {
   const qc = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
   const [startOdo, setStartOdo] = useState("");
@@ -211,6 +214,17 @@ export function TripSection({ vehicleId, costPerKm }: TripSectionProps) {
                         Toll ₹{toll.toFixed(0)}
                       </span>
                     )}
+                    {dist != null && (() => {
+                      const co2 = co2FromTrip(dist, kmPerL, fuelType);
+                      if (co2 == null) return null;
+                      const grade = gradeFromKgPerKm(co2 / dist);
+                      return (
+                        <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${gradeColor(grade)}`}>
+                          <Leaf className="h-2.5 w-2.5" />
+                          {co2.toFixed(1)} kg{grade ? ` · ${grade}` : ""}
+                        </span>
+                      );
+                    })()}
                     {t.notes && <span className="truncate max-w-[12rem]">{t.notes}</span>}
                   </div>
                 </div>
