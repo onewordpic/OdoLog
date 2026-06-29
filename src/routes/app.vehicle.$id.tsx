@@ -1126,6 +1126,34 @@ function AddRefuelModal({
             </div>
           )}
 
+          {vehicle.fuel_type !== "electric" && (
+            <div>
+              <span className="text-xs font-medium text-muted-foreground">
+                Fuel station (optional)
+              </span>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {FUEL_BRANDS.map((b) => {
+                  const active = brand === b.id;
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => setBrand(active ? "" : b.id)}
+                      className={`press rounded-full px-3 py-1.5 text-[11px] font-medium transition ${
+                        active
+                          ? "bg-[var(--mint-accent)] text-stone-900"
+                          : "glass-subtle text-muted-foreground"
+                      }`}
+                    >
+                      {b.short}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+
           <div>
             <NumField
 
