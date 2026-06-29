@@ -68,15 +68,29 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Route = createFileRoute("/app/vehicle/$id")({
   component: VehiclePage,
+  validateSearch: (s: Record<string, unknown>) => ({
+    refuel: s.refuel === 1 || s.refuel === "1" ? 1 : undefined,
+  }),
 });
 
 function VehiclePage() {
   const { id } = Route.useParams();
+  const search = Route.useSearch();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [editing, setEditing] = useState<Refuel | null>(null);
+
+  // Auto-open refuel modal when arriving via the mobile "Log fuel" button.
+  useEffect(() => {
+    if (search.refuel === 1) {
+      setShowAdd(true);
+      navigate({ to: "/app/vehicle/$id", params: { id }, search: {}, replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.refuel]);
+
 
 
   const vehicle = useQuery({
