@@ -4,7 +4,7 @@ import { ArrowLeft, ChevronRight, Plus, Fuel, Gauge } from "lucide-react";
 import { useMemo, useState } from "react";
 import { listVehicles, listAllRefuels, type Vehicle, type Refuel } from "@/lib/data-store";
 import { VehicleIcon } from "@/components/vehicle-icon";
-import { AddVehicleModal } from "@/components/add-vehicle-modal";
+
 import { MobileActionBar } from "@/components/mobile-action-bar";
 
 export const Route = createFileRoute("/app/garage")({
