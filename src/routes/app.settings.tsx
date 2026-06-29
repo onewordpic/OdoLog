@@ -366,7 +366,29 @@ function SettingsPage() {
                 })}
               </div>
             </Field>
+            <Field label="Glass surface">
+              <div className="grid grid-cols-3 gap-2">
+                {GLASS_MODES.map((m) => {
+                  const active = glass === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => { setGlass(m.id); applyGlassMode(m.id); }}
+                      className={`press rounded-2xl border p-3 text-left transition ${active ? "border-foreground/40 bg-foreground/5" : "border-foreground/10 hover:bg-foreground/5"}`}
+                    >
+                      <div className="text-xs font-semibold">{m.label}</div>
+                      <div className="mt-0.5 text-[10px] text-muted-foreground leading-snug">{m.desc}</div>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-[10px] text-muted-foreground">
+                Turn glass off for a flat, distraction-free look or switch to Liquid for Apple-style depth.
+              </p>
+            </Field>
             <Row label="Density" hint="Tighter layout on small screens.">
+
               <Segmented
                 value={prefs.density}
                 onChange={(v) => updatePrefs({ density: v as Prefs["density"] })}
