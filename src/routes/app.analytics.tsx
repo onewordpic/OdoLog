@@ -108,6 +108,9 @@ function AnalyticsPage() {
           <VehicleTrends vehicles={vehicles.data} refuels={refuels.data} />
           <RunningCosts vehicles={vehicles.data} refuels={refuels.data} />
           <CityPriceTrends refuels={refuels.data} />
+          <section className="glass animate-fade-in-up rounded-3xl p-5">
+            <AchievementBadges />
+          </section>
         </div>
       )}
     </main>
