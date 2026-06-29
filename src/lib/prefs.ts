@@ -6,13 +6,15 @@ export type Prefs = {
   defaultChartMetric: "kmpl" | "cpk" | "spend" | "litres";
   // Reminders
   serviceAlertsEnabled: boolean;
-  reminderLeadKm: number; // warn this many km before next-service odo
-  reminderLeadDays: number; // warn this many days before next-service date
+  reminderLeadKm: number;
+  reminderLeadDays: number;
   // Depreciation
   showDepreciation: boolean;
   // Sharing
   shareMessage: string;
   shareUrl: string;
+  // Mobile ergonomics: which side the primary "Log fuel" pill pins to.
+  handed: "left" | "right";
 };
 
 const KEY = "odolog.prefs";
@@ -32,6 +34,7 @@ export const DEFAULT_PREFS: Prefs = {
   showDepreciation: true,
   shareMessage: DEFAULT_SHARE_MESSAGE,
   shareUrl: DEFAULT_SHARE_URL,
+  handed: "right",
 };
 
 export function getPrefs(): Prefs {
