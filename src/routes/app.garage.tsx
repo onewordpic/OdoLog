@@ -63,8 +63,6 @@ function GaragePage() {
           ))}
         </ul>
       )}
-
-      <AddVehicleModal open={showAdd} onClose={() => setShowAdd(false)} />
       <MobileActionBar />
     </main>
   );
