@@ -1,37 +1,36 @@
-## Restore Eco, AI Insights, Reports + Liquid Glass toggle
+## Mobile bottom bar redesign + Garage page
 
-### 1. Eco Card (CO₂ + grade)
-- Reuse/restore `src/lib/eco.ts` (CO₂ math by fuel type + A–F grade).
-- New `src/components/eco-card.tsx`:
-  - Per-vehicle: total kg CO₂ (lifetime + last 30d), kg/km, eco grade chip.
-  - Per-trip: kg CO₂ + grade chip rendered inside `TripSection` list rows.
-- Mount the per-vehicle card on `src/routes/app.vehicle.$id.tsx` below the stats row.
-- EV vehicles → show "Zero tailpipe" badge instead of CO₂ math.
+### Problems
+- Active Vehicle card and bottom action bar are both mint green — they blend together visually.
+- Bottom bar has a "+" Add Vehicle button that isn't needed daily.
+- No single place to scan all vehicles with a quick summary.
 
-### 2. AI Insights (moved into Analytics)
-- Restore `src/lib/insights.functions.ts` flow (monthly digest via Lovable AI Gateway, cached in `ai_summaries` table — already exists).
-- New `src/components/ai-insights-panel.tsx` with "Generate" button + cached summary render (markdown).
-- Mount as a new section inside `src/routes/app.analytics.tsx` (above Achievement Badges). No standalone `/app/insights` route.
+### Changes
 
-### 3. Reports tab (restore)
-- New `src/routes/app.reports.tsx`:
-  - Monthly spend table (last 12 months) per vehicle + combined.
-  - Mileage trend, cost/km trend, top fuel brand, total distance, total CO₂.
-  - CSV export button (client-side blob).
-- Add "Reports" link to desktop top nav and mobile action bar overflow.
+**1. Bottom action bar (`src/components/mobile-action-bar.tsx`)**
+- Three actions only: **Log fuel** (prominent), **Trip insight**, **Garage**.
+- Drop the "+" Add Vehicle button (still reachable from Garage page and dashboard).
+- Log fuel = full pill with mint fill + fuel icon + label. The other two = compact icon-only circular buttons (neutral glass, no mint fill) so the primary action stands alone.
+- Add a handedness toggle: Log fuel pinned **left** or **right**; the two secondary icons sit on the opposite side. Order flips via flex-direction.
+- Persist choice in `localStorage` key `odolog.handed` (`left` | `right`, default `right` so it stays where it is today).
 
-### 4. Settings → Glass UI toggles
-- Extend `src/lib/theming.ts` with two booleans persisted to localStorage + applied as `<html>` data attributes:
-  - `glassMode`: `off | standard | liquid` (replaces ad-hoc liquid class usage).
-- In `src/styles.css`: gate `.glass` / `.liquid-glass` styles on `html[data-glass="standard"]` / `html[data-glass="liquid"]`; `off` falls back to solid surfaces using existing tokens.
-- In `src/routes/app.settings.tsx`: add a "Surface style" segmented control (Off / Glass / Liquid Glass) under the existing appearance block.
+**2. Visual separation from Active Vehicle card**
+- Switch the bar's surface from mint-tinted glass to a neutral dark/light glass pill (uses existing `--background` + border tokens), so it reads as chrome, not content.
+- Keep mint only inside the Log fuel pill itself.
+- Add a stronger shadow + subtle outline ring so it floats above the green card.
 
-### 5. Wiring
-- No DB migrations needed (ai_summaries table already present from earlier sprint).
-- Update analytics tab order: Trends → AI Insights → Achievements → City comparisons.
-- Keep all changes additive; do not touch refuel/maintenance flows.
+**3. New Garage page (`src/routes/app.garage.tsx`)**
+- Route: `/app/garage`.
+- Lists every vehicle (owned + guest garage) as cards, each showing: icon/photo, name + make, fuel type chip, last odo, last refuel date, lifetime ₹ spent, ₹/km, mileage.
+- Tap card → existing `/app/vehicle/$id`.
+- "Add vehicle" button lives at top of this page (replacing the bottom-bar "+").
+
+**4. Settings (`src/routes/app.settings.tsx`)**
+- New "Bottom bar position" segmented control: Left / Right. Writes to the same `odolog.handed` key. Reads on mount.
 
 ### Files touched
-- add: `src/components/eco-card.tsx`, `src/components/ai-insights-panel.tsx`, `src/routes/app.reports.tsx`
-- restore/edit: `src/lib/eco.ts`, `src/lib/insights.functions.ts`
-- edit: `src/lib/theming.ts`, `src/styles.css`, `src/routes/app.settings.tsx`, `src/routes/app.analytics.tsx`, `src/routes/app.vehicle.$id.tsx`, `src/components/trip-section.tsx` (or equivalent), nav components
+- edit: `src/components/mobile-action-bar.tsx`, `src/routes/app.settings.tsx`, `src/routes/app.index.tsx` (pass/remove `onAddVehicle` since bar no longer needs it; keep for backward compat but unused), `src/lib/prefs.ts` (add `getHanded`/`setHanded`).
+- add: `src/routes/app.garage.tsx`.
+
+### Out of scope
+- No DB changes. No changes to refuel/maintenance flows or desktop nav.
