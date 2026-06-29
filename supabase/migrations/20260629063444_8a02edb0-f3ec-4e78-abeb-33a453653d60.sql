@@ -1,0 +1,1 @@
+ALTER TABLE public.refuels ADD COLUMN IF NOT EXISTS fuel_brand text;

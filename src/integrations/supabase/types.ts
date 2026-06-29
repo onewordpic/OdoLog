@@ -164,6 +164,7 @@ export type Database = {
         Row: {
           amount_inr: number
           created_at: string
+          fuel_brand: string | null
           fuel_subtype: string | null
           full_tank: boolean
           id: string
@@ -178,6 +179,7 @@ export type Database = {
         Insert: {
           amount_inr: number
           created_at?: string
+          fuel_brand?: string | null
           fuel_subtype?: string | null
           full_tank?: boolean
           id?: string
@@ -192,6 +194,7 @@ export type Database = {
         Update: {
           amount_inr?: number
           created_at?: string
+          fuel_brand?: string | null
           fuel_subtype?: string | null
           full_tank?: boolean
           id?: string
