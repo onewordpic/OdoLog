@@ -33,6 +33,7 @@ import { fetchFuelPrice } from "@/lib/fuel-price.functions";
 import { useAuthed } from "@/lib/use-authed";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AchievementBadges } from "@/components/achievement-badges";
+import { AiInsightsPanel } from "@/components/ai-insights-panel";
 
 export const Route = createFileRoute("/app/analytics")({
   component: AnalyticsPage,
@@ -105,6 +106,9 @@ function AnalyticsPage() {
 
       {vehicles.data && refuels.data && (
         <div className="space-y-6">
+          <AiInsightsPanel
+            vehicleOptions={vehicles.data.map((v) => ({ id: v.id, name: v.name }))}
+          />
           <VehicleTrends vehicles={vehicles.data} refuels={refuels.data} />
           <RunningCosts vehicles={vehicles.data} refuels={refuels.data} />
           <CityPriceTrends refuels={refuels.data} />
