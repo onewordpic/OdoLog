@@ -36,6 +36,9 @@ import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
 import { VehicleAvatar } from "@/components/vehicle-avatar";
 import { searchCatalog, type CatalogEntry } from "@/lib/vehicle-catalog";
 import { WeatherChip } from "@/components/weather-chip";
+import { MobileActionBar } from "@/components/mobile-action-bar";
+import { TripPlannerModal } from "@/components/trip-planner-modal";
+import { Route as RouteIcon } from "lucide-react";
 
 export const Route = createFileRoute("/app/")({
   component: Dashboard,
