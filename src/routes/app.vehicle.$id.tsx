@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { TripSection } from "@/components/trip-section";
 import { TripAnalytics } from "@/components/trip-analytics";
+import { EcoCard } from "@/components/eco-card";
+import type { FuelType } from "@/lib/eco";
 
 import { fetchFuelPrice } from "@/lib/fuel-price.functions";
 import { toast } from "sonner";
@@ -588,6 +590,18 @@ function VehiclePage() {
 
       <TripSection vehicleId={id} costPerKm={summary.costPerKm} />
       <TripAnalytics vehicleId={id} costPerKm={summary.costPerKm} />
+
+      {vehicle.data && (
+        <div className="mt-5">
+          <EcoCard
+            fuelType={(vehicle.data.fuel_type as FuelType) ?? "petrol"}
+            totalLitres={summary.totalLitres}
+            totalKm={summary.totalKm}
+          />
+        </div>
+      )}
+
+
 
 
 
