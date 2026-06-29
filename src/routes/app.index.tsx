@@ -181,6 +181,14 @@ function Dashboard() {
         </Link>
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
+          <button
+            type="button"
+            onClick={() => setShowTrip(true)}
+            className="press hidden sm:inline-flex h-9 items-center gap-1.5 rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 px-3 text-xs font-semibold transition"
+            aria-label="Trip insight"
+          >
+            <RouteIcon className="h-3.5 w-3.5" /> Trip insight
+          </button>
           <Link
             to="/app/analytics"
             className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
