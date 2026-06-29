@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
-import { Route as GHandleRouteImport } from './routes/g.$handle'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppReportsRouteImport } from './routes/app.reports'
 import { Route as AppInsightsRouteImport } from './routes/app.insights'
@@ -33,11 +32,6 @@ const IndexRoute = IndexRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/app/',
   path: '/app/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GHandleRoute = GHandleRouteImport.update({
-  id: '/g/$handle',
-  path: '/g/$handle',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
@@ -78,7 +72,6 @@ export interface FileRoutesByFullPath {
   '/app/insights': typeof AppInsightsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
-  '/g/$handle': typeof GHandleRoute
   '/app/': typeof AppIndexRoute
   '/app/vehicle/$id': typeof AppVehicleIdRoute
   '/api/public/gcal/callback': typeof ApiPublicGcalCallbackRoute
@@ -90,7 +83,6 @@ export interface FileRoutesByTo {
   '/app/insights': typeof AppInsightsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
-  '/g/$handle': typeof GHandleRoute
   '/app': typeof AppIndexRoute
   '/app/vehicle/$id': typeof AppVehicleIdRoute
   '/api/public/gcal/callback': typeof ApiPublicGcalCallbackRoute
@@ -103,7 +95,6 @@ export interface FileRoutesById {
   '/app/insights': typeof AppInsightsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
-  '/g/$handle': typeof GHandleRoute
   '/app/': typeof AppIndexRoute
   '/app/vehicle/$id': typeof AppVehicleIdRoute
   '/api/public/gcal/callback': typeof ApiPublicGcalCallbackRoute
@@ -117,7 +108,6 @@ export interface FileRouteTypes {
     | '/app/insights'
     | '/app/reports'
     | '/app/settings'
-    | '/g/$handle'
     | '/app/'
     | '/app/vehicle/$id'
     | '/api/public/gcal/callback'
@@ -129,7 +119,6 @@ export interface FileRouteTypes {
     | '/app/insights'
     | '/app/reports'
     | '/app/settings'
-    | '/g/$handle'
     | '/app'
     | '/app/vehicle/$id'
     | '/api/public/gcal/callback'
@@ -141,7 +130,6 @@ export interface FileRouteTypes {
     | '/app/insights'
     | '/app/reports'
     | '/app/settings'
-    | '/g/$handle'
     | '/app/'
     | '/app/vehicle/$id'
     | '/api/public/gcal/callback'
@@ -154,7 +142,6 @@ export interface RootRouteChildren {
   AppInsightsRoute: typeof AppInsightsRoute
   AppReportsRoute: typeof AppReportsRoute
   AppSettingsRoute: typeof AppSettingsRoute
-  GHandleRoute: typeof GHandleRoute
   AppIndexRoute: typeof AppIndexRoute
   AppVehicleIdRoute: typeof AppVehicleIdRoute
   ApiPublicGcalCallbackRoute: typeof ApiPublicGcalCallbackRoute
@@ -181,13 +168,6 @@ declare module '@tanstack/react-router' {
       path: '/app'
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/g/$handle': {
-      id: '/g/$handle'
-      path: '/g/$handle'
-      fullPath: '/g/$handle'
-      preLoaderRoute: typeof GHandleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/settings': {
@@ -242,7 +222,6 @@ const rootRouteChildren: RootRouteChildren = {
   AppInsightsRoute: AppInsightsRoute,
   AppReportsRoute: AppReportsRoute,
   AppSettingsRoute: AppSettingsRoute,
-  GHandleRoute: GHandleRoute,
   AppIndexRoute: AppIndexRoute,
   AppVehicleIdRoute: AppVehicleIdRoute,
   ApiPublicGcalCallbackRoute: ApiPublicGcalCallbackRoute,
