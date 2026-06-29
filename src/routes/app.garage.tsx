@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ChevronRight, Plus, Fuel, Gauge } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { listVehicles, listAllRefuels, type Vehicle, type Refuel } from "@/lib/data-store";
 import { VehicleIcon } from "@/components/vehicle-icon";
 
@@ -201,9 +201,6 @@ function EmptyStateLink() {
   );
 }
 
-function LayoutIcon() {
-  return <Fuel className="h-5 w-5 text-muted-foreground" />;
-}
 
 function formatCompact(n: number): string {
   if (n >= 100000) return `${(n / 100000).toFixed(1)}L`;
