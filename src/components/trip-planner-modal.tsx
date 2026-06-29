@@ -48,8 +48,22 @@ function parseTripText(text: string): {
 } | null {
   const t = text.trim();
   if (!t) return null;
-  const roundTrip = /\b(and\s+back|round\s*trip|return)\b/i.test(t);
-  const cleaned = t.replace(/\b(and\s+back|round\s*trip|return)\b/i, "").trim();
+  // Detect explicit return phrasing.
+  const backMatch = t.match(/\bback\s+to\s+([^,.]+?)(?:[.,]|$)/i);
+  const roundTrip =
+    !!backMatch ||
+    /\b(and\s+back|round\s*trip|return)\b/i.test(t);
+
+  // Strip filler clauses we don't need to geocode (sightseeing, via X, etc.)
+  let cleaned = t
+    .replace(/\bback\s+to\s+[^,.]+/gi, "")
+    .replace(/\b(and\s+)?(some\s+)?(sight\s*seeing|sightseeing|sights|exploring|stops?)\b[^,.]*/gi, "")
+    .replace(/\b(and\s+back|round\s*trip|return)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^and\s+/i, "")
+    .replace(/\s+and\s*$/i, "");
+
   // Patterns: "A to B", "from A to B", "A → B", "A - B"
   const m =
     cleaned.match(/^(?:from\s+)?([^,–\->]+?)\s+(?:to|→|->|-|–)\s+(.+?)\.?$/i) ??
@@ -241,9 +255,9 @@ export function TripPlannerModal({ open, onClose, initialVehicleId }: Props) {
       if (!result || !selectedVehicle) throw new Error("Nothing to save");
       const note = [
         `Planned: ${origin} → ${destination}${roundTrip ? " (and back)" : ""}`,
-        `≈${result.distanceKm.toFixed(0)} km`,
+        `≈${Math.ceil(result.distanceKm)} km`,
         result.litres ? `≈${result.litres.toFixed(1)} L` : null,
-        result.costInr ? `≈₹${result.costInr.toFixed(0)}` : null,
+        result.costInr ? `≈₹${Math.round(result.costInr)}` : null,
         `(estimates only)`,
       ]
         .filter(Boolean)
@@ -310,7 +324,7 @@ export function TripPlannerModal({ open, onClose, initialVehicleId }: Props) {
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Trivandrum to Munnar and back"
+            placeholder="Describe your trip…"
             className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2.5 text-sm"
           />
         </label>
@@ -324,7 +338,7 @@ export function TripPlannerModal({ open, onClose, initialVehicleId }: Props) {
             <input
               value={origin}
               onChange={(e) => setOrigin(e.target.value)}
-              placeholder="Trivandrum"
+              placeholder="Start city"
               className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2 text-sm"
             />
           </label>
@@ -335,7 +349,7 @@ export function TripPlannerModal({ open, onClose, initialVehicleId }: Props) {
             <input
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
-              placeholder="Munnar"
+              placeholder="Destination"
               className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2 text-sm"
             />
           </label>
@@ -417,7 +431,7 @@ export function TripPlannerModal({ open, onClose, initialVehicleId }: Props) {
                 <span className="break-words">{result.destName}</span>
               </div>
               <div className="mt-1 text-[11px] text-muted-foreground">
-                One-way {result.oneWayKm.toFixed(0)} km{" "}
+                One-way {Math.ceil(result.oneWayKm)} km{" "}
                 {roundTrip ? "· round trip" : ""}
               </div>
             </div>
@@ -426,7 +440,7 @@ export function TripPlannerModal({ open, onClose, initialVehicleId }: Props) {
               <Tile
                 icon={<Gauge className="h-3.5 w-3.5" />}
                 label="Distance"
-                value={`${result.distanceKm.toFixed(0)} km`}
+                value={`${Math.ceil(result.distanceKm)} km`}
               />
               <Tile
                 icon={<Droplet className="h-3.5 w-3.5" />}
@@ -436,7 +450,7 @@ export function TripPlannerModal({ open, onClose, initialVehicleId }: Props) {
               <Tile
                 icon={<IndianRupee className="h-3.5 w-3.5" />}
                 label="Cost"
-                value={result.costInr != null ? `₹${result.costInr.toFixed(0)}` : "—"}
+                value={result.costInr != null ? `₹${Math.round(result.costInr)}` : "—"}
               />
             </div>
 

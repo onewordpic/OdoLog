@@ -32,6 +32,7 @@ import {
 import { fetchFuelPrice } from "@/lib/fuel-price.functions";
 import { useAuthed } from "@/lib/use-authed";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AchievementBadges } from "@/components/achievement-badges";
 
 export const Route = createFileRoute("/app/analytics")({
   component: AnalyticsPage,
@@ -107,6 +108,9 @@ function AnalyticsPage() {
           <VehicleTrends vehicles={vehicles.data} refuels={refuels.data} />
           <RunningCosts vehicles={vehicles.data} refuels={refuels.data} />
           <CityPriceTrends refuels={refuels.data} />
+          <section className="glass animate-fade-in-up rounded-3xl p-5">
+            <AchievementBadges />
+          </section>
         </div>
       )}
     </main>

@@ -127,7 +127,6 @@ export function AchievementBadges() {
   }, [vehicles.data, refuels.data, maintenance.data]);
 
   if (!vehicles.data || !refuels.data || !maintenance.data) return null;
-  if (unlocked.size === 0) return null;
 
   return (
     <div className="animate-fade-in">
