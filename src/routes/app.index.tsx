@@ -179,7 +179,6 @@ function Dashboard() {
         </Link>
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
-          <ShareIconButton />
           <Link
             to="/app/analytics"
             className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
@@ -187,22 +186,6 @@ function Dashboard() {
           >
             <BarChart3 className="h-4 w-4" />
           </Link>
-          <Link
-            to="/app/reports"
-            className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
-            aria-label="Reports"
-          >
-            <CalendarDays className="h-4 w-4" />
-          </Link>
-          {authed && (
-            <Link
-              to="/app/insights"
-              className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
-              aria-label="AI insights"
-            >
-              <Sparkles className="h-4 w-4" />
-            </Link>
-          )}
           <Link
             to="/app/settings"
             className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
@@ -244,8 +227,6 @@ function Dashboard() {
         <WeatherChip city={profile.data?.default_city ?? ""} />
       </div>
 
-      <WeatherAdvisory city={profile.data?.default_city ?? ""} />
-      <NameNudge hasName={!!name} />
 
       {authed === false && (
         <div className="mb-4 rounded-2xl border border-foreground/10 bg-foreground/5 px-4 py-2.5 text-xs animate-fade-in">
@@ -515,7 +496,7 @@ function Dashboard() {
 
       </div>
 
-      <AchievementBadges />
+      
 
       <ServiceAlerts authed={authed} />
 
