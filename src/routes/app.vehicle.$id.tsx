@@ -588,7 +588,12 @@ function VehiclePage() {
       />
 
 
-      <TripSection vehicleId={id} costPerKm={summary.costPerKm} />
+      <TripSection
+        vehicleId={id}
+        costPerKm={summary.costPerKm}
+        fuelType={(vehicle.data?.fuel_type as FuelType) ?? "petrol"}
+        kmPerL={summary.kmPerL}
+      />
       <TripAnalytics vehicleId={id} costPerKm={summary.costPerKm} />
 
       {vehicle.data && (
