@@ -180,7 +180,7 @@ function VehiclePage() {
 
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 md:px-6 animate-fade-in">
+    <main className="mx-auto max-w-3xl px-4 pt-8 pb-28 md:px-6 md:pb-8 animate-fade-in">
       <header className="mb-6 flex items-center justify-between">
         <Link
           to="/app"
