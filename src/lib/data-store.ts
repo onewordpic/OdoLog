@@ -37,6 +37,7 @@ export type Refuel = {
   full_tank: boolean;
   notes: string | null;
   fuel_subtype: FuelSubtype;
+  fuel_brand: string | null;
   created_at: string;
 };
 
