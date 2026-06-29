@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ChevronRight, Plus, Fuel, Gauge } from "lucide-react";
+import { ArrowLeft, ChevronRight, Plus, Fuel, Gauge, FileText } from "lucide-react";
 import { useMemo } from "react";
 import { listVehicles, listAllRefuels, type Vehicle, type Refuel } from "@/lib/data-store";
 import { VehicleIcon } from "@/components/vehicle-icon";
