@@ -142,9 +142,6 @@ export type Database = {
           default_city: string | null
           display_name: string | null
           id: string
-          public_avatar_url: string | null
-          public_bio: string | null
-          public_handle: string | null
           updated_at: string
         }
         Insert: {
@@ -152,9 +149,6 @@ export type Database = {
           default_city?: string | null
           display_name?: string | null
           id: string
-          public_avatar_url?: string | null
-          public_bio?: string | null
-          public_handle?: string | null
           updated_at?: string
         }
         Update: {
@@ -162,9 +156,6 @@ export type Database = {
           default_city?: string | null
           display_name?: string | null
           id?: string
-          public_avatar_url?: string | null
-          public_bio?: string | null
-          public_handle?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -276,7 +267,6 @@ export type Database = {
         Row: {
           created_at: string
           fuel_type: Database["public"]["Enums"]["fuel_type"]
-          garage_visibility: string
           icon: string
           id: string
           image_url: string | null
@@ -295,7 +285,6 @@ export type Database = {
         Insert: {
           created_at?: string
           fuel_type?: Database["public"]["Enums"]["fuel_type"]
-          garage_visibility?: string
           icon?: string
           id?: string
           image_url?: string | null
@@ -314,7 +303,6 @@ export type Database = {
         Update: {
           created_at?: string
           fuel_type?: Database["public"]["Enums"]["fuel_type"]
-          garage_visibility?: string
           icon?: string
           id?: string
           image_url?: string | null
@@ -337,27 +325,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_public_garage: {
-        Args: { _handle: string }
-        Returns: {
-          default_city: string
-          display_name: string
-          public_avatar_url: string
-          public_bio: string
-          vehicles: Json
-        }[]
-      }
-      get_public_garage_stats: {
-        Args: { _handle: string }
-        Returns: {
-          max_odo: number
-          min_odo: number
-          refuel_count: number
-          total_litres: number
-          total_spend: number
-          vehicle_id: string
-        }[]
-      }
+      [_ in never]: never
     }
     Enums: {
       fuel_type: "petrol" | "diesel" | "cng" | "electric"

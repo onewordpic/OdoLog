@@ -17,8 +17,6 @@ import {
   BellRing,
   BarChart3,
   Wrench,
-  CalendarDays,
-  Sparkles,
 } from "lucide-react";
 import {
   listVehicles,
@@ -34,12 +32,10 @@ import {
 import { PREFS_EVENT, getPrefs, type Prefs } from "@/lib/prefs";
 import { useAuthed } from "@/lib/use-authed";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { ShareIconButton, ShareCard } from "@/components/share-button";
 import { VehicleIcon, VEHICLE_ICONS } from "@/components/vehicle-icon";
 import { VehicleAvatar } from "@/components/vehicle-avatar";
 import { searchCatalog, type CatalogEntry } from "@/lib/vehicle-catalog";
-import { WeatherChip, WeatherAdvisory } from "@/components/weather-chip";
-import { AchievementBadges } from "@/components/achievement-badges";
+import { WeatherChip } from "@/components/weather-chip";
 
 export const Route = createFileRoute("/app/")({
   component: Dashboard,
@@ -181,7 +177,6 @@ function Dashboard() {
         </Link>
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
-          <ShareIconButton />
           <Link
             to="/app/analytics"
             className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
@@ -189,22 +184,6 @@ function Dashboard() {
           >
             <BarChart3 className="h-4 w-4" />
           </Link>
-          <Link
-            to="/app/reports"
-            className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
-            aria-label="Reports"
-          >
-            <CalendarDays className="h-4 w-4" />
-          </Link>
-          {authed && (
-            <Link
-              to="/app/insights"
-              className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
-              aria-label="AI insights"
-            >
-              <Sparkles className="h-4 w-4" />
-            </Link>
-          )}
           <Link
             to="/app/settings"
             className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
@@ -246,8 +225,6 @@ function Dashboard() {
         <WeatherChip city={profile.data?.default_city ?? ""} />
       </div>
 
-      <WeatherAdvisory city={profile.data?.default_city ?? ""} />
-      <NameNudge hasName={!!name} />
 
       {authed === false && (
         <div className="mb-4 rounded-2xl border border-foreground/10 bg-foreground/5 px-4 py-2.5 text-xs animate-fade-in">
@@ -276,9 +253,7 @@ function Dashboard() {
           <div className="mt-1 flex flex-wrap gap-1">
             {([
               ["all", "All time"],
-              ["year", "This year"],
               ["month", "This month"],
-              ["30d", "30 days"],
             ] as const).map(([k, label]) => (
               <button
                 key={k}
@@ -315,11 +290,7 @@ function Dashboard() {
               <div className="font-display text-3xl font-bold tracking-tight">
                 {totalLitres.toFixed(1)}<span className="text-sm ml-1 text-[var(--cockpit-text-mute)]">L</span>
               </div>
-              <div className="mt-3 flex items-end gap-1 h-6">
-                {[40, 65, 30, 80, 55, 90, 70].map((h, i) => (
-                  <div key={i} className="flex-1 rounded-sm bg-[var(--mint-accent)]/70" style={{ height: `${h}%` }} />
-                ))}
-              </div>
+              <p className="text-[11px] mt-2 text-[var(--cockpit-text-soft)]">total fuel</p>
             </div>
           </div>
           <div className="rounded-[2rem] p-5 border border-foreground/10 bg-[var(--cockpit-card)] flex flex-col justify-between stagger"
@@ -517,7 +488,7 @@ function Dashboard() {
 
       </div>
 
-      <AchievementBadges />
+      
 
       <ServiceAlerts authed={authed} />
 
@@ -1218,82 +1189,4 @@ function ServiceAlerts({ authed }: { authed: boolean | null }) {
   );
 }
 
-// ---------- Name nudge: occasionally invite anonymous users to set a name ----------
 
-function NameNudge({ hasName }: { hasName: boolean }) {
-  const [show, setShow] = useState(false);
-  const [val, setVal] = useState("");
-  const qc = useQueryClient();
-
-  useEffect(() => {
-    if (hasName) return;
-    try {
-      const dismissedAt = Number(localStorage.getItem("odolog.name-nudge.dismissed") || "0");
-      const days = (Date.now() - dismissedAt) / (1000 * 60 * 60 * 24);
-      // Show on first visit; after dismiss, re-surface only after ~3 days.
-      if (!dismissedAt || days >= 3) setShow(true);
-    } catch {
-      setShow(true);
-    }
-  }, [hasName]);
-
-  const save = useMutation({
-    mutationFn: async (name: string) => {
-      const cur = await getProfile();
-      await saveProfile({ display_name: name, default_city: cur.default_city || "thiruvananthapuram" });
-    },
-    onSuccess: () => {
-      try { localStorage.setItem("odolog.name-nudge.dismissed", String(Date.now())); } catch {}
-      qc.invalidateQueries({ queryKey: ["profile"] });
-      setShow(false);
-    },
-  });
-
-  function dismiss() {
-    try { localStorage.setItem("odolog.name-nudge.dismissed", String(Date.now())); } catch {}
-    setShow(false);
-  }
-
-  if (hasName || !show) return null;
-
-  return (
-    <div className="mt-4 glass rounded-2xl p-3.5 flex items-center gap-3 animate-fade-in-up">
-      <div className="text-xl">👋</div>
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold leading-tight">What should we call you?</div>
-        <div className="text-[11px] text-muted-foreground">We'll use it for greetings — totally optional.</div>
-      </div>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const n = val.trim();
-          if (n) save.mutate(n);
-        }}
-        className="flex items-center gap-1.5 shrink-0"
-      >
-        <input
-          value={val}
-          onChange={(e) => setVal(e.target.value)}
-          placeholder="Your name"
-          maxLength={30}
-          className="w-28 sm:w-36 rounded-xl glass-input glass-input-focus px-3 py-1.5 text-sm"
-        />
-        <button
-          type="submit"
-          disabled={!val.trim() || save.isPending}
-          className="press rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
-        >
-          Save
-        </button>
-        <button
-          type="button"
-          onClick={dismiss}
-          aria-label="Dismiss"
-          className="press rounded-xl glass-subtle glass-hover px-2 py-1.5 text-xs"
-        >
-          ✕
-        </button>
-      </form>
-    </div>
-  );
-}
