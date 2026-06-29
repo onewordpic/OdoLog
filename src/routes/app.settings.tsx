@@ -398,6 +398,19 @@ function SettingsPage() {
                 ]}
               />
             </Row>
+            <Row
+              label="Log fuel button"
+              hint="Pin the primary action to your thumb side on mobile."
+            >
+              <Segmented
+                value={prefs.handed}
+                onChange={(v) => updatePrefs({ handed: v as Prefs["handed"] })}
+                options={[
+                  { id: "left", label: "Left" },
+                  { id: "right", label: "Right" },
+                ]}
+              />
+            </Row>
             <Field label="Default chart metric">
               <select
                 value={prefs.defaultChartMetric}
