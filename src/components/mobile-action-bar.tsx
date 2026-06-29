@@ -80,7 +80,7 @@ export function MobileActionBar({
         aria-label="Garage"
         className="press flex h-11 w-11 items-center justify-center rounded-full bg-foreground/8 hover:bg-foreground/15 text-foreground"
       >
-        <Cog className="h-4 w-4" />
+        <LayoutGrid className="h-4 w-4" />
       </Link>
     </div>
   );
