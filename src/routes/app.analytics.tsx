@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -32,8 +32,12 @@ import {
 import { fetchFuelPrice } from "@/lib/fuel-price.functions";
 import { useAuthed } from "@/lib/use-authed";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { AchievementBadges } from "@/components/achievement-badges";
-import { AiInsightsPanel } from "@/components/ai-insights-panel";
+const AchievementBadges = lazy(() =>
+  import("@/components/achievement-badges").then((m) => ({ default: m.AchievementBadges })),
+);
+const AiInsightsPanel = lazy(() =>
+  import("@/components/ai-insights-panel").then((m) => ({ default: m.AiInsightsPanel })),
+);
 
 export const Route = createFileRoute("/app/analytics")({
   component: AnalyticsPage,
@@ -106,14 +110,18 @@ function AnalyticsPage() {
 
       {vehicles.data && refuels.data && (
         <div className="space-y-6">
-          <AiInsightsPanel
-            vehicleOptions={vehicles.data.map((v) => ({ id: v.id, name: v.name }))}
-          />
+          <Suspense fallback={<div className="glass h-24 rounded-2xl animate-pulse" />}>
+            <AiInsightsPanel
+              vehicleOptions={vehicles.data.map((v) => ({ id: v.id, name: v.name }))}
+            />
+          </Suspense>
           <VehicleTrends vehicles={vehicles.data} refuels={refuels.data} />
           <RunningCosts vehicles={vehicles.data} refuels={refuels.data} />
           <CityPriceTrends refuels={refuels.data} />
           <section className="glass animate-fade-in-up rounded-3xl p-5">
-            <AchievementBadges />
+            <Suspense fallback={<div className="h-20 rounded-2xl bg-foreground/5 animate-pulse" />}>
+              <AchievementBadges />
+            </Suspense>
           </section>
         </div>
       )}
