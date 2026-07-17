@@ -7,6 +7,7 @@ import type { FuelType } from "@/lib/eco";
 const TripSection = lazy(() => import("@/components/trip-section").then((m) => ({ default: m.TripSection })));
 const TripAnalytics = lazy(() => import("@/components/trip-analytics").then((m) => ({ default: m.TripAnalytics })));
 const EcoCard = lazy(() => import("@/components/eco-card").then((m) => ({ default: m.EcoCard })));
+const TrendChart = lazy(() => import("@/components/trend-chart").then((m) => ({ default: m.TrendChart })));
 
 import { fetchFuelPrice } from "@/lib/fuel-price.functions";
 import { toast } from "sonner";
@@ -33,15 +34,8 @@ import {
 import { CountdownRing } from "@/components/countdown-ring";
 const CsvImportModal = lazy(() => import("@/components/csv-import-modal").then((m) => ({ default: m.CsvImportModal })));
 
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
+
+
 import {
   getVehicle,
   listRefuels,
@@ -427,7 +421,25 @@ function VehiclePage() {
             </div>
           )}
 
-          <TrendChart summary={summary} refuels={refuels.data ?? []} />
+          {summary.anomalies.summary.length > 0 && (
+            <div className="mt-3 glass rounded-2xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 animate-fade-in">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                <div className="text-xs">
+                  <div className="font-medium text-foreground">Data looks unusual</div>
+                  <ul className="mt-1 space-y-0.5 text-muted-foreground">
+                    {summary.anomalies.summary.map((m, i) => (
+                      <li key={i}>{m}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <Suspense fallback={<div className="glass mt-6 h-52 rounded-2xl animate-pulse" />}>
+            <TrendChart chart={summary.chart} refuels={refuels.data ?? []} />
+          </Suspense>
         </>
       )}
 
@@ -477,13 +489,25 @@ function VehiclePage() {
             <ul className="divide-y divide-foreground/5">
               {refuels.data.map((r) => {
                 const seg = summary.segmentById.get(r.id);
+                const flags = summary.anomalies.byId.get(r.id);
                 return (
                   <li
                     key={r.id}
                     className="group grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm transition hover:bg-foreground/5"
                   >
                     <div className="col-span-6 md:col-span-2">
-                      <div className="font-medium">{formatDate(r.refuel_date)}</div>
+                      <div className="flex items-center gap-1.5 font-medium">
+                        {flags && (
+                          <span
+                            title={flags.join("\n")}
+                            className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/15 text-amber-500"
+                            aria-label={`Warning: ${flags.join(", ")}`}
+                          >
+                            <AlertTriangle className="h-3 w-3" />
+                          </span>
+                        )}
+                        <span>{formatDate(r.refuel_date)}</span>
+                      </div>
                       <div className="mt-0.5 flex flex-wrap items-center gap-1">
                         {!r.full_tank && (
                           <span className="inline-block rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-medium uppercase text-accent-foreground">
@@ -1527,6 +1551,7 @@ function computeSummary(refuels: Refuel[]) {
   }
 
   const segmentById = new Map(segments.map((s) => [s.refuelId, s]));
+  const anomalies = detectAnomalies(asc, segments);
 
   return {
     totalLitres,
@@ -1539,121 +1564,94 @@ function computeSummary(refuels: Refuel[]) {
     latestOdo,
     basis: basisSource ? { source: basisSource, label: basisLabel, detail: basisDetail } : null,
     missing,
+    anomalies,
   };
 }
 
+// Flag suspicious refuels so the user can spot typos or mis-logged entries.
+function detectAnomalies(
+  asc: OrderedRefuel[],
+  segments: Segment[],
+): { byId: Map<string, string[]>; summary: string[] } {
+  const byId = new Map<string, string[]>();
+  const push = (id: string, msg: string) => {
+    const arr = byId.get(id) ?? [];
+    arr.push(msg);
+    byId.set(id, arr);
+  };
 
-// ---------- Interactive trend chart ----------
+  // Median segment km/L as a baseline for outliers.
+  const kmpls = segments.map((s) => s.kmpl).sort((a, b) => a - b);
+  const median = kmpls.length ? kmpls[Math.floor(kmpls.length / 2)] : null;
 
-type Metric = "kmpl" | "cpk" | "spend" | "litres";
+  // Per-refuel row checks.
+  let prevWithOdo: OrderedRefuel | null = null;
+  for (const r of asc) {
+    const amount = validNumber(r.amount_inr);
+    const rate = validNumber(r.rate_per_litre);
+    const litres = validNumber(r.litres);
+    const odo = r.odo_km != null ? validNumber(r.odo_km) : null;
 
-const METRICS: { id: Metric; label: string; color: string; unit: string }[] = [
-  { id: "kmpl", label: "Mileage", color: "oklch(0.55 0.18 250)", unit: "km/l" },
-  { id: "cpk", label: "Cost / km", color: "oklch(0.65 0.18 30)", unit: "₹/km" },
-  { id: "spend", label: "Spend", color: "oklch(0.6 0.15 150)", unit: "₹" },
-  { id: "litres", label: "Litres", color: "oklch(0.6 0.15 60)", unit: "L" },
-];
-
-function TrendChart({
-  summary,
-  refuels,
-}: {
-  summary: ReturnType<typeof computeSummary>;
-  refuels: Refuel[];
-}) {
-  const [metric, setMetric] = useState<Metric>("kmpl");
-
-  const data = useMemo(() => {
-    if (metric === "kmpl" || metric === "cpk") {
-      return summary.chart.map((s) => ({ date: s.date, value: s[metric] }));
+    if (amount > 0 && rate <= 0) push(r.id, "Missing fuel rate (₹/L).");
+    if (amount <= 0 && litres <= 0) push(r.id, "No amount or litres recorded.");
+    if (litres > 100) push(r.id, `Unusually large fill (${litres.toFixed(1)} L).`);
+    if (rate > 0 && (rate < 40 || rate > 200)) {
+      push(r.id, `Fuel rate ₹${rate.toFixed(2)}/L looks off.`);
     }
-    const asc = [...refuels].sort((a, b) =>
-      a.refuel_date.localeCompare(b.refuel_date),
+    if (odo != null) {
+      if (prevWithOdo) {
+        const prevOdo = validNumber(prevWithOdo.odo_km);
+        if (odo < prevOdo) push(r.id, `Odometer went backwards (was ${prevOdo.toFixed(0)} km).`);
+        else if (odo === prevOdo && r.refuel_date !== prevWithOdo.refuel_date) {
+          push(r.id, "Same odometer as previous refuel.");
+        } else {
+          const gap = odo - prevOdo;
+          if (gap > 3000) push(r.id, `Big odo jump (+${gap.toFixed(0)} km) — check the reading.`);
+        }
+      }
+      prevWithOdo = r;
+    }
+  }
+
+  // Segment-level outliers (extreme km/L vs median).
+  for (const s of segments) {
+    if (s.kmpl < 3) push(s.refuelId, `Very low mileage (${s.kmpl.toFixed(1)} km/L) for this span.`);
+    else if (s.kmpl > 60) push(s.refuelId, `Very high mileage (${s.kmpl.toFixed(1)} km/L) — possible odo/litres error.`);
+    if (median != null && median > 0) {
+      const ratio = s.kmpl / median;
+      if (ratio < 0.5) push(s.refuelId, `Mileage ~${Math.round((1 - ratio) * 100)}% below your usual.`);
+      else if (ratio > 1.8) push(s.refuelId, `Mileage ~${Math.round((ratio - 1) * 100)}% above your usual.`);
+    }
+  }
+
+  // Same-day duplicate refuels.
+  const byDate = new Map<string, OrderedRefuel[]>();
+  for (const r of asc) {
+    const arr = byDate.get(r.refuel_date) ?? [];
+    arr.push(r);
+    byDate.set(r.refuel_date, arr);
+  }
+  for (const [date, rows] of byDate) {
+    if (rows.length > 1) {
+      for (const r of rows) push(r.id, `Multiple refuels logged on ${fmtShortDate(date)}.`);
+    }
+  }
+
+  const summary: string[] = [];
+  const flagged = byId.size;
+  if (flagged > 0) {
+    summary.push(
+      `${flagged} refuel${flagged === 1 ? "" : "s"} flagged — tap the ⚠ icon or edit to fix.`,
     );
-    return asc.map((r) => ({
-      date: new Date(r.refuel_date + "T00:00:00").toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-      }),
-      value:
-        metric === "spend" ? Number(r.amount_inr) : Number(r.litres),
-    }));
-  }, [metric, summary.chart, refuels]);
-
-  if (data.length < 2) return null;
-  const cfg = METRICS.find((m) => m.id === metric)!;
-
-  return (
-    <section className="glass mt-6 rounded-2xl p-4 animate-fade-in-up">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground">
-          Trend
-        </div>
-        <div className="glass-subtle flex rounded-full p-1 text-[11px]">
-          {METRICS.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => setMetric(m.id)}
-              className={`press rounded-full px-3 py-1 transition ${
-                metric === m.id
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {m.label}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="h-52">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.7 0.02 250 / 0.2)" />
-            <XAxis
-              dataKey="date"
-              stroke="oklch(0.5 0.02 250)"
-              fontSize={11}
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis
-              stroke="oklch(0.5 0.02 250)"
-              fontSize={11}
-              tickLine={false}
-              axisLine={false}
-              width={36}
-            />
-            <Tooltip
-              contentStyle={{
-                background: "var(--background)",
-                border: "1px solid var(--border)",
-                borderRadius: 12,
-                fontSize: 12,
-              }}
-              formatter={(v: number) => [
-                metric === "spend" || metric === "cpk"
-                  ? `${cfg.unit === "₹" ? "₹" : ""}${v.toFixed(2)}${cfg.unit !== "₹" ? ` ${cfg.unit}` : ""}`
-                  : `${v.toFixed(2)} ${cfg.unit}`,
-                cfg.label,
-              ]}
-            />
-            <Line
-              type="monotone"
-              dataKey="value"
-              name={cfg.label}
-              stroke={cfg.color}
-              strokeWidth={2.5}
-              dot={{ r: 3, fill: cfg.color }}
-              activeDot={{ r: 5 }}
-              isAnimationActive
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </section>
-  );
+  }
+  return { byId, summary };
 }
+
+
+
+
+
+
 
 // ---------- Maintenance log ----------
 
