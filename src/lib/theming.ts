@@ -1,5 +1,25 @@
-export type Accent = "mint" | "coral" | "violet" | "sky" | "amber";
-export type Gradient = "aurora" | "paper" | "sunrise" | "ocean";
+export type Accent =
+  | "mint"
+  | "coral"
+  | "violet"
+  | "sky"
+  | "amber"
+  | "rose"
+  | "lime"
+  | "teal"
+  | "indigo"
+  | "fuchsia"
+  | "slate";
+export type Gradient =
+  | "aurora"
+  | "paper"
+  | "sunrise"
+  | "ocean"
+  | "midnight"
+  | "peach"
+  | "forest"
+  | "candy"
+  | "mono";
 export type GlassMode = "solid" | "glass" | "liquid";
 
 export const ACCENTS: { id: Accent; label: string; light: string; dark: string }[] = [
@@ -8,6 +28,12 @@ export const ACCENTS: { id: Accent; label: string; light: string; dark: string }
   { id: "violet", label: "Violet", light: "#7C3AED", dark: "#C4B5FD" },
   { id: "sky", label: "Sky", light: "#0284C7", dark: "#93C5FD" },
   { id: "amber", label: "Amber", light: "#D97706", dark: "#FCD34D" },
+  { id: "rose", label: "Rose", light: "#E11D48", dark: "#FDA4AF" },
+  { id: "lime", label: "Lime", light: "#65A30D", dark: "#BEF264" },
+  { id: "teal", label: "Teal", light: "#0D9488", dark: "#5EEAD4" },
+  { id: "indigo", label: "Indigo", light: "#4F46E5", dark: "#A5B4FC" },
+  { id: "fuchsia", label: "Fuchsia", light: "#C026D3", dark: "#F0ABFC" },
+  { id: "slate", label: "Slate", light: "#475569", dark: "#CBD5E1" },
 ];
 
 export const GRADIENTS: { id: Gradient; label: string; preview: string }[] = [
@@ -15,6 +41,11 @@ export const GRADIENTS: { id: Gradient; label: string; preview: string }[] = [
   { id: "paper", label: "Paper", preview: "linear-gradient(135deg,#FBFBF7,#E9E5DC)" },
   { id: "sunrise", label: "Sunrise", preview: "linear-gradient(135deg,#FDA4AF,#FCD34D)" },
   { id: "ocean", label: "Ocean", preview: "linear-gradient(135deg,#93C5FD,#A7F3D0)" },
+  { id: "midnight", label: "Midnight", preview: "linear-gradient(135deg,#818CF8,#475569)" },
+  { id: "peach", label: "Peach", preview: "linear-gradient(135deg,#FDA4AF,#FB923C)" },
+  { id: "forest", label: "Forest", preview: "linear-gradient(135deg,#2DD4BF,#BEF264)" },
+  { id: "candy", label: "Candy", preview: "linear-gradient(135deg,#F0ABFC,#7DD3FC)" },
+  { id: "mono", label: "Mono", preview: "linear-gradient(135deg,#E7E5E4,#A8A29E)" },
 ];
 
 export const GLASS_MODES: { id: GlassMode; label: string; desc: string }[] = [
