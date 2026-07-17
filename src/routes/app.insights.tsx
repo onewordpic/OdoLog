@@ -77,7 +77,7 @@ function InsightsPage() {
   const d = summary.data as MonthlyDigest | undefined;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5 p-4 sm:p-6 animate-fade-in">
+    <div className="mx-auto max-w-3xl space-y-5 px-4 safe-top pb-6 sm:px-6 animate-fade-in">
       <header className="flex items-center justify-between">
         <Link to="/app" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back

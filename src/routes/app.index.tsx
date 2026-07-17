@@ -173,7 +173,7 @@ function Dashboard() {
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-4 pt-6 pb-28 md:px-8 md:py-10 md:pb-10 text-foreground">
+    <main className="mx-auto max-w-6xl px-4 safe-top pb-28 md:px-8 md:py-10 md:pb-10 text-foreground">
       {/* Top bar */}
       <header className="mb-8 flex items-center justify-between animate-fade-in-up">
         <Link to="/app" className="flex items-center gap-2 group">

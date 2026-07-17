@@ -157,17 +157,29 @@
 }
 
 /* ---------- Accent presets (data-accent on <html>) ---------- */
-:root[data-accent="mint"]   { --mint-accent: #10B981; --mint-accent-soft: rgba(16,185,129,0.14); }
-:root[data-accent="coral"]  { --mint-accent: #F43F5E; --mint-accent-soft: rgba(244,63,94,0.14); }
-:root[data-accent="violet"] { --mint-accent: #7C3AED; --mint-accent-soft: rgba(124,58,237,0.14); }
-:root[data-accent="sky"]    { --mint-accent: #0284C7; --mint-accent-soft: rgba(2,132,199,0.14); }
-:root[data-accent="amber"]  { --mint-accent: #D97706; --mint-accent-soft: rgba(217,119,6,0.14); }
+:root[data-accent="mint"]    { --mint-accent: #10B981; --mint-accent-soft: rgba(16,185,129,0.14); }
+:root[data-accent="coral"]   { --mint-accent: #F43F5E; --mint-accent-soft: rgba(244,63,94,0.14); }
+:root[data-accent="violet"]  { --mint-accent: #7C3AED; --mint-accent-soft: rgba(124,58,237,0.14); }
+:root[data-accent="sky"]     { --mint-accent: #0284C7; --mint-accent-soft: rgba(2,132,199,0.14); }
+:root[data-accent="amber"]   { --mint-accent: #D97706; --mint-accent-soft: rgba(217,119,6,0.14); }
+:root[data-accent="rose"]    { --mint-accent: #E11D48; --mint-accent-soft: rgba(225,29,72,0.14); }
+:root[data-accent="lime"]    { --mint-accent: #65A30D; --mint-accent-soft: rgba(101,163,13,0.14); }
+:root[data-accent="teal"]    { --mint-accent: #0D9488; --mint-accent-soft: rgba(13,148,136,0.14); }
+:root[data-accent="indigo"]  { --mint-accent: #4F46E5; --mint-accent-soft: rgba(79,70,229,0.14); }
+:root[data-accent="fuchsia"] { --mint-accent: #C026D3; --mint-accent-soft: rgba(192,38,211,0.14); }
+:root[data-accent="slate"]   { --mint-accent: #475569; --mint-accent-soft: rgba(71,85,105,0.14); }
 
-.dark[data-accent="mint"]   { --mint-accent: #A7F3D0; --mint-accent-soft: rgba(167,243,208,0.30); }
-.dark[data-accent="coral"]  { --mint-accent: #FDA4AF; --mint-accent-soft: rgba(253,164,175,0.30); }
-.dark[data-accent="violet"] { --mint-accent: #C4B5FD; --mint-accent-soft: rgba(196,181,253,0.30); }
-.dark[data-accent="sky"]    { --mint-accent: #93C5FD; --mint-accent-soft: rgba(147,197,253,0.30); }
-.dark[data-accent="amber"]  { --mint-accent: #FCD34D; --mint-accent-soft: rgba(252,211,77,0.30); }
+.dark[data-accent="mint"]    { --mint-accent: #A7F3D0; --mint-accent-soft: rgba(167,243,208,0.30); }
+.dark[data-accent="coral"]   { --mint-accent: #FDA4AF; --mint-accent-soft: rgba(253,164,175,0.30); }
+.dark[data-accent="violet"]  { --mint-accent: #C4B5FD; --mint-accent-soft: rgba(196,181,253,0.30); }
+.dark[data-accent="sky"]     { --mint-accent: #93C5FD; --mint-accent-soft: rgba(147,197,253,0.30); }
+.dark[data-accent="amber"]   { --mint-accent: #FCD34D; --mint-accent-soft: rgba(252,211,77,0.30); }
+.dark[data-accent="rose"]    { --mint-accent: #FDA4AF; --mint-accent-soft: rgba(253,164,175,0.30); }
+.dark[data-accent="lime"]    { --mint-accent: #BEF264; --mint-accent-soft: rgba(190,242,100,0.30); }
+.dark[data-accent="teal"]    { --mint-accent: #5EEAD4; --mint-accent-soft: rgba(94,234,212,0.30); }
+.dark[data-accent="indigo"]  { --mint-accent: #A5B4FC; --mint-accent-soft: rgba(165,180,252,0.30); }
+.dark[data-accent="fuchsia"] { --mint-accent: #F0ABFC; --mint-accent-soft: rgba(240,171,252,0.30); }
+.dark[data-accent="slate"]   { --mint-accent: #CBD5E1; --mint-accent-soft: rgba(203,213,225,0.30); }
 
 /* Background-gradient presets */
 :root[data-gradient="aurora"] {
@@ -191,6 +203,33 @@
     radial-gradient(50% 40% at 100% 100%, rgba(16,185,129,0.18), transparent 70%),
     linear-gradient(180deg, #F4FAFF, #EEF4FB);
 }
+:root[data-gradient="midnight"] {
+  --gradient-bg:
+    radial-gradient(60% 50% at 0% 0%, rgba(99,102,241,0.20), transparent 65%),
+    radial-gradient(50% 40% at 100% 100%, rgba(71,85,105,0.20), transparent 70%),
+    linear-gradient(180deg, #F5F6FA, #EBEDF3);
+}
+:root[data-gradient="peach"] {
+  --gradient-bg:
+    radial-gradient(60% 50% at 0% 0%, rgba(251,113,133,0.22), transparent 65%),
+    radial-gradient(50% 40% at 100% 100%, rgba(251,146,60,0.22), transparent 70%),
+    linear-gradient(180deg, #FFF5F1, #FBEBE2);
+}
+:root[data-gradient="forest"] {
+  --gradient-bg:
+    radial-gradient(60% 50% at 0% 0%, rgba(13,148,136,0.20), transparent 65%),
+    radial-gradient(50% 40% at 100% 100%, rgba(163,230,53,0.20), transparent 70%),
+    linear-gradient(180deg, #F3FAF5, #E9F3EA);
+}
+:root[data-gradient="candy"] {
+  --gradient-bg:
+    radial-gradient(60% 50% at 100% 0%, rgba(232,121,249,0.22), transparent 65%),
+    radial-gradient(50% 40% at 0% 100%, rgba(56,189,248,0.22), transparent 70%),
+    linear-gradient(180deg, #FDF6FF, #F1F6FE);
+}
+:root[data-gradient="mono"] {
+  --gradient-bg: linear-gradient(180deg, #F7F7F5, #ECECE8);
+}
 
 .dark[data-gradient="aurora"] {
   --gradient-bg:
@@ -212,6 +251,33 @@
     radial-gradient(60% 50% at 0% 0%, rgba(56,189,248,0.18), transparent 65%),
     radial-gradient(50% 40% at 100% 100%, rgba(16,185,129,0.18), transparent 70%),
     linear-gradient(180deg, #0F1620, #0B121A);
+}
+.dark[data-gradient="midnight"] {
+  --gradient-bg:
+    radial-gradient(60% 50% at 100% 0%, rgba(129,140,248,0.16), transparent 65%),
+    radial-gradient(50% 40% at 0% 100%, rgba(100,116,139,0.18), transparent 70%),
+    linear-gradient(180deg, #0F111A, #0A0C13);
+}
+.dark[data-gradient="peach"] {
+  --gradient-bg:
+    radial-gradient(60% 50% at 0% 0%, rgba(251,146,60,0.16), transparent 65%),
+    radial-gradient(50% 40% at 100% 100%, rgba(253,164,175,0.16), transparent 70%),
+    linear-gradient(180deg, #1D1613, #14100E);
+}
+.dark[data-gradient="forest"] {
+  --gradient-bg:
+    radial-gradient(60% 50% at 0% 0%, rgba(45,212,191,0.14), transparent 65%),
+    radial-gradient(50% 40% at 100% 100%, rgba(190,242,100,0.12), transparent 70%),
+    linear-gradient(180deg, #0F1815, #0A110E);
+}
+.dark[data-gradient="candy"] {
+  --gradient-bg:
+    radial-gradient(60% 50% at 100% 0%, rgba(240,171,252,0.18), transparent 65%),
+    radial-gradient(50% 40% at 0% 100%, rgba(125,211,252,0.18), transparent 70%),
+    linear-gradient(180deg, #17121A, #100C13);
+}
+.dark[data-gradient="mono"] {
+  --gradient-bg: linear-gradient(180deg, #1A1A1A, #101010);
 }
 
 @layer base {
@@ -317,6 +383,14 @@
 
 @utility stagger {
   animation: fade-in-up 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Safe-area padding for PWA standalone mode (status bar on iOS/Android). */
+@utility safe-top {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 1.5rem);
+}
+@utility safe-bottom {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 7rem);
 }
 
 /* ---- Glass surface mode overrides (Settings → Display) ---- */
