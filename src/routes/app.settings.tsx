@@ -41,7 +41,8 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ShareCard } from "@/components/share-button";
 import { GoogleCalendarCard } from "@/components/google-calendar-card";
-import { JsonImportModal } from "@/components/json-import-modal";
+import { lazy, Suspense } from "react";
+const JsonImportModal = lazy(() => import("@/components/json-import-modal").then((m) => ({ default: m.JsonImportModal })));
 
 
 
@@ -621,7 +622,11 @@ function SettingsPage() {
           </footer>
         </div>
       )}
-      <JsonImportModal open={showJsonImport} onClose={() => setShowJsonImport(false)} />
+      {showJsonImport && (
+        <Suspense fallback={null}>
+          <JsonImportModal open={showJsonImport} onClose={() => setShowJsonImport(false)} />
+        </Suspense>
+      )}
     </main>
   );
 }
