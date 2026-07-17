@@ -489,13 +489,25 @@ function VehiclePage() {
             <ul className="divide-y divide-foreground/5">
               {refuels.data.map((r) => {
                 const seg = summary.segmentById.get(r.id);
+                const flags = summary.anomalies.byId.get(r.id);
                 return (
                   <li
                     key={r.id}
                     className="group grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm transition hover:bg-foreground/5"
                   >
                     <div className="col-span-6 md:col-span-2">
-                      <div className="font-medium">{formatDate(r.refuel_date)}</div>
+                      <div className="flex items-center gap-1.5 font-medium">
+                        {flags && (
+                          <span
+                            title={flags.join("\n")}
+                            className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/15 text-amber-500"
+                            aria-label={`Warning: ${flags.join(", ")}`}
+                          >
+                            <AlertTriangle className="h-3 w-3" />
+                          </span>
+                        )}
+                        <span>{formatDate(r.refuel_date)}</span>
+                      </div>
                       <div className="mt-0.5 flex flex-wrap items-center gap-1">
                         {!r.full_tank && (
                           <span className="inline-block rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-medium uppercase text-accent-foreground">
