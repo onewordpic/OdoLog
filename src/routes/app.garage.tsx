@@ -26,7 +26,7 @@ function GaragePage() {
   }, [vehicles.data, refuels.data]);
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-6 md:px-6 md:py-8 pb-32 md:pb-12">
+    <main className="mx-auto max-w-2xl px-4 safe-top pb-32 md:px-6 md:py-8 md:pb-12">
       <header className="mb-5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <Link
