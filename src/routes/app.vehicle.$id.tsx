@@ -1523,6 +1523,7 @@ function computeSummary(refuels: Refuel[]) {
   }
 
   const segmentById = new Map(segments.map((s) => [s.refuelId, s]));
+  const anomalies = detectAnomalies(asc, segments);
 
   return {
     totalLitres,
@@ -1535,8 +1536,90 @@ function computeSummary(refuels: Refuel[]) {
     latestOdo,
     basis: basisSource ? { source: basisSource, label: basisLabel, detail: basisDetail } : null,
     missing,
+    anomalies,
   };
 }
+
+// Flag suspicious refuels so the user can spot typos or mis-logged entries.
+function detectAnomalies(
+  asc: OrderedRefuel[],
+  segments: Segment[],
+): { byId: Map<string, string[]>; summary: string[] } {
+  const byId = new Map<string, string[]>();
+  const push = (id: string, msg: string) => {
+    const arr = byId.get(id) ?? [];
+    arr.push(msg);
+    byId.set(id, arr);
+  };
+
+  // Median segment km/L as a baseline for outliers.
+  const kmpls = segments.map((s) => s.kmpl).sort((a, b) => a - b);
+  const median = kmpls.length ? kmpls[Math.floor(kmpls.length / 2)] : null;
+
+  // Per-refuel row checks.
+  let prevWithOdo: OrderedRefuel | null = null;
+  for (const r of asc) {
+    const amount = validNumber(r.amount_inr);
+    const rate = validNumber(r.rate_per_litre);
+    const litres = validNumber(r.litres);
+    const odo = r.odo_km != null ? validNumber(r.odo_km) : null;
+
+    if (amount > 0 && rate <= 0) push(r.id, "Missing fuel rate (₹/L).");
+    if (amount <= 0 && litres <= 0) push(r.id, "No amount or litres recorded.");
+    if (litres > 100) push(r.id, `Unusually large fill (${litres.toFixed(1)} L).`);
+    if (rate > 0 && (rate < 40 || rate > 200)) {
+      push(r.id, `Fuel rate ₹${rate.toFixed(2)}/L looks off.`);
+    }
+    if (odo != null) {
+      if (prevWithOdo) {
+        const prevOdo = validNumber(prevWithOdo.odo_km);
+        if (odo < prevOdo) push(r.id, `Odometer went backwards (was ${prevOdo.toFixed(0)} km).`);
+        else if (odo === prevOdo && r.refuel_date !== prevWithOdo.refuel_date) {
+          push(r.id, "Same odometer as previous refuel.");
+        } else {
+          const gap = odo - prevOdo;
+          if (gap > 3000) push(r.id, `Big odo jump (+${gap.toFixed(0)} km) — check the reading.`);
+        }
+      }
+      prevWithOdo = r;
+    }
+  }
+
+  // Segment-level outliers (extreme km/L vs median).
+  for (const s of segments) {
+    if (s.kmpl < 3) push(s.refuelId, `Very low mileage (${s.kmpl.toFixed(1)} km/L) for this span.`);
+    else if (s.kmpl > 60) push(s.refuelId, `Very high mileage (${s.kmpl.toFixed(1)} km/L) — possible odo/litres error.`);
+    if (median != null && median > 0) {
+      const ratio = s.kmpl / median;
+      if (ratio < 0.5) push(s.refuelId, `Mileage ~${Math.round((1 - ratio) * 100)}% below your usual.`);
+      else if (ratio > 1.8) push(s.refuelId, `Mileage ~${Math.round((ratio - 1) * 100)}% above your usual.`);
+    }
+  }
+
+  // Same-day duplicate refuels.
+  const byDate = new Map<string, OrderedRefuel[]>();
+  for (const r of asc) {
+    const arr = byDate.get(r.refuel_date) ?? [];
+    arr.push(r);
+    byDate.set(r.refuel_date, arr);
+  }
+  for (const [date, rows] of byDate) {
+    if (rows.length > 1) {
+      for (const r of rows) push(r.id, `Multiple refuels logged on ${fmtShortDate(date)}.`);
+    }
+  }
+
+  const summary: string[] = [];
+  const flagged = byId.size;
+  if (flagged > 0) {
+    summary.push(
+      `${flagged} refuel${flagged === 1 ? "" : "s"} flagged — tap the ⚠ icon or edit to fix.`,
+    );
+  }
+  return { byId, summary };
+}
+
+
 
 
 
