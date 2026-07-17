@@ -319,6 +319,14 @@
   animation: fade-in-up 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
+/* Safe-area padding for PWA standalone mode (status bar on iOS/Android). */
+@utility safe-top {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 1.5rem);
+}
+@utility safe-bottom {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 7rem);
+}
+
 /* ---- Glass surface mode overrides (Settings → Display) ---- */
 html[data-glass="solid"] .glass,
 html[data-glass="solid"] .glass-subtle,
