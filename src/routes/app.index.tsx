@@ -519,7 +519,11 @@ function Dashboard() {
       <ServiceAlerts authed={authed} />
 
       {showAdd && <AddVehicleModal onClose={() => setShowAdd(false)} />}
-      <TripPlannerModal open={showTrip} onClose={() => setShowTrip(false)} />
+      {showTrip && (
+        <Suspense fallback={null}>
+          <TripPlannerModal open={showTrip} onClose={() => setShowTrip(false)} />
+        </Suspense>
+      )}
       <FirstRunCityModal profileLoaded={profile.isSuccess} currentCity={profile.data?.default_city ?? ""} currentName={name} />
       <MobileActionBar onAddVehicle={() => setShowAdd(true)} />
     </main>
