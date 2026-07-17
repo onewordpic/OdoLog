@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -38,7 +38,9 @@ import { VehicleAvatar } from "@/components/vehicle-avatar";
 import { searchCatalog, type CatalogEntry } from "@/lib/vehicle-catalog";
 import { WeatherChip } from "@/components/weather-chip";
 import { MobileActionBar } from "@/components/mobile-action-bar";
-import { TripPlannerModal } from "@/components/trip-planner-modal";
+const TripPlannerModal = lazy(() =>
+  import("@/components/trip-planner-modal").then((m) => ({ default: m.TripPlannerModal })),
+);
 import { Route as RouteIcon } from "lucide-react";
 
 export const Route = createFileRoute("/app/")({
@@ -517,7 +519,11 @@ function Dashboard() {
       <ServiceAlerts authed={authed} />
 
       {showAdd && <AddVehicleModal onClose={() => setShowAdd(false)} />}
-      <TripPlannerModal open={showTrip} onClose={() => setShowTrip(false)} />
+      {showTrip && (
+        <Suspense fallback={null}>
+          <TripPlannerModal open={showTrip} onClose={() => setShowTrip(false)} />
+        </Suspense>
+      )}
       <FirstRunCityModal profileLoaded={profile.isSuccess} currentCity={profile.data?.default_city ?? ""} currentName={name} />
       <MobileActionBar onAddVehicle={() => setShowAdd(true)} />
     </main>

@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { TripSection } from "@/components/trip-section";
-import { TripAnalytics } from "@/components/trip-analytics";
-import { EcoCard } from "@/components/eco-card";
 import type { FuelType } from "@/lib/eco";
+
+const TripSection = lazy(() => import("@/components/trip-section").then((m) => ({ default: m.TripSection })));
+const TripAnalytics = lazy(() => import("@/components/trip-analytics").then((m) => ({ default: m.TripAnalytics })));
+const EcoCard = lazy(() => import("@/components/eco-card").then((m) => ({ default: m.EcoCard })));
 
 import { fetchFuelPrice } from "@/lib/fuel-price.functions";
 import { toast } from "sonner";
@@ -30,7 +31,7 @@ import {
   Fuel,
 } from "lucide-react";
 import { CountdownRing } from "@/components/countdown-ring";
-import { CsvImportModal } from "@/components/csv-import-modal";
+const CsvImportModal = lazy(() => import("@/components/csv-import-modal").then((m) => ({ default: m.CsvImportModal })));
 
 import {
   LineChart,
@@ -581,30 +582,36 @@ function VehiclePage() {
           onClose={() => setEditing(null)}
         />
       )}
-      <CsvImportModal
-        vehicleId={id}
-        open={showImport}
-        onClose={() => setShowImport(false)}
-      />
-
-
-      <TripSection
-        vehicleId={id}
-        costPerKm={summary.costPerKm}
-        fuelType={(vehicle.data?.fuel_type as FuelType) ?? "petrol"}
-        kmPerL={summary.kmPerL}
-      />
-      <TripAnalytics vehicleId={id} costPerKm={summary.costPerKm} />
-
-      {vehicle.data && (
-        <div className="mt-5">
-          <EcoCard
-            fuelType={(vehicle.data.fuel_type as FuelType) ?? "petrol"}
-            totalLitres={summary.totalLitres}
-            totalKm={summary.totalKm}
+      {showImport && (
+        <Suspense fallback={null}>
+          <CsvImportModal
+            vehicleId={id}
+            open={showImport}
+            onClose={() => setShowImport(false)}
           />
-        </div>
+        </Suspense>
       )}
+
+
+      <Suspense fallback={<div className="glass mt-5 h-40 rounded-3xl animate-pulse" />}>
+        <TripSection
+          vehicleId={id}
+          costPerKm={summary.costPerKm}
+          fuelType={(vehicle.data?.fuel_type as FuelType) ?? "petrol"}
+          kmPerL={summary.kmPerL}
+        />
+        <TripAnalytics vehicleId={id} costPerKm={summary.costPerKm} />
+
+        {vehicle.data && (
+          <div className="mt-5">
+            <EcoCard
+              fuelType={(vehicle.data.fuel_type as FuelType) ?? "petrol"}
+              totalLitres={summary.totalLitres}
+              totalKm={summary.totalKm}
+            />
+          </div>
+        )}
+      </Suspense>
 
 
 

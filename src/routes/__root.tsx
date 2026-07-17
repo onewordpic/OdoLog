@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -15,7 +15,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { initThemeFromStorage } from "@/components/theme-toggle";
 import { initThemingFromStorage } from "@/lib/theming";
 import { Toaster } from "@/components/ui/sonner";
-import { InstallPrompt } from "@/components/install-prompt";
+
+const InstallPrompt = lazy(() =>
+  import("@/components/install-prompt").then((m) => ({ default: m.InstallPrompt })),
+);
 
 function NotFoundComponent() {
   return (
@@ -157,7 +160,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
-      <InstallPrompt />
+      <Suspense fallback={null}>
+        <InstallPrompt />
+      </Suspense>
       <Toaster position="top-center" />
     </QueryClientProvider>
   );
