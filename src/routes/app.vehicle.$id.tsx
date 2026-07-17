@@ -7,6 +7,7 @@ import type { FuelType } from "@/lib/eco";
 const TripSection = lazy(() => import("@/components/trip-section").then((m) => ({ default: m.TripSection })));
 const TripAnalytics = lazy(() => import("@/components/trip-analytics").then((m) => ({ default: m.TripAnalytics })));
 const EcoCard = lazy(() => import("@/components/eco-card").then((m) => ({ default: m.EcoCard })));
+const TrendChart = lazy(() => import("@/components/trend-chart").then((m) => ({ default: m.TrendChart })));
 
 import { fetchFuelPrice } from "@/lib/fuel-price.functions";
 import { toast } from "sonner";
