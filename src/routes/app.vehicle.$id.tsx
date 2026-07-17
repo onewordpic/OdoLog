@@ -421,7 +421,9 @@ function VehiclePage() {
             </div>
           )}
 
-          <TrendChart summary={summary} refuels={refuels.data ?? []} />
+          <Suspense fallback={<div className="glass mt-6 h-52 rounded-2xl animate-pulse" />}>
+            <TrendChart chart={summary.chart} refuels={refuels.data ?? []} />
+          </Suspense>
         </>
       )}
 
