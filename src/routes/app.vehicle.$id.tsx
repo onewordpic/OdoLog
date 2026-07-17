@@ -34,15 +34,8 @@ import {
 import { CountdownRing } from "@/components/countdown-ring";
 const CsvImportModal = lazy(() => import("@/components/csv-import-modal").then((m) => ({ default: m.CsvImportModal })));
 
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
+
+
 import {
   getVehicle,
   listRefuels,
