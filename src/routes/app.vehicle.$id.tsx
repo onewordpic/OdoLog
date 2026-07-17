@@ -421,6 +421,22 @@ function VehiclePage() {
             </div>
           )}
 
+          {summary.anomalies.summary.length > 0 && (
+            <div className="mt-3 glass rounded-2xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 animate-fade-in">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                <div className="text-xs">
+                  <div className="font-medium text-foreground">Data looks unusual</div>
+                  <ul className="mt-1 space-y-0.5 text-muted-foreground">
+                    {summary.anomalies.summary.map((m, i) => (
+                      <li key={i}>{m}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
           <Suspense fallback={<div className="glass mt-6 h-52 rounded-2xl animate-pulse" />}>
             <TrendChart chart={summary.chart} refuels={refuels.data ?? []} />
           </Suspense>
