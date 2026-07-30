@@ -2,7 +2,7 @@
 
 OdoLog is a sleek, open-source, mobile-first Progressive Web App (PWA) designed for seamless multi-vehicle tracking, detailed fuel-efficiency metrics, and automated travel expense logging. Built around rapid micro-interactions and high portability, it empowers owners to completely audit their vehicle health, running costs, and regional financial trends.
 
-🔗 **Live Demo:** [https://odolog.lovable.app](https://odolog.lovable.app)
+🔗 **Live Demo:** [https://odolog.lovable.app](https://odolog.online)
 
 ---
 
