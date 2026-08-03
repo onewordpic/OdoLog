@@ -357,7 +357,12 @@ function VehiclePage() {
               value={summary.totalKm != null ? `${summary.totalKm.toFixed(0)} km` : "—"}
             />
           </section>
-          <NextRefuelEstimate refuels={refuels.data ?? []} summary={summary} />
+          <NextRefuelEstimate
+            refuels={refuels.data ?? []}
+            summary={summary}
+            claimedKmPerL={claimedMileage(vehicle.data.name, vehicle.data.make)}
+          />
+
           <CostProjection refuels={refuels.data ?? []} />
 
           {vehicle.data && (() => {
