@@ -4,6 +4,9 @@ import { ArrowLeft, ChevronRight, Plus, Fuel, Gauge, FileText } from "lucide-rea
 import { useMemo } from "react";
 import { listVehicles, listAllRefuels, type Vehicle, type Refuel } from "@/lib/data-store";
 import { VehicleIcon } from "@/components/vehicle-icon";
+import { estimateRange } from "@/lib/range";
+import { claimedMileage } from "@/lib/vehicle-catalog";
+import { formatKm } from "@/lib/format";
 
 import { MobileActionBar } from "@/components/mobile-action-bar";
 
