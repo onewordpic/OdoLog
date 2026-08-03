@@ -120,6 +120,7 @@ function computeHealthScore(
 export function NextRefuelEstimate({
   refuels,
   summary,
+  claimedKmPerL,
 }: {
   refuels: Refuel[];
   summary: {
@@ -128,26 +129,18 @@ export function NextRefuelEstimate({
     totalLitres: number;
     totalKm: number | null;
   };
+  claimedKmPerL?: number | null;
 }) {
-  const estimate = useMemo(() => {
-    if (
-      summary.kmPerL == null ||
-      summary.latestOdo == null ||
-      refuels.length === 0
-    )
-      return null;
-
-    // Average litres per refuel (only refuels with valid data)
-    const valid = refuels.filter(
-      (r) => Number(r.amount_inr) > 0 && Number(r.litres) > 0,
-    );
-    if (valid.length === 0) return null;
-    const avgLitres =
-      valid.reduce((s, r) => s + Number(r.litres), 0) / valid.length;
-    const projectedKm = summary.kmPerL * avgLitres;
-    const nextOdo = summary.latestOdo + projectedKm;
-    return { nextOdo, projectedKm, avgLitres };
-  }, [refuels, summary]);
+  const estimate = useMemo(
+    () =>
+      estimateRange({
+        refuels,
+        kmPerL: summary.kmPerL,
+        claimedKmPerL,
+        latestOdo: summary.latestOdo,
+      }),
+    [refuels, summary.kmPerL, summary.latestOdo, claimedKmPerL],
+  );
 
   if (!estimate) return null;
 
@@ -157,19 +150,25 @@ export function NextRefuelEstimate({
         <Fuel className="h-4 w-4 text-primary" />
       </div>
       <div className="min-w-0">
-        <div className="text-sm font-medium">Next refuel estimate</div>
+        <div className="text-sm font-medium">Next fuel-up</div>
         <p className="text-xs text-muted-foreground">
-          Around{" "}
+          Refuel around{" "}
           <span className="font-semibold text-foreground tabular-nums">
-            {estimate.nextOdo.toFixed(0)} km
+            {formatKm(estimate.nextOdo)}
           </span>{" "}
-          · ~{estimate.projectedKm.toFixed(0)} km from now (based on{" "}
-          {estimate.avgLitres.toFixed(1)} L avg)
+          · roughly{" "}
+          <span className="font-semibold text-foreground tabular-nums">
+            {formatKm(estimate.kmLeft)}
+          </span>{" "}
+          left on this tank (~{estimate.litresLeft.toFixed(1)} L at{" "}
+          {estimate.kmPerL.toFixed(1)} km/l
+          {estimate.estimated ? ", claimed figure" : ""})
         </p>
       </div>
     </div>
   );
 }
+
 
 // ---------- Cost Projection ----------
 
