@@ -14,7 +14,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppReportsRouteImport } from './routes/app.reports'
-import { Route as AppInsightsRouteImport } from './routes/app.insights'
 import { Route as AppGarageRouteImport } from './routes/app.garage'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppVehicleIdRouteImport } from './routes/app.vehicle.$id'
@@ -45,11 +44,6 @@ const AppReportsRoute = AppReportsRouteImport.update({
   path: '/app/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppInsightsRoute = AppInsightsRouteImport.update({
-  id: '/app/insights',
-  path: '/app/insights',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AppGarageRoute = AppGarageRouteImport.update({
   id: '/app/garage',
   path: '/app/garage',
@@ -76,7 +70,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/garage': typeof AppGarageRoute
-  '/app/insights': typeof AppInsightsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
@@ -88,7 +81,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/garage': typeof AppGarageRoute
-  '/app/insights': typeof AppInsightsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
@@ -101,7 +93,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/garage': typeof AppGarageRoute
-  '/app/insights': typeof AppInsightsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
@@ -115,7 +106,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app/analytics'
     | '/app/garage'
-    | '/app/insights'
     | '/app/reports'
     | '/app/settings'
     | '/app/'
@@ -127,7 +117,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app/analytics'
     | '/app/garage'
-    | '/app/insights'
     | '/app/reports'
     | '/app/settings'
     | '/app'
@@ -139,7 +128,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app/analytics'
     | '/app/garage'
-    | '/app/insights'
     | '/app/reports'
     | '/app/settings'
     | '/app/'
@@ -152,7 +140,6 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppGarageRoute: typeof AppGarageRoute
-  AppInsightsRoute: typeof AppInsightsRoute
   AppReportsRoute: typeof AppReportsRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -197,13 +184,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/insights': {
-      id: '/app/insights'
-      path: '/app/insights'
-      fullPath: '/app/insights'
-      preLoaderRoute: typeof AppInsightsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/app/garage': {
       id: '/app/garage'
       path: '/app/garage'
@@ -240,7 +220,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   AppAnalyticsRoute: AppAnalyticsRoute,
   AppGarageRoute: AppGarageRoute,
-  AppInsightsRoute: AppInsightsRoute,
   AppReportsRoute: AppReportsRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,

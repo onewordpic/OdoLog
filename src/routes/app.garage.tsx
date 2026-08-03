@@ -4,6 +4,9 @@ import { ArrowLeft, ChevronRight, Plus, Fuel, Gauge, FileText } from "lucide-rea
 import { useMemo } from "react";
 import { listVehicles, listAllRefuels, type Vehicle, type Refuel } from "@/lib/data-store";
 import { VehicleIcon } from "@/components/vehicle-icon";
+import { estimateRange } from "@/lib/range";
+import { claimedMileage } from "@/lib/vehicle-catalog";
+import { formatKm } from "@/lib/format";
 
 import { MobileActionBar } from "@/components/mobile-action-bar";
 
@@ -88,12 +91,21 @@ type VehicleSummary = {
   lastOdo: number | null;
   lastDate: string | null;
   kmpl: number | null;
+  range: ReturnType<typeof estimateRange>;
 };
 
 function summarize(v: Vehicle, all: Refuel[]): VehicleSummary {
   const mine = all.filter((r) => r.vehicle_id === v.id);
   if (mine.length === 0)
-    return { count: 0, spend: 0, litres: 0, lastOdo: null, lastDate: null, kmpl: null };
+    return {
+      count: 0,
+      spend: 0,
+      litres: 0,
+      lastOdo: null,
+      lastDate: null,
+      kmpl: null,
+      range: null,
+    };
 
   const spend = mine.reduce((s, r) => s + Number(r.amount_inr || 0), 0);
   const litres = mine.reduce((s, r) => s + Number(r.litres || 0), 0);
@@ -106,8 +118,18 @@ function summarize(v: Vehicle, all: Refuel[]): VehicleSummary {
   if (lastOdo && minOdo && lastOdo > minOdo && litres > 0) {
     kmpl = (lastOdo - minOdo) / litres;
   }
-  return { count: mine.length, spend, litres, lastOdo, lastDate, kmpl };
+  const isEV = v.fuel_type === "electric";
+  const range = isEV
+    ? null
+    : estimateRange({
+        refuels: mine,
+        kmPerL: kmpl,
+        claimedKmPerL: claimedMileage(v.name, v.make),
+        latestOdo: lastOdo,
+      });
+  return { count: mine.length, spend, litres, lastOdo, lastDate, kmpl, range };
 }
+
 
 function VehicleCard({ vehicle, summary }: { vehicle: Vehicle; summary: VehicleSummary }) {
   return (
@@ -162,6 +184,21 @@ function VehicleCard({ vehicle, summary }: { vehicle: Vehicle; summary: VehicleS
           icon={<Gauge className="h-3 w-3" />}
         />
       </div>
+
+      {summary.range && (
+        <div className="mt-2 flex items-center gap-1.5 rounded-2xl bg-foreground/[0.04] px-3 py-2 text-[11px] text-muted-foreground">
+          <Fuel className="h-3 w-3 shrink-0" />
+          <span className="truncate">
+            Next fuel-up around{" "}
+            <span className="font-semibold text-foreground tabular-nums">
+              {formatKm(summary.range.nextOdo)}
+            </span>{" "}
+            · ~{formatKm(summary.range.kmLeft)} left
+            {summary.range.estimated ? " (est.)" : ""}
+          </span>
+        </div>
+      )}
+
     </Link>
   );
 }
