@@ -88,12 +88,21 @@ type VehicleSummary = {
   lastOdo: number | null;
   lastDate: string | null;
   kmpl: number | null;
+  range: ReturnType<typeof estimateRange>;
 };
 
 function summarize(v: Vehicle, all: Refuel[]): VehicleSummary {
   const mine = all.filter((r) => r.vehicle_id === v.id);
   if (mine.length === 0)
-    return { count: 0, spend: 0, litres: 0, lastOdo: null, lastDate: null, kmpl: null };
+    return {
+      count: 0,
+      spend: 0,
+      litres: 0,
+      lastOdo: null,
+      lastDate: null,
+      kmpl: null,
+      range: null,
+    };
 
   const spend = mine.reduce((s, r) => s + Number(r.amount_inr || 0), 0);
   const litres = mine.reduce((s, r) => s + Number(r.litres || 0), 0);
@@ -106,8 +115,18 @@ function summarize(v: Vehicle, all: Refuel[]): VehicleSummary {
   if (lastOdo && minOdo && lastOdo > minOdo && litres > 0) {
     kmpl = (lastOdo - minOdo) / litres;
   }
-  return { count: mine.length, spend, litres, lastOdo, lastDate, kmpl };
+  const isEV = v.fuel_type === "electric";
+  const range = isEV
+    ? null
+    : estimateRange({
+        refuels: mine,
+        kmPerL: kmpl,
+        claimedKmPerL: claimedMileage(v.name, v.make),
+        latestOdo: lastOdo,
+      });
+  return { count: mine.length, spend, litres, lastOdo, lastDate, kmpl, range };
 }
+
 
 function VehicleCard({ vehicle, summary }: { vehicle: Vehicle; summary: VehicleSummary }) {
   return (
