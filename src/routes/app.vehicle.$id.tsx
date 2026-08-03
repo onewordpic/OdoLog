@@ -360,7 +360,12 @@ function VehiclePage() {
           <NextRefuelEstimate
             refuels={refuels.data ?? []}
             summary={summary}
-            claimedKmPerL={claimedMileage(vehicle.data.name, vehicle.data.make)}
+            claimedKmPerL={
+              vehicle.data
+                ? claimedMileage(vehicle.data.name, vehicle.data.make)
+                : null
+            }
+
           />
 
           <CostProjection refuels={refuels.data ?? []} />
