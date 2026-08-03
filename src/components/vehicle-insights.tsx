@@ -197,8 +197,7 @@ export function CostProjection({ refuels }: { refuels: Refuel[] }) {
 
   if (!projection) return null;
 
-  const fmt = (n: number) =>
-    `₹${Math.round(n).toLocaleString("en-IN")}`;
+  const fmt = (n: number) => formatINR(Math.round(n));
 
   return (
     <div className="mt-3 glass rounded-2xl p-4 flex items-center gap-3 animate-fade-in">
@@ -216,6 +215,7 @@ export function CostProjection({ refuels }: { refuels: Refuel[] }) {
           <span className="font-semibold tabular-nums">
             {fmt(projection.avgMonthly)}
           </span>{" "}
+
           / mo (over {projection.months} mo)
         </p>
       </div>
