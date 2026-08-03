@@ -184,6 +184,21 @@ function VehicleCard({ vehicle, summary }: { vehicle: Vehicle; summary: VehicleS
           icon={<Gauge className="h-3 w-3" />}
         />
       </div>
+
+      {summary.range && (
+        <div className="mt-2 flex items-center gap-1.5 rounded-2xl bg-foreground/[0.04] px-3 py-2 text-[11px] text-muted-foreground">
+          <Fuel className="h-3 w-3 shrink-0" />
+          <span className="truncate">
+            Next fuel-up around{" "}
+            <span className="font-semibold text-foreground tabular-nums">
+              {formatKm(summary.range.nextOdo)}
+            </span>{" "}
+            · ~{formatKm(summary.range.kmLeft)} left
+            {summary.range.estimated ? " (est.)" : ""}
+          </span>
+        </div>
+      )}
+
     </Link>
   );
 }
