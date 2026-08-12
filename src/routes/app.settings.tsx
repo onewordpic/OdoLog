@@ -65,7 +65,24 @@ import {
 
 export const Route = createFileRoute("/app/settings")({
   component: SettingsPage,
+  head: () => ({
+    meta: [
+      { title: "Settings — OdoLog" },
+      {
+        name: "description",
+        content:
+          "Manage your OdoLog profile, default city, theme and glass style, reminders, imports and data.",
+      },
+      { property: "og:title", content: "Settings — OdoLog" },
+      {
+        property: "og:description",
+        content: "Profile, default city, themes, reminders, imports and data controls.",
+      },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
 });
+
 
 const CITIES = [
   "Thiruvananthapuram",
