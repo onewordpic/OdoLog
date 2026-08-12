@@ -45,7 +45,24 @@ import { Route as RouteIcon } from "lucide-react";
 
 export const Route = createFileRoute("/app/")({
   component: Dashboard,
+  head: () => ({
+    meta: [
+      { title: "Dashboard — OdoLog" },
+      {
+        name: "description",
+        content:
+          "Your OdoLog dashboard: recent refuels, spend, mileage and service alerts for every vehicle.",
+      },
+      { property: "og:title", content: "Dashboard — OdoLog" },
+      {
+        property: "og:description",
+        content: "Recent refuels, spend, mileage and service alerts for every vehicle.",
+      },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
 });
+
 
 function greetingFor(name: string) {
   const h = new Date().getHours();
