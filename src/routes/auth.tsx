@@ -14,8 +14,16 @@ export const Route = createFileRoute("/auth")({
         name: "description",
         content: "Sign in to OdoLog to sync your vehicles, refuels, mileage, and maintenance logs.",
       },
+      { property: "og:title", content: "Sign in to OdoLog" },
+      {
+        property: "og:description",
+        content: "Sync your vehicles, refuels, mileage and maintenance logs across devices.",
+      },
+      { property: "og:url", content: "https://odolog.online/auth" },
     ],
+    links: [{ rel: "canonical", href: "https://odolog.online/auth" }],
   }),
+
 });
 
 function AuthPage() {
