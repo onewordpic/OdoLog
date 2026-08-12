@@ -20,7 +20,7 @@ import {
   Share2,
   Upload,
   X,
-
+  Activity,
 } from "lucide-react";
 import {
   getProfile,
@@ -479,6 +479,34 @@ function SettingsPage() {
               />
             </Row>
           </Section>
+
+          {/* Performance profiling */}
+          <Section
+            icon={Activity}
+            title="Performance profiling"
+            subtitle="Measure real load times and track improvements."
+          >
+            <Row
+              label="Collect load timings"
+              hint="Records server response, first paint, largest paint and hydration for each visit. Saved to your account only."
+            >
+              <Toggle
+                checked={prefs.perfProfiling}
+                onChange={(v) => updatePrefs({ perfProfiling: v })}
+              />
+            </Row>
+            {prefs.perfProfiling && (
+              <Link
+                to="/app/perf"
+                className="press glass-subtle flex items-center justify-between rounded-xl px-4 py-3 text-sm"
+              >
+                <span>Open performance dashboard</span>
+                <Activity className="h-4 w-4 text-primary" />
+              </Link>
+            )}
+          </Section>
+
+
 
           {/* Share */}
           <Section

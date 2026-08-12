@@ -136,6 +136,57 @@ export type Database = {
           },
         ]
       }
+      perf_samples: {
+        Row: {
+          app_version: string | null
+          connection: string | null
+          created_at: string
+          device: string | null
+          fcp_ms: number | null
+          hydration_ms: number | null
+          id: string
+          lcp_ms: number | null
+          route: string
+          route_load_ms: number | null
+          slow_resources: Json
+          total_ms: number | null
+          ttfb_ms: number | null
+          user_id: string
+        }
+        Insert: {
+          app_version?: string | null
+          connection?: string | null
+          created_at?: string
+          device?: string | null
+          fcp_ms?: number | null
+          hydration_ms?: number | null
+          id?: string
+          lcp_ms?: number | null
+          route: string
+          route_load_ms?: number | null
+          slow_resources?: Json
+          total_ms?: number | null
+          ttfb_ms?: number | null
+          user_id: string
+        }
+        Update: {
+          app_version?: string | null
+          connection?: string | null
+          created_at?: string
+          device?: string | null
+          fcp_ms?: number | null
+          hydration_ms?: number | null
+          id?: string
+          lcp_ms?: number | null
+          route?: string
+          route_load_ms?: number | null
+          slow_resources?: Json
+          total_ms?: number | null
+          ttfb_ms?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

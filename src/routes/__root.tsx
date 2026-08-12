@@ -7,7 +7,10 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { getPrefs, PREFS_EVENT } from "@/lib/prefs";
+import { markHydrationStart } from "@/lib/perf";
+
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -19,6 +22,11 @@ import { Toaster } from "@/components/ui/sonner";
 const InstallPrompt = lazy(() =>
   import("@/components/install-prompt").then((m) => ({ default: m.InstallPrompt })),
 );
+
+const PerfCollector = lazy(() =>
+  import("@/components/perf-collector").then((m) => ({ default: m.PerfCollector })),
+);
+
 
 function NotFoundComponent() {
   return (
@@ -137,10 +145,16 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const [perfOn, setPerfOn] = useState(false);
 
   useEffect(() => {
     initThemeFromStorage();
     initThemingFromStorage();
+    markHydrationStart();
+    const sync = () => setPerfOn(getPrefs().perfProfiling);
+    sync();
+    window.addEventListener(PREFS_EVENT, sync);
+    return () => window.removeEventListener(PREFS_EVENT, sync);
   }, []);
 
   useEffect(() => {
@@ -163,7 +177,13 @@ function RootComponent() {
       <Suspense fallback={null}>
         <InstallPrompt />
       </Suspense>
+      {perfOn && (
+        <Suspense fallback={null}>
+          <PerfCollector />
+        </Suspense>
+      )}
       <Toaster position="top-center" />
     </QueryClientProvider>
   );
 }
+

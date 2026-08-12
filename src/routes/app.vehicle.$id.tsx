@@ -66,10 +66,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Route = createFileRoute("/app/vehicle/$id")({
   component: VehiclePage,
-  validateSearch: (s: Record<string, unknown>) => ({
-    refuel: s.refuel === 1 || s.refuel === "1" ? 1 : undefined,
-  }),
+  validateSearch: (s: Record<string, unknown>): { refuel?: 1 } =>
+    s.refuel === 1 || s.refuel === "1" ? { refuel: 1 } : {},
 });
+
 
 function VehiclePage() {
   const { id } = Route.useParams();
