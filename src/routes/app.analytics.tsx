@@ -41,7 +41,24 @@ const AiInsightsPanel = lazy(() =>
 
 export const Route = createFileRoute("/app/analytics")({
   component: AnalyticsPage,
+  head: () => ({
+    meta: [
+      { title: "Analytics — OdoLog" },
+      {
+        name: "description",
+        content:
+          "Fuel price history, mileage trends, running cost per vehicle, AI insights and badges in OdoLog.",
+      },
+      { property: "og:title", content: "Analytics — OdoLog" },
+      {
+        property: "og:description",
+        content: "Fuel price history, mileage trends and running cost per vehicle.",
+      },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
 });
+
 
 const POPULAR_CITIES = [
   "Thiruvananthapuram",
