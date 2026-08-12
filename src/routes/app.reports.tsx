@@ -27,7 +27,24 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 export const Route = createFileRoute("/app/reports")({
   component: ReportsPage,
+  head: () => ({
+    meta: [
+      { title: "Reports — OdoLog" },
+      {
+        name: "description",
+        content:
+          "Detailed OdoLog reports: monthly spend, litres, distance and cost per km, exportable per vehicle.",
+      },
+      { property: "og:title", content: "Reports — OdoLog" },
+      {
+        property: "og:description",
+        content: "Monthly spend, litres, distance and cost per km per vehicle.",
+      },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
 });
+
 
 type View = "monthly" | "yearly";
 
