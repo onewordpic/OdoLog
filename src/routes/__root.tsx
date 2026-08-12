@@ -142,10 +142,16 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const [perfOn, setPerfOn] = useState(false);
 
   useEffect(() => {
     initThemeFromStorage();
     initThemingFromStorage();
+    markHydrationStart();
+    const sync = () => setPerfOn(getPrefs().perfProfiling);
+    sync();
+    window.addEventListener(PREFS_EVENT, sync);
+    return () => window.removeEventListener(PREFS_EVENT, sync);
   }, []);
 
   useEffect(() => {
@@ -168,7 +174,13 @@ function RootComponent() {
       <Suspense fallback={null}>
         <InstallPrompt />
       </Suspense>
+      {perfOn && (
+        <Suspense fallback={null}>
+          <PerfCollector />
+        </Suspense>
+      )}
       <Toaster position="top-center" />
     </QueryClientProvider>
   );
 }
+
