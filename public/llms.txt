@@ -1,0 +1,14 @@
+# OdoLog
+
+> OdoLog is a fuel and running-cost tracker for Indian vehicles: log a refuel in rupees, it converts to litres using that day's local fuel rate, and derives mileage (km/l) and cost per km from your odometer readings.
+
+OdoLog also tracks maintenance, insurance and PUC expiry, trips, depreciation and CO2 footprint across cars, bikes, scooters and EVs. It works without an account (data stays on the device) or signed in for sync.
+
+## Pages
+
+- [Home](/): What OdoLog does, features, and how the cost-per-km calculation works.
+- [Sign in](/auth): Create an account or sign in to sync vehicles and logs.
+
+## Optional
+
+- The tracker itself (`/app/...`) is private and requires the owner's own data, so it is not crawlable.
