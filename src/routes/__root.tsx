@@ -20,6 +20,11 @@ const InstallPrompt = lazy(() =>
   import("@/components/install-prompt").then((m) => ({ default: m.InstallPrompt })),
 );
 
+const PerfCollector = lazy(() =>
+  import("@/components/perf-collector").then((m) => ({ default: m.PerfCollector })),
+);
+
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
