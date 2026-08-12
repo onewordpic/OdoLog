@@ -15,6 +15,8 @@ export type Prefs = {
   shareUrl: string;
   // Mobile ergonomics: which side the primary "Log fuel" pill pins to.
   handed: "left" | "right";
+  // Developer: collect page-load performance samples and expose /app/perf.
+  perfProfiling: boolean;
 };
 
 const KEY = "odolog.prefs";
