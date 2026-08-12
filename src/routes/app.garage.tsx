@@ -12,7 +12,24 @@ import { MobileActionBar } from "@/components/mobile-action-bar";
 
 export const Route = createFileRoute("/app/garage")({
   component: GaragePage,
+  head: () => ({
+    meta: [
+      { title: "Garage — OdoLog" },
+      {
+        name: "description",
+        content:
+          "All your vehicles on one page with a short summary of mileage, spend and upcoming service for each.",
+      },
+      { property: "og:title", content: "Garage — OdoLog" },
+      {
+        property: "og:description",
+        content: "Every vehicle with mileage, spend and upcoming service at a glance.",
+      },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
 });
+
 
 function GaragePage() {
   const vehicles = useQuery({ queryKey: ["vehicles"], queryFn: listVehicles });

@@ -68,7 +68,24 @@ export const Route = createFileRoute("/app/vehicle/$id")({
   component: VehiclePage,
   validateSearch: (s: Record<string, unknown>): { refuel?: 1 } =>
     s.refuel === 1 || s.refuel === "1" ? { refuel: 1 } : {},
+  head: () => ({
+    meta: [
+      { title: "Vehicle log — OdoLog" },
+      {
+        name: "description",
+        content:
+          "Refuel history, mileage, cost per km, maintenance and next fuel-up estimate for this vehicle.",
+      },
+      { property: "og:title", content: "Vehicle log — OdoLog" },
+      {
+        property: "og:description",
+        content: "Refuel history, mileage, cost per km and maintenance for this vehicle.",
+      },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
 });
+
 
 
 function VehiclePage() {
