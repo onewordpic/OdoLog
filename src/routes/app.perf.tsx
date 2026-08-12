@@ -260,7 +260,15 @@ function PerfPage() {
         <div className="glass mt-4 h-28 animate-pulse rounded-2xl" />
       )}
 
-      {!samples.isLoading && rows.length === 0 && (
+      {samples.isError && (
+        <section className="glass mt-4 rounded-2xl p-6 text-sm text-muted-foreground">
+          Sign in to view your performance history — samples are stored in your
+          account.
+        </section>
+      )}
+
+      {!samples.isLoading && !samples.isError && rows.length === 0 && (
+
         <section className="glass mt-4 rounded-2xl p-6 text-sm text-muted-foreground">
           No samples yet. Keep profiling enabled in Settings and reload the app a
           few times — each visit records one sample once the page settles.
