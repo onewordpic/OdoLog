@@ -21,8 +21,47 @@ export const Route = createFileRoute("/")({
         content:
           "Log refuels in rupees, auto-fetch today's fuel rate, track odometer, mileage and cost per km across all your vehicles.",
       },
+      { property: "og:title", content: "OdoLog — know what every kilometre costs" },
+      {
+        property: "og:description",
+        content:
+          "Log refuels in rupees, auto-fetch today's fuel rate, track odometer, mileage and cost per km across all your vehicles.",
+      },
+      { property: "og:url", content: "https://odolog.online/" },
+    ],
+    links: [{ rel: "canonical", href: "https://odolog.online/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "WebSite",
+              name: "OdoLog",
+              url: "https://odolog.online/",
+            },
+            {
+              "@type": "Organization",
+              name: "OdoLog",
+              url: "https://odolog.online/",
+              logo: "https://odolog.online/icon-512.png",
+            },
+            {
+              "@type": "SoftwareApplication",
+              name: "OdoLog",
+              url: "https://odolog.online/",
+              applicationCategory: "FinanceApplication",
+              operatingSystem: "Web",
+              description:
+                "Fuel and running-cost tracker: log refuels in rupees, get litres from the day's fuel rate, and see mileage and cost per km.",
+            },
+          ],
+        }),
+      },
     ],
   }),
+
 });
 
 function Landing() {
