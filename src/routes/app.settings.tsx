@@ -20,7 +20,7 @@ import {
   Share2,
   Upload,
   X,
-
+  Activity,
 } from "lucide-react";
 import {
   getProfile,
