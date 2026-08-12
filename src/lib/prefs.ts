@@ -37,6 +37,8 @@ export const DEFAULT_PREFS: Prefs = {
   shareMessage: DEFAULT_SHARE_MESSAGE,
   shareUrl: DEFAULT_SHARE_URL,
   handed: "right",
+  perfProfiling: false,
+
 };
 
 export function getPrefs(): Prefs {
