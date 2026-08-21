@@ -833,6 +833,7 @@ function ReserveCard({
     litresFilled: last ? Number(last.litres) : null,
     reserveLitres: vehicle.reserve_litres,
     kmPerL,
+    typicalReserveKm: stats.typicalReserveKm,
   });
 
   return (
@@ -857,6 +858,13 @@ function ReserveCard({
           <div className="mt-0.5 text-base font-semibold tabular-nums">
             {stats.typicalReserveKm ? `${stats.typicalReserveKm} km` : "—"}
           </div>
+          <div className="mt-0.5 text-[10px] text-muted-foreground">
+            {stats.typicalReserveKm
+              ? `from ${stats.reserveKmSamples} fill${stats.reserveKmSamples === 1 ? "" : "s"}`
+              : stats.reserveKmSamples === 1
+                ? "need 1 more measured fill"
+                : "log the odo when you flip"}
+          </div>
         </div>
         <div className="rounded-xl bg-foreground/[0.04] p-2.5">
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -867,6 +875,11 @@ function ReserveCard({
               ? `${stats.reserveFills} / ${stats.totalFills}`
               : "—"}
           </div>
+          {stats.partialReserveFills > 0 && (
+            <div className="mt-0.5 text-[10px] text-muted-foreground">
+              {stats.partialReserveFills} left on reserve
+            </div>
+          )}
         </div>
       </div>
       <p className="mt-2 text-[11px] text-muted-foreground">
