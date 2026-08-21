@@ -1490,6 +1490,17 @@ function AddRefuelModal({
       ? String(editing.reserve_switch_odo_km)
       : "",
   );
+  // A new fill picks up the "switched to reserve" marker logged mid-ride.
+  const [markerAge, setMarkerAge] = useState<number | null>(null);
+  useEffect(() => {
+    if (editing || !hasReserve) return;
+    const m = getMarker(vehicle.id);
+    if (!m) return;
+    setSwitchOdoInput(String(m.odo));
+    setTankState("reserve");
+    setMarkerAge(markerAgeDays(m));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [city, setCity] = useState("");
 
