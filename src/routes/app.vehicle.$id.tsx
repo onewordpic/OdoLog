@@ -1401,10 +1401,12 @@ function AddRefuelModal({
         fuel_subtype: vehicle.fuel_type === "petrol" ? fuelSubtype : null,
         fuel_brand: brand || null,
         tank_state: hasReserve ? tankState : null,
-        reserve_km:
-          hasReserve && tankState === "reserve" && reserveKm
-            ? Number(reserveKm)
+        tank_state_after: hasReserve ? tankStateAfter : null,
+        reserve_switch_odo_km:
+          hasReserve && tankState === "reserve" && switchOdoInput
+            ? Number(switchOdoInput)
             : null,
+        reserve_km: reserveDerivedKm,
       };
       if (brand) rememberBrand(vehicle.id, brand as FuelBrandId);
 
