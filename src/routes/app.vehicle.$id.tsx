@@ -1474,7 +1474,7 @@ function AddRefuelModal({
             </div>
           )}
 
-          {(vehicle.fuel_type === "petrol" || vehicle.fuel_type !== "electric") && (
+          {vehicle.fuel_type !== "electric" && (
             <details className="group rounded-xl glass-subtle px-4 py-3">
               <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium">
                 <span>
