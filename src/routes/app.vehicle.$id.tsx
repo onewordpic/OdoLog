@@ -66,6 +66,12 @@ import { FUEL_BRANDS, brandLabel, rememberBrand, recallBrand, type FuelBrandId }
 import { TripPlannerModal } from "@/components/trip-planner-modal";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { reserveDistance, reserveStats, reserveSwitchOdo } from "@/lib/reserve";
+import {
+  getMarker,
+  clearMarker,
+  markerAgeDays,
+  useReserveMarker,
+} from "@/lib/reserve-marker";
 
 
 export const Route = createFileRoute("/app/vehicle/$id")({
