@@ -1317,8 +1317,13 @@ function AddRefuelModal({
   const [tankState, setTankState] = useState<"main" | "reserve">(
     (editing?.tank_state as "main" | "reserve" | undefined) ?? "main",
   );
-  const [reserveKm, setReserveKm] = useState(
-    editing?.reserve_km != null ? String(editing.reserve_km) : "",
+  const [tankStateAfter, setTankStateAfter] = useState<"main" | "reserve">(
+    (editing?.tank_state_after as "main" | "reserve" | undefined) ?? "main",
+  );
+  const [switchOdoInput, setSwitchOdoInput] = useState(
+    editing?.reserve_switch_odo_km != null
+      ? String(editing.reserve_switch_odo_km)
+      : "",
   );
 
   const [city, setCity] = useState("");
