@@ -1474,64 +1474,69 @@ function AddRefuelModal({
             </div>
           )}
 
-          {vehicle.fuel_type === "petrol" && (
-            <div>
-              <span className="text-xs font-medium text-muted-foreground">
-                Petrol variant
-              </span>
-              <div className="mt-1 grid grid-cols-4 gap-2">
-                {[
-                  { v: "normal", l: "Normal" },
-                  { v: "e20", l: "E20" },
-                  { v: "xp95", l: "XP95" },
-                  { v: "xp100", l: "XP100" },
-                ].map((o) => (
-                  <button
-                    key={o.v}
-                    type="button"
-                    onClick={() => setFuelSubtype(o.v as any)}
-                    className={`press rounded-xl px-2 py-2 text-xs font-medium transition ${
-                      fuelSubtype === o.v
-                        ? "bg-[var(--mint-accent)] text-stone-900"
-                        : "glass-subtle text-muted-foreground"
-                    }`}
-                  >
-                    {o.l}
-                  </button>
-                ))}
+          {(vehicle.fuel_type === "petrol" || vehicle.fuel_type !== "electric") && (
+            <details className="group rounded-xl glass-subtle px-4 py-3">
+              <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium">
+                <span>
+                  More details
+                  <span className="ml-2 text-[11px] font-normal text-muted-foreground">
+                    {[
+                      vehicle.fuel_type === "petrol" && fuelSubtype !== "normal"
+                        ? fuelSubtype.toUpperCase()
+                        : null,
+                      brand ? brandLabel(brand) : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || "optional"}
+                  </span>
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition group-open:rotate-180" />
+              </summary>
+
+              <div className="mt-3 space-y-3">
+                {vehicle.fuel_type === "petrol" && (
+                  <label className="block">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Petrol variant
+                    </span>
+                    <select
+                      value={fuelSubtype}
+                      onChange={(e) => setFuelSubtype(e.target.value as any)}
+                      className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
+                    >
+                      <option value="normal">Normal</option>
+                      <option value="e20">E20 (20% ethanol)</option>
+                      <option value="xp95">XP95 (premium)</option>
+                      <option value="xp100">XP100 (premium)</option>
+                    </select>
+                  </label>
+                )}
+
+                {vehicle.fuel_type !== "electric" && (
+                  <label className="block">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Fuel station (optional)
+                    </span>
+                    <select
+                      value={brand}
+                      onChange={(e) =>
+                        setBrand(e.target.value as FuelBrandId | "")
+                      }
+                      className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
+                    >
+                      <option value="">Not specified</option>
+                      {FUEL_BRANDS.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
               </div>
-              <p className="mt-1 px-1 text-[10px] text-muted-foreground">
-                E20 = 20% ethanol blend · XP95/XP100 = premium octane
-              </p>
-            </div>
+            </details>
           )}
 
-          {vehicle.fuel_type !== "electric" && (
-            <div>
-              <span className="text-xs font-medium text-muted-foreground">
-                Fuel station (optional)
-              </span>
-              <div className="mt-1 flex flex-wrap gap-1.5">
-                {FUEL_BRANDS.map((b) => {
-                  const active = brand === b.id;
-                  return (
-                    <button
-                      key={b.id}
-                      type="button"
-                      onClick={() => setBrand(active ? "" : b.id)}
-                      className={`press rounded-full px-3 py-1.5 text-[11px] font-medium transition ${
-                        active
-                          ? "bg-[var(--mint-accent)] text-stone-900"
-                          : "glass-subtle text-muted-foreground"
-                      }`}
-                    >
-                      {b.short}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
 
           <div>
