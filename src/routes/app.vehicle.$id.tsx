@@ -30,6 +30,9 @@ import {
   TrendingDown,
   Upload,
   Fuel,
+  ChevronDown,
+  MoreHorizontal,
+  FlaskConical,
 } from "lucide-react";
 import { CountdownRing } from "@/components/countdown-ring";
 const CsvImportModal = lazy(() => import("@/components/csv-import-modal").then((m) => ({ default: m.CsvImportModal })));
@@ -62,6 +65,7 @@ import { getPrefs, PREFS_EVENT, type Prefs } from "@/lib/prefs";
 import { FUEL_BRANDS, brandLabel, rememberBrand, recallBrand, type FuelBrandId } from "@/lib/fuel-brands";
 import { TripPlannerModal } from "@/components/trip-planner-modal";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { reserveStats, reserveSwitchOdo } from "@/lib/reserve";
 
 
 export const Route = createFileRoute("/app/vehicle/$id")({
@@ -204,15 +208,24 @@ function VehiclePage() {
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <button
-          onClick={() => {
-            if (confirm("Delete this vehicle and all its refuels?"))
-              delVehicle.mutate();
-          }}
-          className="text-xs text-muted-foreground transition-colors hover:text-destructive"
-        >
-          Delete vehicle
-        </button>
+        <HeaderMenu
+          items={[
+            ...(isEV
+              ? []
+              : [
+                  { label: "Log refuel", onClick: () => setShowAdd(true) },
+                  { label: "Import CSV", onClick: () => setShowImport(true) },
+                ]),
+            {
+              label: "Delete vehicle",
+              danger: true,
+              onClick: () => {
+                if (confirm("Delete this vehicle and all its refuels?"))
+                  delVehicle.mutate();
+              },
+            },
+          ]}
+        />
       </header>
 
       <div className="mb-6 flex items-start gap-4 animate-fade-in-up">
@@ -299,7 +312,11 @@ function VehiclePage() {
       )}
 
       {depreciation && (
-        <div className="glass mb-4 rounded-2xl p-5 animate-fade-in">
+        <Collapse
+          title="Estimated current value"
+          hint={`₹${Math.round(depreciation.value).toLocaleString("en-IN")} · ${(depreciation.rate * 100).toFixed(0)}% / yr`}
+        >
+        <div className="animate-fade-in">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-medium">
               <TrendingDown className="h-4 w-4 text-muted-foreground" />
@@ -331,6 +348,7 @@ function VehiclePage() {
             Toggle this off in Settings.
           </p>
         </div>
+        </Collapse>
       )}
       {vehicle.data && (
         <VehicleHealthScore vehicle={vehicle.data} latestOdo={summary.latestOdo} />
@@ -385,8 +403,20 @@ function VehiclePage() {
 
           />
 
+          {vehicle.data?.has_reserve && (
+            <ReserveCard
+              vehicle={vehicle.data}
+              refuels={refuels.data ?? []}
+              kmPerL={
+                summary.kmPerL ??
+                claimedMileage(vehicle.data.name, vehicle.data.make)
+              }
+            />
+          )}
+
           <CostProjection refuels={refuels.data ?? []} />
 
+          <Collapse title="Mileage details" hint="Claimed figure, how we calculated, data warnings">
           {vehicle.data && (() => {
             const claimed = claimedMileage(vehicle.data.name, vehicle.data.make);
             if (claimed == null) return null;
@@ -464,6 +494,8 @@ function VehiclePage() {
             </div>
           )}
 
+          </Collapse>
+
           <Suspense fallback={<div className="glass mt-6 h-52 rounded-2xl animate-pulse" />}>
             <TrendChart chart={summary.chart} refuels={refuels.data ?? []} />
           </Suspense>
@@ -484,7 +516,7 @@ function VehiclePage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowImport(true)}
-              className="flex items-center gap-1 rounded-full glass-subtle px-3 py-1.5 text-xs font-medium hover:opacity-90"
+              className="hidden items-center gap-1 rounded-full glass-subtle px-3 py-1.5 text-xs font-medium hover:opacity-90 md:flex"
               title="Import from CSV (Hammond, Fuelio, etc.)"
             >
               <Upload className="h-3.5 w-3.5" /> Import CSV
@@ -544,6 +576,16 @@ function VehiclePage() {
                         {r.fuel_brand && (
                           <span className="inline-block rounded-full bg-foreground/5 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                             {brandLabel(r.fuel_brand)}
+                          </span>
+                        )}
+                        {r.tank_state === "reserve" && (
+                          <span className="inline-block rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium uppercase text-amber-600 dark:text-amber-400">
+                            Reserve{r.reserve_km ? ` · ${Number(r.reserve_km).toFixed(0)} km` : ""}
+                          </span>
+                        )}
+                        {r.tank_state === "main" && (
+                          <span className="inline-block rounded-full bg-foreground/5 px-2 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
+                            Main
                           </span>
                         )}
                       </div>
@@ -683,6 +725,160 @@ function VehiclePage() {
   );
 }
 
+/**
+ * Small disclosure block — keeps rarely-read detail off the mobile screen
+ * without hiding it entirely.
+ */
+function Collapse({
+  title,
+  hint,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="mt-3 glass-subtle overflow-hidden rounded-2xl">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="press flex min-h-11 w-full items-center justify-between gap-3 px-4 py-3 text-left"
+      >
+        <span className="min-w-0">
+          <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {title}
+          </span>
+          {hint && (
+            <span className="block truncate text-[11px] text-muted-foreground/80">
+              {hint}
+            </span>
+          )}
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-muted-foreground transition ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && <div className="px-4 pb-4">{children}</div>}
+    </div>
+  );
+}
+
+/** Header overflow menu — keeps destructive / rare actions out of the way. */
+function HeaderMenu({ items }: { items: { label: string; onClick: () => void; danger?: boolean }[] }) {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [open]);
+  return (
+    <div className="relative" onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        aria-label="More actions"
+        onClick={() => setOpen((o) => !o)}
+        className="glass glass-hover press flex h-9 w-9 items-center justify-center rounded-full"
+      >
+        <MoreHorizontal className="h-4 w-4" />
+      </button>
+      {open && (
+        <div className="glass absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-2xl p-1 shadow-xl">
+          {items.map((it) => (
+            <button
+              key={it.label}
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                it.onClick();
+              }}
+              className={`press block w-full rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-foreground/5 ${
+                it.danger ? "text-destructive" : ""
+              }`}
+            >
+              {it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Reserve-tap insight for carburettor bikes. */
+function ReserveCard({
+  vehicle,
+  refuels,
+  kmPerL,
+}: {
+  vehicle: Vehicle;
+  refuels: Refuel[];
+  kmPerL: number | null;
+}) {
+  const stats = useMemo(() => reserveStats(refuels), [refuels]);
+  const last = useMemo(() => {
+    const withOdo = refuels
+      .filter((r) => r.odo_km != null && Number(r.litres) > 0)
+      .sort((a, b) => a.refuel_date.localeCompare(b.refuel_date));
+    return withOdo[withOdo.length - 1] ?? null;
+  }, [refuels]);
+
+  const switchOdo = reserveSwitchOdo({
+    lastOdo: last ? Number(last.odo_km) : null,
+    litresFilled: last ? Number(last.litres) : null,
+    reserveLitres: vehicle.reserve_litres,
+    kmPerL,
+  });
+
+  return (
+    <div className="mt-3 glass rounded-2xl p-4 animate-fade-in">
+      <div className="flex items-center gap-2 text-sm font-medium">
+        <FlaskConical className="h-4 w-4 text-primary" />
+        Reserve tap
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+        <div className="rounded-xl bg-foreground/[0.04] p-2.5">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Flip to reserve near
+          </div>
+          <div className="mt-0.5 text-base font-semibold tabular-nums">
+            {switchOdo ? `${switchOdo.toLocaleString("en-IN")} km` : "—"}
+          </div>
+        </div>
+        <div className="rounded-xl bg-foreground/[0.04] p-2.5">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Typical reserve run
+          </div>
+          <div className="mt-0.5 text-base font-semibold tabular-nums">
+            {stats.typicalReserveKm ? `${stats.typicalReserveKm} km` : "—"}
+          </div>
+        </div>
+        <div className="rounded-xl bg-foreground/[0.04] p-2.5">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Fills on reserve
+          </div>
+          <div className="mt-0.5 text-base font-semibold tabular-nums">
+            {stats.totalFills > 0
+              ? `${stats.reserveFills} / ${stats.totalFills}`
+              : "—"}
+          </div>
+        </div>
+      </div>
+      <p className="mt-2 text-[11px] text-muted-foreground">
+        {vehicle.reserve_litres
+          ? `Reserve holds about ${vehicle.reserve_litres} L. `
+          : "Add your reserve capacity in vehicle details for a sharper estimate. "}
+        Estimates only — carb bikes have no gauge, so keep a buffer.
+      </p>
+    </div>
+  );
+}
+
 function Stat({
   icon: Icon,
   label,
@@ -757,6 +953,11 @@ function EditVehicleModal({
   const [purchasePrice, setPurchasePrice] = useState(
     vehicle.purchase_price_inr != null ? String(vehicle.purchase_price_inr) : "",
   );
+  const [hasReserve, setHasReserve] = useState(!!vehicle.has_reserve);
+  const [reserveLitres, setReserveLitres] = useState(
+    vehicle.reserve_litres != null ? String(vehicle.reserve_litres) : "",
+  );
+  const [advanced, setAdvanced] = useState(false);
 
   const suggestions = useMemo<CatalogEntry[]>(
     () => (name.trim().length >= 1 ? searchCatalog(name, 4) : []),
@@ -776,6 +977,9 @@ function EditVehicleModal({
         puc_expiry: pucExpiry || null,
         purchase_date: purchaseDate || null,
         purchase_price_inr: purchasePrice ? Number(purchasePrice) : null,
+        has_reserve: canReserve ? hasReserve : false,
+        reserve_litres:
+          canReserve && hasReserve && reserveLitres ? Number(reserveLitres) : null,
       }),
     onSuccess: () => {
       toast.success("Vehicle updated");
@@ -803,6 +1007,7 @@ function EditVehicleModal({
   }
 
   const currentYear = new Date().getFullYear();
+  const canReserve = icon !== "car" && vehicle.fuel_type !== "electric";
 
   return (
     <div
@@ -957,6 +1162,58 @@ function EditVehicleModal({
             </div>
           </div>
 
+          {canReserve && (
+            <div className="rounded-2xl glass-subtle p-3">
+              <button
+                type="button"
+                onClick={() => setAdvanced((a) => !a)}
+                className="flex w-full items-center justify-between text-xs font-medium text-muted-foreground"
+              >
+                Advanced · fuel tap
+                <ChevronDown
+                  className={`h-4 w-4 transition ${advanced ? "rotate-180" : ""}`}
+                />
+              </button>
+              {advanced && (
+                <div className="mt-3 space-y-3">
+                  <label className="flex items-center justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium text-foreground">
+                        Has reserve tap
+                      </span>
+                      <span className="block text-[11px] text-muted-foreground">
+                        Carburettor bikes with a main / reserve fuel cock.
+                      </span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={hasReserve}
+                      onChange={(e) => setHasReserve(e.target.checked)}
+                      className="h-5 w-5 shrink-0 accent-primary"
+                    />
+                  </label>
+                  {hasReserve && (
+                    <label className="block">
+                      <span className="text-[11px] text-muted-foreground">
+                        Reserve capacity (litres)
+                      </span>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="any"
+                        min={0}
+                        value={reserveLitres}
+                        onChange={(e) => setReserveLitres(e.target.value)}
+                        placeholder="e.g. 2.5"
+                        className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2 text-sm"
+                      />
+                    </label>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           <div>
             <span className="text-xs font-medium text-muted-foreground">Type</span>
             <div className="mt-1 grid grid-cols-3 gap-2">
@@ -1035,6 +1292,13 @@ function AddRefuelModal({
       "",
   );
   const [fetchingRate, setFetchingRate] = useState(false);
+  const hasReserve = !!vehicle.has_reserve && vehicle.fuel_type !== "electric";
+  const [tankState, setTankState] = useState<"main" | "reserve">(
+    (editing?.tank_state as "main" | "reserve" | undefined) ?? "main",
+  );
+  const [reserveKm, setReserveKm] = useState(
+    editing?.reserve_km != null ? String(editing.reserve_km) : "",
+  );
 
   const [city, setCity] = useState("");
 
@@ -1110,6 +1374,11 @@ function AddRefuelModal({
         full_tank: fullTank,
         fuel_subtype: vehicle.fuel_type === "petrol" ? fuelSubtype : null,
         fuel_brand: brand || null,
+        tank_state: hasReserve ? tankState : null,
+        reserve_km:
+          hasReserve && tankState === "reserve" && reserveKm
+            ? Number(reserveKm)
+            : null,
       };
       if (brand) rememberBrand(vehicle.id, brand as FuelBrandId);
 
@@ -1302,6 +1571,45 @@ function AddRefuelModal({
               className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
             />
           </div>
+
+          {hasReserve && (
+            <div>
+              <span className="text-xs font-medium text-muted-foreground">
+                Tank when you pulled in
+              </span>
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                {[
+                  { v: "main", l: "Still on main" },
+                  { v: "reserve", l: "On reserve" },
+                ].map((o) => (
+                  <button
+                    key={o.v}
+                    type="button"
+                    onClick={() => setTankState(o.v as "main" | "reserve")}
+                    className={`press rounded-xl px-3 py-2.5 text-xs font-medium transition ${
+                      tankState === o.v
+                        ? "bg-[var(--mint-accent)] text-stone-900"
+                        : "glass-subtle text-muted-foreground"
+                    }`}
+                  >
+                    {o.l}
+                  </button>
+                ))}
+              </div>
+              {tankState === "reserve" && (
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="any"
+                  min={0}
+                  value={reserveKm}
+                  onChange={(e) => setReserveKm(e.target.value)}
+                  placeholder="km ridden on reserve (optional)"
+                  className="mt-2 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
+                />
+              )}
+            </div>
+          )}
 
           <label className="flex items-center justify-between rounded-xl glass-subtle px-4 py-3">
             <div>

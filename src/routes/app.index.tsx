@@ -18,6 +18,7 @@ import {
   BarChart3,
   FileText,
   Wrench,
+  MoreHorizontal,
 } from "lucide-react";
 import {
   listVehicles,
@@ -211,21 +212,21 @@ function Dashboard() {
           </button>
           <Link
             to="/app/analytics"
-            className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
+            className="press hidden sm:flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
             aria-label="Analytics"
           >
             <BarChart3 className="h-4 w-4" />
           </Link>
           <Link
             to="/app/reports"
-            className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
+            className="press hidden sm:flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
             aria-label="Reports"
           >
             <FileText className="h-4 w-4" />
           </Link>
           <Link
             to="/app/settings"
-            className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
+            className="press hidden sm:flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
             aria-label="Settings"
           >
             <Settings className="h-4 w-4" />
@@ -233,7 +234,7 @@ function Dashboard() {
           {authed ? (
             <button
               onClick={signOut}
-              className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
+              className="press hidden sm:flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
               aria-label="Sign out"
             >
               <LogOut className="h-4 w-4" />
@@ -241,11 +242,12 @@ function Dashboard() {
           ) : (
             <Link
               to="/auth"
-              className="press flex h-9 items-center gap-1.5 rounded-full bg-[var(--mint-accent)] text-stone-900 px-4 text-xs font-semibold"
+              className="press hidden sm:flex h-9 items-center gap-1.5 rounded-full bg-[var(--mint-accent)] text-stone-900 px-4 text-xs font-semibold"
             >
               <LogIn className="h-3.5 w-3.5" /> Sign in
             </Link>
           )}
+          <MoreMenu authed={authed} onSignOut={signOut} onTrip={() => setShowTrip(true)} />
         </div>
       </header>
 
@@ -574,6 +576,78 @@ const CITY_SUGGESTIONS = [
   "Visakhapatnam",
 ];
 
+/** Mobile overflow menu — keeps the header to two taps wide on phones. */
+function MoreMenu({
+  authed,
+  onSignOut,
+  onTrip,
+}: {
+  authed: boolean | null;
+  onSignOut: () => void;
+  onTrip: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [open]);
+  const item =
+    "press block w-full rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-foreground/5";
+  return (
+    <div className="relative sm:hidden" onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        aria-label="More"
+        onClick={() => setOpen((o) => !o)}
+        className="press flex h-9 w-9 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition"
+      >
+        <MoreHorizontal className="h-4 w-4" />
+      </button>
+      {open && (
+        <div className="glass absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-2xl p-1 shadow-xl">
+          <button
+            type="button"
+            className={item}
+            onClick={() => {
+              setOpen(false);
+              onTrip();
+            }}
+          >
+            Trip insight
+          </button>
+          <Link to="/app/analytics" className={item} onClick={() => setOpen(false)}>
+            Analytics
+          </Link>
+          <Link to="/app/reports" className={item} onClick={() => setOpen(false)}>
+            Reports
+          </Link>
+          <Link to="/app/settings" className={item} onClick={() => setOpen(false)}>
+            Settings
+          </Link>
+          {authed ? (
+            <button
+              type="button"
+              className={item}
+              onClick={() => {
+                setOpen(false);
+                onSignOut();
+              }}
+            >
+              Sign out
+            </button>
+          ) : (
+            <Link to="/auth" className={item} onClick={() => setOpen(false)}>
+              Sign in
+            </Link>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function matchSuggestion(value: string): string {
   const v = value.trim().toLowerCase();
   return CITY_SUGGESTIONS.find((c) => c.toLowerCase() === v) ?? "";
@@ -728,6 +802,10 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
 
   const [isGuest, setIsGuest] = useState(false);
   const [ownerName, setOwnerName] = useState("");
+  const [hasReserve, setHasReserve] = useState(false);
+  const [reserveLitres, setReserveLitres] = useState("");
+  const canReserve =
+    (icon === "bike" || icon === "scooter") && fuelType !== "electric";
 
   const mut = useMutation({
     mutationFn: () =>
@@ -741,6 +819,11 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
         image_url: imageUrl.trim() || null,
         is_guest: isGuest,
         owner_name: isGuest ? (ownerName.trim() || null) : null,
+        has_reserve: canReserve && hasReserve,
+        reserve_litres:
+          canReserve && hasReserve && reserveLitres
+            ? Number(reserveLitres)
+            : null,
       }),
     onSuccess: () => {
       toast.success("Vehicle added");
@@ -976,6 +1059,39 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
                   />
                 </label>
               </div>
+              {canReserve && (
+                <div className="rounded-xl bg-foreground/[0.04] p-3">
+                  <label className="flex items-center justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium">
+                        Has reserve tap
+                      </span>
+                      <span className="block text-[11px] text-muted-foreground">
+                        Carburettor bikes with a main / reserve fuel cock.
+                      </span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={hasReserve}
+                      onChange={(e) => setHasReserve(e.target.checked)}
+                      className="h-5 w-5 shrink-0 accent-primary"
+                    />
+                  </label>
+                  {hasReserve && (
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="any"
+                      min={0}
+                      value={reserveLitres}
+                      onChange={(e) => setReserveLitres(e.target.value)}
+                      placeholder="Reserve capacity in litres (e.g. 2.5)"
+                      className="mt-2 w-full rounded-xl glass-input glass-input-focus px-4 py-2.5 text-sm"
+                    />
+                  )}
+                </div>
+              )}
+
               <label className="block">
                 <span className="text-xs font-medium text-muted-foreground">
                   Photo URL

@@ -1,9 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   ArrowLeft,
+  ChevronDown,
   Loader2,
   Download,
   Trash2,
@@ -307,7 +309,7 @@ function SettingsPage() {
 
 
           {/* Profile */}
-          <Section icon={User} title="Profile" subtitle="Your name and default city for fuel-rate lookups.">
+          <Section icon={User} defaultOpen title="Profile" subtitle="Your name and default city for fuel-rate lookups.">
             <Field label="Name">
               <input
                 value={name}
@@ -677,31 +679,50 @@ function SettingsPage() {
 }
 
 
+/**
+ * Settings group. On phones it collapses to a single tappable row so the page
+ * stays scannable; on desktop everything stays expanded.
+ */
 function Section({
   icon: Icon,
   title,
   subtitle,
+  defaultOpen = false,
   children,
 }: {
   icon: typeof User;
   title: string;
   subtitle?: string;
+  defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
+  const isMobile = useIsMobile();
+  const [open, setOpen] = useState(defaultOpen);
+  const expanded = !isMobile || open;
   return (
-    <section className="glass animate-fade-in-up space-y-4 rounded-3xl p-6">
-      <div className="flex items-start gap-3">
+    <section className="glass animate-fade-in-up rounded-3xl p-5 md:p-6">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={expanded}
+        className="flex w-full items-start gap-3 text-left md:cursor-default"
+      >
         <div className="glass-subtle flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
           <Icon className="h-4 w-4 text-primary" />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h2 className="text-sm font-medium">{title}</h2>
           {subtitle && (
             <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>
           )}
         </div>
-      </div>
-      <div className="space-y-3">{children}</div>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-muted-foreground transition md:hidden ${
+            expanded ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+      {expanded && <div className="mt-4 space-y-3">{children}</div>}
     </section>
   );
 }
