@@ -66,6 +66,12 @@ import { FUEL_BRANDS, brandLabel, rememberBrand, recallBrand, type FuelBrandId }
 import { TripPlannerModal } from "@/components/trip-planner-modal";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { reserveDistance, reserveStats, reserveSwitchOdo } from "@/lib/reserve";
+import {
+  getMarker,
+  clearMarker,
+  markerAgeDays,
+  useReserveMarker,
+} from "@/lib/reserve-marker";
 
 
 export const Route = createFileRoute("/app/vehicle/$id")({
@@ -844,11 +850,21 @@ function ReserveCard({
     typicalReserveKm: stats.typicalReserveKm,
   });
 
+  const lastOdo = last?.odo_km != null ? Number(last.odo_km) : null;
+
   return (
     <div className="mt-3 glass rounded-2xl p-4 animate-fade-in">
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <FlaskConical className="h-4 w-4 text-primary" />
-        Reserve tap
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2 text-sm font-medium">
+          <FlaskConical className="h-4 w-4 shrink-0 text-primary" />
+          <span className="truncate">Reserve tap</span>
+        </div>
+        <ReserveMarkerControl
+          vehicleId={vehicle.id}
+          suggestedOdo={switchOdo ?? lastOdo}
+          lastOdo={lastOdo}
+          typicalReserveKm={stats.typicalReserveKm}
+        />
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
         <div className="rounded-xl bg-foreground/[0.04] p-2.5">
@@ -899,6 +915,155 @@ function ReserveCard({
     </div>
   );
 }
+
+/**
+ * One-tap "I just flipped the tap" marker. Records the odo at the moment the
+ * rider switches to reserve, so the next fill measures a real reserve run.
+ */
+function ReserveMarkerControl({
+  vehicleId,
+  suggestedOdo,
+  lastOdo,
+  typicalReserveKm,
+}: {
+  vehicleId: string;
+  suggestedOdo: number | null;
+  lastOdo: number | null;
+  typicalReserveKm: number | null;
+}) {
+  const { marker, save, clear } = useReserveMarker(vehicleId);
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState("");
+
+  function openPrompt() {
+    setValue(
+      marker ? String(marker.odo) : suggestedOdo != null ? String(Math.round(suggestedOdo)) : "",
+    );
+    setOpen(true);
+  }
+
+  function commit() {
+    const n = parseFloat(value);
+    if (!Number.isFinite(n) || n <= 0) {
+      toast.error("Enter the odometer reading");
+      return;
+    }
+    if (lastOdo != null && n < lastOdo) {
+      toast.error(`Should be at least your last logged odo (${lastOdo.toFixed(0)} km).`);
+      return;
+    }
+    save(n);
+    setOpen(false);
+    toast.success("Marked — on reserve from here");
+  }
+
+  const sinceKm =
+    marker && lastOdo != null && lastOdo > marker.odo ? lastOdo - marker.odo : null;
+  const age = marker ? markerAgeDays(marker) : 0;
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={openPrompt}
+        className="min-h-9 shrink-0 rounded-full bg-primary/15 px-3 text-xs font-medium text-primary transition hover:bg-primary/25"
+      >
+        {marker ? "On reserve" : "Switched to reserve"}
+      </button>
+
+      {marker && (
+        <div className="col-span-2 mt-2 rounded-xl border border-primary/25 bg-primary/[0.07] px-3 py-2 text-xs">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="font-medium text-foreground">
+              On reserve since {marker.odo.toLocaleString("en-IN")} km
+            </span>
+            {sinceKm != null && (
+              <span className="tabular-nums text-muted-foreground">
+                · {sinceKm.toFixed(0)} km so far
+              </span>
+            )}
+            {typicalReserveKm != null && (
+              <span className="text-muted-foreground">
+                · you usually get ~{typicalReserveKm} km
+              </span>
+            )}
+            {age > 3 && (
+              <span className="text-muted-foreground">· marked {age} days ago</span>
+            )}
+          </div>
+          <div className="mt-1.5 flex gap-3">
+            <button
+              type="button"
+              onClick={openPrompt}
+              className="font-medium text-primary underline-offset-2 hover:underline"
+            >
+              Edit reading
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                clear();
+                toast.success("Reserve marker cleared");
+              }}
+              className="text-muted-foreground underline-offset-2 hover:underline"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl glass bg-card p-4 soft-shadow animate-fade-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-semibold">Switched to reserve</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Log the odometer right now, so your reserve range is measured instead of
+              guessed. It'll be filled in for you at the next refuel.
+            </p>
+            <label className="mt-3 block text-xs font-medium text-muted-foreground">
+              Odometer (km)
+              <input
+                autoFocus
+                type="number"
+                inputMode="decimal"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && commit()}
+                placeholder={suggestedOdo != null ? String(Math.round(suggestedOdo)) : "e.g. 41208"}
+                className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2.5 text-base tabular-nums md:text-sm"
+              />
+            </label>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="min-h-11 flex-1 rounded-xl glass-subtle text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={commit}
+                className="min-h-11 flex-1 rounded-xl bg-primary text-sm font-semibold text-primary-foreground"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+
 
 function Stat({
   icon: Icon,
@@ -1325,6 +1490,17 @@ function AddRefuelModal({
       ? String(editing.reserve_switch_odo_km)
       : "",
   );
+  // A new fill picks up the "switched to reserve" marker logged mid-ride.
+  const [markerAge, setMarkerAge] = useState<number | null>(null);
+  useEffect(() => {
+    if (editing || !hasReserve) return;
+    const m = getMarker(vehicle.id);
+    if (!m) return;
+    setSwitchOdoInput(String(m.odo));
+    setTankState("reserve");
+    setMarkerAge(markerAgeDays(m));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [city, setCity] = useState("");
 
@@ -1428,6 +1604,8 @@ function AddRefuelModal({
       }
     },
     onSuccess: () => {
+      // The marker has done its job once the fill carries the switch odo.
+      if (!editing && hasReserve) clearMarker(vehicle.id);
       toast.success(editing ? "Refuel updated" : "Refuel logged");
       qc.invalidateQueries({ queryKey: ["refuels", vehicle.id] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
@@ -1622,10 +1800,19 @@ function AddRefuelModal({
                     className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2.5 text-base md:text-sm"
                   />
                   <p className="mt-1 text-[11px] text-muted-foreground">
-                    {reserveDerivedKm
-                      ? `Rode ${reserveDerivedKm.toFixed(0)} km on reserve.`
-                      : "Lets us measure your reserve range instead of guessing."}
+                    {markerAge != null && markerAge > 3
+                      ? `Filled in from the marker you saved ${markerAge} days ago — check this reading.`
+                      : markerAge != null
+                        ? "Filled in from the marker you saved when you flipped the tap."
+                        : reserveDerivedKm
+                          ? `Rode ${reserveDerivedKm.toFixed(0)} km on reserve.`
+                          : "Lets us measure your reserve range instead of guessing."}
                   </p>
+                  {markerAge != null && reserveDerivedKm != null && (
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      Rode {reserveDerivedKm.toFixed(0)} km on reserve.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
