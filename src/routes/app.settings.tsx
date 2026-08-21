@@ -1,9 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   ArrowLeft,
+  ChevronDown,
   Loader2,
   Download,
   Trash2,
@@ -307,7 +309,7 @@ function SettingsPage() {
 
 
           {/* Profile */}
-          <Section icon={User} title="Profile" subtitle="Your name and default city for fuel-rate lookups.">
+          <Section icon={User} defaultOpen title="Profile" subtitle="Your name and default city for fuel-rate lookups.">
             <Field label="Name">
               <input
                 value={name}
