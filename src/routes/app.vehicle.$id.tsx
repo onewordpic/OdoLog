@@ -850,11 +850,21 @@ function ReserveCard({
     typicalReserveKm: stats.typicalReserveKm,
   });
 
+  const lastOdo = last?.odo_km != null ? Number(last.odo_km) : null;
+
   return (
     <div className="mt-3 glass rounded-2xl p-4 animate-fade-in">
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <FlaskConical className="h-4 w-4 text-primary" />
-        Reserve tap
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2 text-sm font-medium">
+          <FlaskConical className="h-4 w-4 shrink-0 text-primary" />
+          <span className="truncate">Reserve tap</span>
+        </div>
+        <ReserveMarkerControl
+          vehicleId={vehicle.id}
+          suggestedOdo={switchOdo ?? lastOdo}
+          lastOdo={lastOdo}
+          typicalReserveKm={stats.typicalReserveKm}
+        />
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
         <div className="rounded-xl bg-foreground/[0.04] p-2.5">
