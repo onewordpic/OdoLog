@@ -1512,7 +1512,7 @@ function AddRefuelModal({
                   </label>
                 )}
 
-                {vehicle.fuel_type !== "electric" && (
+                {(
                   <label className="block">
                     <span className="text-xs font-medium text-muted-foreground">
                       Fuel station (optional)
