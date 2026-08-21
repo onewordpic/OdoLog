@@ -810,6 +810,75 @@ function HeaderMenu({ items }: { items: { label: string; onClick: () => void; da
   );
 }
 
+/** Reserve-tap insight for carburettor bikes. */
+function ReserveCard({
+  vehicle,
+  refuels,
+  kmPerL,
+}: {
+  vehicle: Vehicle;
+  refuels: Refuel[];
+  kmPerL: number | null;
+}) {
+  const stats = useMemo(() => reserveStats(refuels), [refuels]);
+  const last = useMemo(() => {
+    const withOdo = refuels
+      .filter((r) => r.odo_km != null && Number(r.litres) > 0)
+      .sort((a, b) => a.refuel_date.localeCompare(b.refuel_date));
+    return withOdo[withOdo.length - 1] ?? null;
+  }, [refuels]);
+
+  const switchOdo = reserveSwitchOdo({
+    lastOdo: last ? Number(last.odo_km) : null,
+    litresFilled: last ? Number(last.litres) : null,
+    reserveLitres: vehicle.reserve_litres,
+    kmPerL,
+  });
+
+  return (
+    <div className="mt-3 glass rounded-2xl p-4 animate-fade-in">
+      <div className="flex items-center gap-2 text-sm font-medium">
+        <FlaskConical className="h-4 w-4 text-primary" />
+        Reserve tap
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+        <div className="rounded-xl bg-foreground/[0.04] p-2.5">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Flip to reserve near
+          </div>
+          <div className="mt-0.5 text-base font-semibold tabular-nums">
+            {switchOdo ? `${switchOdo.toLocaleString("en-IN")} km` : "—"}
+          </div>
+        </div>
+        <div className="rounded-xl bg-foreground/[0.04] p-2.5">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Typical reserve run
+          </div>
+          <div className="mt-0.5 text-base font-semibold tabular-nums">
+            {stats.typicalReserveKm ? `${stats.typicalReserveKm} km` : "—"}
+          </div>
+        </div>
+        <div className="rounded-xl bg-foreground/[0.04] p-2.5">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Fills on reserve
+          </div>
+          <div className="mt-0.5 text-base font-semibold tabular-nums">
+            {stats.totalFills > 0
+              ? `${stats.reserveFills} / ${stats.totalFills}`
+              : "—"}
+          </div>
+        </div>
+      </div>
+      <p className="mt-2 text-[11px] text-muted-foreground">
+        {vehicle.reserve_litres
+          ? `Reserve holds about ${vehicle.reserve_litres} L. `
+          : "Add your reserve capacity in vehicle details for a sharper estimate. "}
+        Estimates only — carb bikes have no gauge, so keep a buffer.
+      </p>
+    </div>
+  );
+}
+
 function Stat({
   icon: Icon,
   label,
