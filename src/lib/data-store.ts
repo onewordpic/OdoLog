@@ -20,11 +20,17 @@ export type Vehicle = {
   purchase_price_inr: number | null;
   is_guest: boolean;
   owner_name: string | null;
+  /** Carburettor bikes with a main/reserve fuel tap. */
+  has_reserve: boolean;
+  reserve_litres: number | null;
   created_at: string;
 };
 
 
 export type FuelSubtype = "normal" | "e20" | "xp95" | "xp100" | null;
+
+/** Tank the rider was on when they pulled in to refuel. */
+export type TankState = "main" | "reserve" | null;
 
 export type Refuel = {
   id: string;
@@ -38,6 +44,8 @@ export type Refuel = {
   notes: string | null;
   fuel_subtype: FuelSubtype;
   fuel_brand: string | null;
+  tank_state: TankState;
+  reserve_km: number | null;
   created_at: string;
 };
 
@@ -172,6 +180,8 @@ export async function addVehicle(input: {
   purchase_price_inr?: number | null;
   is_guest?: boolean;
   owner_name?: string | null;
+  has_reserve?: boolean;
+  reserve_litres?: number | null;
 }): Promise<Vehicle> {
   const icon = normIcon(input.icon);
   const extras = {
@@ -185,6 +195,8 @@ export async function addVehicle(input: {
     purchase_price_inr: input.purchase_price_inr ?? null,
     is_guest: input.is_guest ?? false,
     owner_name: input.owner_name ?? null,
+    has_reserve: input.has_reserve ?? false,
+    reserve_litres: input.reserve_litres ?? null,
   };
   const userId = await getUserId();
   if (userId) {
@@ -232,6 +244,8 @@ export async function updateVehicle(
     purchase_price_inr?: number | null;
     is_guest?: boolean;
     owner_name?: string | null;
+    has_reserve?: boolean;
+    reserve_litres?: number | null;
   },
 ): Promise<void> {
   const userId = await getUserId();
@@ -385,17 +399,23 @@ export async function addRefuel(input: {
   full_tank: boolean;
   fuel_subtype?: FuelSubtype;
   fuel_brand?: string | null;
+  tank_state?: TankState;
+  reserve_km?: number | null;
 }): Promise<void> {
   const userId = await getUserId();
   const subtype = input.fuel_subtype ?? null;
   const brand = input.fuel_brand ?? null;
+  const tankState = input.tank_state ?? null;
+  const reserveKm = input.reserve_km ?? null;
   if (userId) {
     const { error } = await supabase.from("refuels").insert({
       ...input,
       fuel_subtype: subtype,
       fuel_brand: brand,
+      tank_state: tankState,
+      reserve_km: reserveKm,
       user_id: userId,
-    });
+    } as any);
     if (error) throw error;
     return;
   }
@@ -404,6 +424,8 @@ export async function addRefuel(input: {
     ...input,
     fuel_subtype: subtype,
     fuel_brand: brand,
+    tank_state: tankState,
+    reserve_km: reserveKm,
     notes: null,
     created_at: new Date().toISOString(),
   };
@@ -423,11 +445,16 @@ export async function updateRefuel(
     full_tank: boolean;
     fuel_subtype?: FuelSubtype;
     fuel_brand?: string | null;
+    tank_state?: TankState;
+    reserve_km?: number | null;
   },
 ): Promise<void> {
   const userId = await getUserId();
   if (userId) {
-    const { error } = await supabase.from("refuels").update(patch).eq("id", id);
+    const { error } = await supabase
+      .from("refuels")
+      .update(patch as any)
+      .eq("id", id);
     if (error) throw error;
     return;
   }
