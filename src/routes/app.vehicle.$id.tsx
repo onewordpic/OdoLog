@@ -1019,7 +1019,7 @@ function ReserveMarkerControl({
           onClick={() => setOpen(false)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl glass-strong p-4 animate-fade-in"
+            className="w-full max-w-sm rounded-2xl glass bg-card p-4 soft-shadow animate-fade-in"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-sm font-semibold">Switched to reserve</h3>
