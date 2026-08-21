@@ -458,7 +458,9 @@ export async function updateRefuel(
     fuel_subtype?: FuelSubtype;
     fuel_brand?: string | null;
     tank_state?: TankState;
+    tank_state_after?: TankState;
     reserve_km?: number | null;
+    reserve_switch_odo_km?: number | null;
   },
 ): Promise<void> {
   const userId = await getUserId();
