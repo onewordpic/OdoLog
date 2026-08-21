@@ -757,6 +757,11 @@ function EditVehicleModal({
   const [purchasePrice, setPurchasePrice] = useState(
     vehicle.purchase_price_inr != null ? String(vehicle.purchase_price_inr) : "",
   );
+  const [hasReserve, setHasReserve] = useState(!!vehicle.has_reserve);
+  const [reserveLitres, setReserveLitres] = useState(
+    vehicle.reserve_litres != null ? String(vehicle.reserve_litres) : "",
+  );
+  const [advanced, setAdvanced] = useState(false);
 
   const suggestions = useMemo<CatalogEntry[]>(
     () => (name.trim().length >= 1 ? searchCatalog(name, 4) : []),
@@ -776,6 +781,9 @@ function EditVehicleModal({
         puc_expiry: pucExpiry || null,
         purchase_date: purchaseDate || null,
         purchase_price_inr: purchasePrice ? Number(purchasePrice) : null,
+        has_reserve: canReserve ? hasReserve : false,
+        reserve_litres:
+          canReserve && hasReserve && reserveLitres ? Number(reserveLitres) : null,
       }),
     onSuccess: () => {
       toast.success("Vehicle updated");
@@ -803,6 +811,7 @@ function EditVehicleModal({
   }
 
   const currentYear = new Date().getFullYear();
+  const canReserve = icon !== "car" && vehicle.fuel_type !== "electric";
 
   return (
     <div
@@ -957,6 +966,58 @@ function EditVehicleModal({
             </div>
           </div>
 
+          {canReserve && (
+            <div className="rounded-2xl glass-subtle p-3">
+              <button
+                type="button"
+                onClick={() => setAdvanced((a) => !a)}
+                className="flex w-full items-center justify-between text-xs font-medium text-muted-foreground"
+              >
+                Advanced · fuel tap
+                <ChevronDown
+                  className={`h-4 w-4 transition ${advanced ? "rotate-180" : ""}`}
+                />
+              </button>
+              {advanced && (
+                <div className="mt-3 space-y-3">
+                  <label className="flex items-center justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium text-foreground">
+                        Has reserve tap
+                      </span>
+                      <span className="block text-[11px] text-muted-foreground">
+                        Carburettor bikes with a main / reserve fuel cock.
+                      </span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={hasReserve}
+                      onChange={(e) => setHasReserve(e.target.checked)}
+                      className="h-5 w-5 shrink-0 accent-primary"
+                    />
+                  </label>
+                  {hasReserve && (
+                    <label className="block">
+                      <span className="text-[11px] text-muted-foreground">
+                        Reserve capacity (litres)
+                      </span>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="any"
+                        min={0}
+                        value={reserveLitres}
+                        onChange={(e) => setReserveLitres(e.target.value)}
+                        placeholder="e.g. 2.5"
+                        className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2 text-sm"
+                      />
+                    </label>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           <div>
             <span className="text-xs font-medium text-muted-foreground">Type</span>
             <div className="mt-1 grid grid-cols-3 gap-2">
@@ -1035,6 +1096,13 @@ function AddRefuelModal({
       "",
   );
   const [fetchingRate, setFetchingRate] = useState(false);
+  const hasReserve = !!vehicle.has_reserve && vehicle.fuel_type !== "electric";
+  const [tankState, setTankState] = useState<"main" | "reserve">(
+    (editing?.tank_state as "main" | "reserve" | undefined) ?? "main",
+  );
+  const [reserveKm, setReserveKm] = useState(
+    editing?.reserve_km != null ? String(editing.reserve_km) : "",
+  );
 
   const [city, setCity] = useState("");
 
@@ -1110,6 +1178,11 @@ function AddRefuelModal({
         full_tank: fullTank,
         fuel_subtype: vehicle.fuel_type === "petrol" ? fuelSubtype : null,
         fuel_brand: brand || null,
+        tank_state: hasReserve ? tankState : null,
+        reserve_km:
+          hasReserve && tankState === "reserve" && reserveKm
+            ? Number(reserveKm)
+            : null,
       };
       if (brand) rememberBrand(vehicle.id, brand as FuelBrandId);
 
@@ -1302,6 +1375,45 @@ function AddRefuelModal({
               className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
             />
           </div>
+
+          {hasReserve && (
+            <div>
+              <span className="text-xs font-medium text-muted-foreground">
+                Tank when you pulled in
+              </span>
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                {[
+                  { v: "main", l: "Still on main" },
+                  { v: "reserve", l: "On reserve" },
+                ].map((o) => (
+                  <button
+                    key={o.v}
+                    type="button"
+                    onClick={() => setTankState(o.v as "main" | "reserve")}
+                    className={`press rounded-xl px-3 py-2.5 text-xs font-medium transition ${
+                      tankState === o.v
+                        ? "bg-[var(--mint-accent)] text-stone-900"
+                        : "glass-subtle text-muted-foreground"
+                    }`}
+                  >
+                    {o.l}
+                  </button>
+                ))}
+              </div>
+              {tankState === "reserve" && (
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="any"
+                  min={0}
+                  value={reserveKm}
+                  onChange={(e) => setReserveKm(e.target.value)}
+                  placeholder="km ridden on reserve (optional)"
+                  className="mt-2 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
+                />
+              )}
+            </div>
+          )}
 
           <label className="flex items-center justify-between rounded-xl glass-subtle px-4 py-3">
             <div>
