@@ -312,7 +312,11 @@ function VehiclePage() {
       )}
 
       {depreciation && (
-        <div className="glass mb-4 rounded-2xl p-5 animate-fade-in">
+        <Collapse
+          title="Estimated current value"
+          hint={`₹${Math.round(depreciation.value).toLocaleString("en-IN")} · ${(depreciation.rate * 100).toFixed(0)}% / yr`}
+        >
+        <div className="animate-fade-in">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-medium">
               <TrendingDown className="h-4 w-4 text-muted-foreground" />
@@ -344,6 +348,7 @@ function VehiclePage() {
             Toggle this off in Settings.
           </p>
         </div>
+        </Collapse>
       )}
       {vehicle.data && (
         <VehicleHealthScore vehicle={vehicle.data} latestOdo={summary.latestOdo} />
@@ -398,8 +403,20 @@ function VehiclePage() {
 
           />
 
+          {vehicle.data?.has_reserve && (
+            <ReserveCard
+              vehicle={vehicle.data}
+              refuels={refuels.data ?? []}
+              kmPerL={
+                summary.kmPerL ??
+                claimedMileage(vehicle.data.name, vehicle.data.make)
+              }
+            />
+          )}
+
           <CostProjection refuels={refuels.data ?? []} />
 
+          <Collapse title="Mileage details" hint="Claimed figure, how we calculated, data warnings">
           {vehicle.data && (() => {
             const claimed = claimedMileage(vehicle.data.name, vehicle.data.make);
             if (claimed == null) return null;
@@ -477,6 +494,8 @@ function VehiclePage() {
             </div>
           )}
 
+          </Collapse>
+
           <Suspense fallback={<div className="glass mt-6 h-52 rounded-2xl animate-pulse" />}>
             <TrendChart chart={summary.chart} refuels={refuels.data ?? []} />
           </Suspense>
@@ -497,7 +516,7 @@ function VehiclePage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowImport(true)}
-              className="flex items-center gap-1 rounded-full glass-subtle px-3 py-1.5 text-xs font-medium hover:opacity-90"
+              className="hidden items-center gap-1 rounded-full glass-subtle px-3 py-1.5 text-xs font-medium hover:opacity-90 md:flex"
               title="Import from CSV (Hammond, Fuelio, etc.)"
             >
               <Upload className="h-3.5 w-3.5" /> Import CSV
@@ -557,6 +576,16 @@ function VehiclePage() {
                         {r.fuel_brand && (
                           <span className="inline-block rounded-full bg-foreground/5 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                             {brandLabel(r.fuel_brand)}
+                          </span>
+                        )}
+                        {r.tank_state === "reserve" && (
+                          <span className="inline-block rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium uppercase text-amber-600 dark:text-amber-400">
+                            Reserve{r.reserve_km ? ` · ${Number(r.reserve_km).toFixed(0)} km` : ""}
+                          </span>
+                        )}
+                        {r.tank_state === "main" && (
+                          <span className="inline-block rounded-full bg-foreground/5 px-2 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
+                            Main
                           </span>
                         )}
                       </div>
