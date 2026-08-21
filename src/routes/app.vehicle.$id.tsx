@@ -1387,6 +1387,17 @@ function AddRefuelModal({
   const litres =
     !isNaN(amountN) && !isNaN(rateN) && rateN > 0 ? amountN / rateN : null;
 
+  // Reserve distance is measured, not guessed: fill odo − odo when tap flipped.
+  const reserveDerivedKm = useMemo(() => {
+    if (!hasReserve || tankState !== "reserve") return null;
+    const fillOdo = odo ? parseFloat(odo) : NaN;
+    const sw = switchOdoInput ? parseFloat(switchOdoInput) : NaN;
+    if (!Number.isFinite(fillOdo) || !Number.isFinite(sw)) return null;
+    const d = fillOdo - sw;
+    return d > 0 ? Number(d.toFixed(1)) : null;
+  }, [hasReserve, tankState, odo, switchOdoInput]);
+
+
   const mut = useMutation({
     mutationFn: async () => {
       if (!litres) throw new Error("Enter amount and rate");
