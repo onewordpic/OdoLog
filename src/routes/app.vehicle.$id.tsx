@@ -1800,10 +1800,19 @@ function AddRefuelModal({
                     className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2.5 text-base md:text-sm"
                   />
                   <p className="mt-1 text-[11px] text-muted-foreground">
-                    {reserveDerivedKm
-                      ? `Rode ${reserveDerivedKm.toFixed(0)} km on reserve.`
-                      : "Lets us measure your reserve range instead of guessing."}
+                    {markerAge != null && markerAge > 3
+                      ? `Filled in from the marker you saved ${markerAge} days ago — check this reading.`
+                      : markerAge != null
+                        ? "Filled in from the marker you saved when you flipped the tap."
+                        : reserveDerivedKm
+                          ? `Rode ${reserveDerivedKm.toFixed(0)} km on reserve.`
+                          : "Lets us measure your reserve range instead of guessing."}
                   </p>
+                  {markerAge != null && reserveDerivedKm != null && (
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      Rode {reserveDerivedKm.toFixed(0)} km on reserve.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
