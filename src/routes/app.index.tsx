@@ -18,6 +18,7 @@ import {
   BarChart3,
   FileText,
   Wrench,
+  MoreHorizontal,
 } from "lucide-react";
 import {
   listVehicles,
@@ -801,6 +802,10 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
 
   const [isGuest, setIsGuest] = useState(false);
   const [ownerName, setOwnerName] = useState("");
+  const [hasReserve, setHasReserve] = useState(false);
+  const [reserveLitres, setReserveLitres] = useState("");
+  const canReserve =
+    (icon === "bike" || icon === "scooter") && fuelType !== "electric";
 
   const mut = useMutation({
     mutationFn: () =>
@@ -814,6 +819,11 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
         image_url: imageUrl.trim() || null,
         is_guest: isGuest,
         owner_name: isGuest ? (ownerName.trim() || null) : null,
+        has_reserve: canReserve && hasReserve,
+        reserve_litres:
+          canReserve && hasReserve && reserveLitres
+            ? Number(reserveLitres)
+            : null,
       }),
     onSuccess: () => {
       toast.success("Vehicle added");
@@ -1049,6 +1059,39 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
                   />
                 </label>
               </div>
+              {canReserve && (
+                <div className="rounded-xl bg-foreground/[0.04] p-3">
+                  <label className="flex items-center justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium">
+                        Has reserve tap
+                      </span>
+                      <span className="block text-[11px] text-muted-foreground">
+                        Carburettor bikes with a main / reserve fuel cock.
+                      </span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={hasReserve}
+                      onChange={(e) => setHasReserve(e.target.checked)}
+                      className="h-5 w-5 shrink-0 accent-primary"
+                    />
+                  </label>
+                  {hasReserve && (
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="any"
+                      min={0}
+                      value={reserveLitres}
+                      onChange={(e) => setReserveLitres(e.target.value)}
+                      placeholder="Reserve capacity in litres (e.g. 2.5)"
+                      className="mt-2 w-full rounded-xl glass-input glass-input-focus px-4 py-2.5 text-sm"
+                    />
+                  )}
+                </div>
+              )}
+
               <label className="block">
                 <span className="text-xs font-medium text-muted-foreground">
                   Photo URL
