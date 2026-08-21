@@ -578,14 +578,22 @@ function VehiclePage() {
                             {brandLabel(r.fuel_brand)}
                           </span>
                         )}
-                        {r.tank_state === "reserve" && (
-                          <span className="inline-block rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium uppercase text-amber-600 dark:text-amber-400">
-                            Reserve{r.reserve_km ? ` · ${Number(r.reserve_km).toFixed(0)} km` : ""}
-                          </span>
-                        )}
+                        {r.tank_state === "reserve" && (() => {
+                          const d = reserveDistance(r as any);
+                          return (
+                            <span className="inline-block rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium uppercase text-amber-600 dark:text-amber-400">
+                              Reserve{d ? ` · ${d.toFixed(0)} km` : ""}
+                            </span>
+                          );
+                        })()}
                         {r.tank_state === "main" && (
                           <span className="inline-block rounded-full bg-foreground/5 px-2 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
                             Main
+                          </span>
+                        )}
+                        {r.tank_state_after === "reserve" && (
+                          <span className="inline-block rounded-full bg-foreground/5 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            left on reserve
                           </span>
                         )}
                       </div>
