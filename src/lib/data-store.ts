@@ -45,7 +45,11 @@ export type Refuel = {
   fuel_subtype: FuelSubtype;
   fuel_brand: string | null;
   tank_state: TankState;
+  /** Tank the rider was on after filling (tap flipped back to main, or left on reserve). */
+  tank_state_after?: TankState;
   reserve_km: number | null;
+  /** Odometer reading when the rider flipped the tap to reserve. */
+  reserve_switch_odo_km?: number | null;
   created_at: string;
 };
 
