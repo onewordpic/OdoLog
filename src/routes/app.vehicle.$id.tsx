@@ -30,6 +30,9 @@ import {
   TrendingDown,
   Upload,
   Fuel,
+  ChevronDown,
+  MoreHorizontal,
+  FlaskConical,
 } from "lucide-react";
 import { CountdownRing } from "@/components/countdown-ring";
 const CsvImportModal = lazy(() => import("@/components/csv-import-modal").then((m) => ({ default: m.CsvImportModal })));
@@ -62,6 +65,7 @@ import { getPrefs, PREFS_EVENT, type Prefs } from "@/lib/prefs";
 import { FUEL_BRANDS, brandLabel, rememberBrand, recallBrand, type FuelBrandId } from "@/lib/fuel-brands";
 import { TripPlannerModal } from "@/components/trip-planner-modal";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { reserveStats, reserveSwitchOdo } from "@/lib/reserve";
 
 
 export const Route = createFileRoute("/app/vehicle/$id")({
@@ -204,15 +208,24 @@ function VehiclePage() {
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <button
-          onClick={() => {
-            if (confirm("Delete this vehicle and all its refuels?"))
-              delVehicle.mutate();
-          }}
-          className="text-xs text-muted-foreground transition-colors hover:text-destructive"
-        >
-          Delete vehicle
-        </button>
+        <HeaderMenu
+          items={[
+            ...(isEV
+              ? []
+              : [
+                  { label: "Log refuel", onClick: () => setShowAdd(true) },
+                  { label: "Import CSV", onClick: () => setShowImport(true) },
+                ]),
+            {
+              label: "Delete vehicle",
+              danger: true,
+              onClick: () => {
+                if (confirm("Delete this vehicle and all its refuels?"))
+                  delVehicle.mutate();
+              },
+            },
+          ]}
+        />
       </header>
 
       <div className="mb-6 flex items-start gap-4 animate-fade-in-up">
@@ -680,6 +693,91 @@ function VehiclePage() {
         </button>
       )}
     </main>
+  );
+}
+
+/**
+ * Small disclosure block — keeps rarely-read detail off the mobile screen
+ * without hiding it entirely.
+ */
+function Collapse({
+  title,
+  hint,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="mt-3 glass-subtle overflow-hidden rounded-2xl">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="press flex min-h-11 w-full items-center justify-between gap-3 px-4 py-3 text-left"
+      >
+        <span className="min-w-0">
+          <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {title}
+          </span>
+          {hint && (
+            <span className="block truncate text-[11px] text-muted-foreground/80">
+              {hint}
+            </span>
+          )}
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-muted-foreground transition ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && <div className="px-4 pb-4">{children}</div>}
+    </div>
+  );
+}
+
+/** Header overflow menu — keeps destructive / rare actions out of the way. */
+function HeaderMenu({ items }: { items: { label: string; onClick: () => void; danger?: boolean }[] }) {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [open]);
+  return (
+    <div className="relative" onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        aria-label="More actions"
+        onClick={() => setOpen((o) => !o)}
+        className="glass glass-hover press flex h-9 w-9 items-center justify-center rounded-full"
+      >
+        <MoreHorizontal className="h-4 w-4" />
+      </button>
+      {open && (
+        <div className="glass absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-2xl p-1 shadow-xl">
+          {items.map((it) => (
+            <button
+              key={it.label}
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                it.onClick();
+              }}
+              className={`press block w-full rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-foreground/5 ${
+                it.danger ? "text-destructive" : ""
+              }`}
+            >
+              {it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
