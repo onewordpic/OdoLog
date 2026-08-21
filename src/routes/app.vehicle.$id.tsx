@@ -1604,6 +1604,8 @@ function AddRefuelModal({
       }
     },
     onSuccess: () => {
+      // The marker has done its job once the fill carries the switch odo.
+      if (!editing && hasReserve) clearMarker(vehicle.id);
       toast.success(editing ? "Refuel updated" : "Refuel logged");
       qc.invalidateQueries({ queryKey: ["refuels", vehicle.id] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
