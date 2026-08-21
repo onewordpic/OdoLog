@@ -65,7 +65,7 @@ import { getPrefs, PREFS_EVENT, type Prefs } from "@/lib/prefs";
 import { FUEL_BRANDS, brandLabel, rememberBrand, recallBrand, type FuelBrandId } from "@/lib/fuel-brands";
 import { TripPlannerModal } from "@/components/trip-planner-modal";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { reserveStats, reserveSwitchOdo } from "@/lib/reserve";
+import { reserveDistance, reserveStats, reserveSwitchOdo } from "@/lib/reserve";
 
 
 export const Route = createFileRoute("/app/vehicle/$id")({
