@@ -45,7 +45,11 @@ export type Refuel = {
   fuel_subtype: FuelSubtype;
   fuel_brand: string | null;
   tank_state: TankState;
+  /** Tank the rider was on after filling (tap flipped back to main, or left on reserve). */
+  tank_state_after?: TankState;
   reserve_km: number | null;
+  /** Odometer reading when the rider flipped the tap to reserve. */
+  reserve_switch_odo_km?: number | null;
   created_at: string;
 };
 
@@ -400,20 +404,26 @@ export async function addRefuel(input: {
   fuel_subtype?: FuelSubtype;
   fuel_brand?: string | null;
   tank_state?: TankState;
+  tank_state_after?: TankState;
   reserve_km?: number | null;
+  reserve_switch_odo_km?: number | null;
 }): Promise<void> {
   const userId = await getUserId();
   const subtype = input.fuel_subtype ?? null;
   const brand = input.fuel_brand ?? null;
   const tankState = input.tank_state ?? null;
+  const tankStateAfter = input.tank_state_after ?? null;
   const reserveKm = input.reserve_km ?? null;
+  const switchOdo = input.reserve_switch_odo_km ?? null;
   if (userId) {
     const { error } = await supabase.from("refuels").insert({
       ...input,
       fuel_subtype: subtype,
       fuel_brand: brand,
       tank_state: tankState,
+      tank_state_after: tankStateAfter,
       reserve_km: reserveKm,
+      reserve_switch_odo_km: switchOdo,
       user_id: userId,
     } as any);
     if (error) throw error;
@@ -425,7 +435,9 @@ export async function addRefuel(input: {
     fuel_subtype: subtype,
     fuel_brand: brand,
     tank_state: tankState,
+    tank_state_after: tankStateAfter,
     reserve_km: reserveKm,
+    reserve_switch_odo_km: switchOdo,
     notes: null,
     created_at: new Date().toISOString(),
   };
@@ -446,7 +458,9 @@ export async function updateRefuel(
     fuel_subtype?: FuelSubtype;
     fuel_brand?: string | null;
     tank_state?: TankState;
+    tank_state_after?: TankState;
     reserve_km?: number | null;
+    reserve_switch_odo_km?: number | null;
   },
 ): Promise<void> {
   const userId = await getUserId();

@@ -225,7 +225,9 @@ export type Database = {
           rate_per_litre: number
           refuel_date: string
           reserve_km: number | null
+          reserve_switch_odo_km: number | null
           tank_state: string | null
+          tank_state_after: string | null
           user_id: string
           vehicle_id: string
         }
@@ -242,7 +244,9 @@ export type Database = {
           rate_per_litre: number
           refuel_date?: string
           reserve_km?: number | null
+          reserve_switch_odo_km?: number | null
           tank_state?: string | null
+          tank_state_after?: string | null
           user_id: string
           vehicle_id: string
         }
@@ -259,7 +263,9 @@ export type Database = {
           rate_per_litre?: number
           refuel_date?: string
           reserve_km?: number | null
+          reserve_switch_odo_km?: number | null
           tank_state?: string | null
+          tank_state_after?: string | null
           user_id?: string
           vehicle_id?: string
         }
