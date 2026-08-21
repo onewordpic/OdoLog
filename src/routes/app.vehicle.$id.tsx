@@ -1447,75 +1447,193 @@ function AddRefuelModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/20 backdrop-blur-sm md:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 backdrop-blur-sm md:items-center"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="glass max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl p-6 md:rounded-3xl"
+        className="glass flex max-h-[92dvh] w-full max-w-md flex-col rounded-t-3xl md:rounded-3xl"
       >
-        <h3 className="text-lg font-medium">{editing ? "Edit refuel" : "New refuel"}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {vehicle.name} · {vehicle.fuel_type}
-        </p>
-
+        <div className="shrink-0 px-5 pt-4">
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-foreground/15 md:hidden" />
+          <h3 className="text-base font-semibold">
+            {editing ? "Edit refuel" : "New refuel"}
+          </h3>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            {vehicle.name} · {vehicle.fuel_type}
+          </p>
+        </div>
 
         <form
+          id="refuel-form"
           onSubmit={(e) => {
             e.preventDefault();
             mut.mutate();
           }}
-          className="mt-5 space-y-4"
+          className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-3 pt-4"
         >
-          <NumField
-            label="Amount (₹)"
-            value={amount}
-            onChange={setAmount}
-            placeholder="500"
-            step="any"
-            required
-            autoFocus
-          />
-
-          <div>
-            <div className="flex items-end justify-between">
-              <span className="text-xs font-medium text-muted-foreground">
-                Rate (₹ / litre)
-              </span>
-              <button
-                type="button"
-                onClick={doFetchRate}
-                disabled={fetchingRate}
-                className="flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50"
-              >
-                {fetchingRate ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <RefreshCcw className="h-3 w-3" />
-                )}
-                Fetch today's rate{city ? ` (${city})` : ""}
-              </button>
-            </div>
-            <input
-              type="number"
+          <div className="grid grid-cols-2 gap-3">
+            <NumField
+              label="Amount (₹)"
+              value={amount}
+              onChange={setAmount}
+              placeholder="500"
               step="any"
-              value={rate}
-              onChange={(e) => setRate(e.target.value)}
-              placeholder="104.50"
               required
-              className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
+              autoFocus
             />
+            <div>
+              <div className="flex items-baseline justify-between gap-1">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Rate ₹/L
+                </span>
+                <button
+                  type="button"
+                  onClick={doFetchRate}
+                  disabled={fetchingRate}
+                  aria-label="Fetch today's fuel rate"
+                  className="flex items-center gap-1 text-[11px] text-primary disabled:opacity-50"
+                >
+                  {fetchingRate ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <RefreshCcw className="h-3 w-3" />
+                  )}
+                  Today
+                </button>
+              </div>
+              <input
+                type="number"
+                inputMode="decimal"
+                step="any"
+                value={rate}
+                onChange={(e) => setRate(e.target.value)}
+                placeholder="104.50"
+                required
+                className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2.5 text-base md:text-sm"
+              />
+            </div>
           </div>
 
           {litres != null && (
-            <div className="glass-subtle rounded-xl p-3 text-center text-sm">
-              ≈ <span className="font-medium">{litres.toFixed(2)} L</span>
+            <div className="rounded-xl glass-subtle px-3 py-2 text-center text-xs">
+              ≈ <span className="text-sm font-semibold">{litres.toFixed(2)} L</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <NumField
+                label="Odometer (km)"
+                value={odo}
+                onChange={setOdo}
+                placeholder={lastOdo != null ? `> ${lastOdo.toFixed(0)}` : "optional"}
+                step="any"
+              />
+              {lastOdo != null && !odoError && (
+                <p className="mt-1 px-1 text-[11px] text-muted-foreground">
+                  Last: <span className="font-medium tabular-nums text-foreground">{lastOdo.toFixed(0)}</span>
+                </p>
+              )}
+            </div>
+            <label className="block">
+              <span className="text-xs font-medium text-muted-foreground">Date</span>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                max={today}
+                className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2.5 text-base md:text-sm"
+              />
+            </label>
+          </div>
+          {odoError && (
+            <p className="px-1 text-[11px] font-medium text-destructive">{odoError}</p>
+          )}
+
+          {hasReserve && (
+            <div className="space-y-2 rounded-xl glass-subtle p-3">
+              <div>
+                <span className="text-xs font-medium text-muted-foreground">
+                  When you pulled in
+                </span>
+                <div className="mt-1.5 grid grid-cols-2 gap-2">
+                  {[
+                    { v: "main", l: "On main" },
+                    { v: "reserve", l: "On reserve" },
+                  ].map((o) => (
+                    <button
+                      key={o.v}
+                      type="button"
+                      onClick={() => setTankState(o.v as "main" | "reserve")}
+                      className={`press min-h-11 rounded-xl px-3 text-xs font-medium transition ${
+                        tankState === o.v
+                          ? "bg-[var(--mint-accent)] text-stone-900"
+                          : "bg-foreground/[0.05] text-muted-foreground"
+                      }`}
+                    >
+                      {o.l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <span className="text-xs font-medium text-muted-foreground">
+                  After filling
+                </span>
+                <div className="mt-1.5 grid grid-cols-2 gap-2">
+                  {[
+                    { v: "main", l: "Back on main" },
+                    { v: "reserve", l: "Still on reserve" },
+                  ].map((o) => (
+                    <button
+                      key={o.v}
+                      type="button"
+                      onClick={() => {
+                        setTankStateAfter(o.v as "main" | "reserve");
+                        if (o.v === "reserve") setFullTank(false);
+                      }}
+                      className={`press min-h-11 rounded-xl px-3 text-xs font-medium transition ${
+                        tankStateAfter === o.v
+                          ? "bg-[var(--mint-accent)] text-stone-900"
+                          : "bg-foreground/[0.05] text-muted-foreground"
+                      }`}
+                    >
+                      {o.l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {tankState === "reserve" && (
+                <div>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Odometer when you flipped to reserve (optional)
+                  </span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="any"
+                    min={0}
+                    value={switchOdoInput}
+                    onChange={(e) => setSwitchOdoInput(e.target.value)}
+                    placeholder={lastOdo != null ? `e.g. ${lastOdo.toFixed(0)}` : "e.g. 24350"}
+                    className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2.5 text-base md:text-sm"
+                  />
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    {reserveDerivedKm
+                      ? `Rode ${reserveDerivedKm.toFixed(0)} km on reserve.`
+                      : "Lets us measure your reserve range instead of guessing."}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
           {vehicle.fuel_type !== "electric" && (
-            <details className="group rounded-xl glass-subtle px-4 py-3">
-              <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium">
+            <details className="group rounded-xl glass-subtle px-3 py-2.5">
+              <summary className="flex min-h-9 cursor-pointer list-none items-center justify-between text-sm font-medium">
                 <span>
                   More details
                   <span className="ml-2 text-[11px] font-normal text-muted-foreground">
@@ -1541,7 +1659,7 @@ function AddRefuelModal({
                     <select
                       value={fuelSubtype}
                       onChange={(e) => setFuelSubtype(e.target.value as any)}
-                      className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
+                      className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2.5 text-base md:text-sm"
                     >
                       <option value="normal">Normal</option>
                       <option value="e20">E20 (20% ethanol)</option>
@@ -1551,114 +1669,31 @@ function AddRefuelModal({
                   </label>
                 )}
 
-                {(
-                  <label className="block">
-                    <span className="text-xs font-medium text-muted-foreground">
-                      Fuel station (optional)
-                    </span>
-                    <select
-                      value={brand}
-                      onChange={(e) =>
-                        setBrand(e.target.value as FuelBrandId | "")
-                      }
-                      className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
-                    >
-                      <option value="">Not specified</option>
-                      {FUEL_BRANDS.map((b) => (
-                        <option key={b.id} value={b.id}>
-                          {b.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
+                <label className="block">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Fuel station (optional)
+                  </span>
+                  <select
+                    value={brand}
+                    onChange={(e) => setBrand(e.target.value as FuelBrandId | "")}
+                    className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2.5 text-base md:text-sm"
+                  >
+                    <option value="">Not specified</option>
+                    {FUEL_BRANDS.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
             </details>
           )}
 
-
-
-          <div>
-            <NumField
-
-              label="Odometer (km)"
-              value={odo}
-              onChange={setOdo}
-              placeholder={
-                lastOdo != null
-                  ? `must be > ${lastOdo.toFixed(0)} km`
-                  : "optional, but improves accuracy"
-              }
-              step="any"
-            />
-            {lastOdo != null && (
-              <p className="mt-1 px-1 text-[11px] text-muted-foreground">
-                Last reading: <span className="font-medium tabular-nums text-foreground">{lastOdo.toFixed(0)} km</span>
-              </p>
-            )}
-            {odoError && (
-              <p className="mt-1 px-1 text-[11px] font-medium text-destructive">
-                {odoError}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <span className="text-xs font-medium text-muted-foreground">
-              Date
-            </span>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              max={today}
-              className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
-            />
-          </div>
-
-          {hasReserve && (
-            <div>
-              <span className="text-xs font-medium text-muted-foreground">
-                Tank when you pulled in
-              </span>
-              <div className="mt-1 grid grid-cols-2 gap-2">
-                {[
-                  { v: "main", l: "Still on main" },
-                  { v: "reserve", l: "On reserve" },
-                ].map((o) => (
-                  <button
-                    key={o.v}
-                    type="button"
-                    onClick={() => setTankState(o.v as "main" | "reserve")}
-                    className={`press rounded-xl px-3 py-2.5 text-xs font-medium transition ${
-                      tankState === o.v
-                        ? "bg-[var(--mint-accent)] text-stone-900"
-                        : "glass-subtle text-muted-foreground"
-                    }`}
-                  >
-                    {o.l}
-                  </button>
-                ))}
-              </div>
-              {tankState === "reserve" && (
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="any"
-                  min={0}
-                  value={reserveKm}
-                  onChange={(e) => setReserveKm(e.target.value)}
-                  placeholder="km ridden on reserve (optional)"
-                  className="mt-2 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
-                />
-              )}
-            </div>
-          )}
-
-          <label className="flex items-center justify-between rounded-xl glass-subtle px-4 py-3">
+          <label className="flex min-h-11 items-center justify-between rounded-xl glass-subtle px-3 py-2.5">
             <div>
               <div className="text-sm font-medium">Full tank</div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-[11px] text-muted-foreground">
                 Required for accurate mileage
               </div>
             </div>
@@ -1669,24 +1704,28 @@ function AddRefuelModal({
               className="h-5 w-5 accent-primary"
             />
           </label>
-
-          <div className="flex gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-xl glass-subtle py-3 text-sm font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={mut.isPending || !litres || !!odoError}
-              className="flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-primary-foreground disabled:opacity-60"
-            >
-              {mut.isPending ? "Saving…" : editing ? "Save changes" : "Save refuel"}
-            </button>
-          </div>
         </form>
+
+        <div
+          className="shrink-0 flex gap-2 border-t border-foreground/10 px-5 pt-3"
+          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 rounded-xl glass-subtle py-3 text-sm font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="refuel-form"
+            disabled={mut.isPending || !litres || !!odoError}
+            className="flex-[1.5] rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+          >
+            {mut.isPending ? "Saving…" : editing ? "Save changes" : "Save refuel"}
+          </button>
+        </div>
       </div>
     </div>
   );
