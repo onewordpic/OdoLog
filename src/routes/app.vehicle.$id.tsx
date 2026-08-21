@@ -1750,7 +1750,7 @@ function NumField({
         inputMode="decimal"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-xl glass-input glass-input-focus px-4 py-3 text-sm"
+        className="mt-1 w-full rounded-xl glass-input glass-input-focus px-3 py-2.5 text-base md:text-sm"
       />
     </label>
   );
