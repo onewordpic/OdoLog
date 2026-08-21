@@ -224,6 +224,8 @@ export type Database = {
           odo_km: number | null
           rate_per_litre: number
           refuel_date: string
+          reserve_km: number | null
+          tank_state: string | null
           user_id: string
           vehicle_id: string
         }
@@ -239,6 +241,8 @@ export type Database = {
           odo_km?: number | null
           rate_per_litre: number
           refuel_date?: string
+          reserve_km?: number | null
+          tank_state?: string | null
           user_id: string
           vehicle_id: string
         }
@@ -254,6 +258,8 @@ export type Database = {
           odo_km?: number | null
           rate_per_litre?: number
           refuel_date?: string
+          reserve_km?: number | null
+          tank_state?: string | null
           user_id?: string
           vehicle_id?: string
         }
@@ -321,6 +327,7 @@ export type Database = {
         Row: {
           created_at: string
           fuel_type: Database["public"]["Enums"]["fuel_type"]
+          has_reserve: boolean
           icon: string
           id: string
           image_url: string | null
@@ -334,11 +341,13 @@ export type Database = {
           purchase_date: string | null
           purchase_price_inr: number | null
           reg_number: string | null
+          reserve_litres: number | null
           user_id: string
         }
         Insert: {
           created_at?: string
           fuel_type?: Database["public"]["Enums"]["fuel_type"]
+          has_reserve?: boolean
           icon?: string
           id?: string
           image_url?: string | null
@@ -352,11 +361,13 @@ export type Database = {
           purchase_date?: string | null
           purchase_price_inr?: number | null
           reg_number?: string | null
+          reserve_litres?: number | null
           user_id: string
         }
         Update: {
           created_at?: string
           fuel_type?: Database["public"]["Enums"]["fuel_type"]
+          has_reserve?: boolean
           icon?: string
           id?: string
           image_url?: string | null
@@ -370,6 +381,7 @@ export type Database = {
           purchase_date?: string | null
           purchase_price_inr?: number | null
           reg_number?: string | null
+          reserve_litres?: number | null
           user_id?: string
         }
         Relationships: []
