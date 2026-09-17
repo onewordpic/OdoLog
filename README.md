@@ -25,6 +25,13 @@ OdoLog is a modern, feature-rich iOS application built with Swift and SwiftUI de
 * **Swift** / **SwiftUI**
 * **Xcode**
 
+<div align="center">
+  <img src="home.PNG" width="220" style="margin: 5px;" alt="Home Screen" />
+  <img src="analytics.PNG" width="220" style="margin: 5px;" alt="Analytics" />
+  <img src="changelog.PNG" width="220" style="margin: 5px;" alt="Change Log" />
+</div>
+
+
 ## 📱 Installation (Sideloading)
 
 Since OdoLog is distributed as an independent iOS application, you can sideload the `.ipa` file onto your device using your preferred installation tool:
