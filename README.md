@@ -2,6 +2,12 @@
 
 OdoLog is a modern, feature-rich iOS application built with Swift and SwiftUI designed to track the fuel efficiency of your daily drivers using manual logging methods.
 
+<div align="center">
+  <img src="home.PNG" width="220" style="margin: 5px;" alt="Home Screen" />
+  <img src="analytics.PNG" width="220" style="margin: 5px;" alt="Analytics" />
+  <img src="changelog.PNG" width="220" style="margin: 5px;" alt="Change Log" />
+</div>
+
 ## ✨ Key Features
 
 ### 🏠 Home Dashboard
@@ -24,13 +30,6 @@ OdoLog is a modern, feature-rich iOS application built with Swift and SwiftUI de
 ## 🛠️ Built With
 * **Swift** / **SwiftUI**
 * **Xcode**
-
-<div align="center">
-  <img src="home.PNG" width="220" style="margin: 5px;" alt="Home Screen" />
-  <img src="analytics.PNG" width="220" style="margin: 5px;" alt="Analytics" />
-  <img src="changelog.PNG" width="220" style="margin: 5px;" alt="Change Log" />
-</div>
-
 
 ## 📱 Installation (Sideloading)
 
