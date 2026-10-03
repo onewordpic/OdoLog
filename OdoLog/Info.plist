@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>OdoLog CSV</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.comma-separated-values-text</string>
+				<string>public.delimited-values-text</string>
+				<string>public.plain-text</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>OdoLog Backup</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.json</string>
+				<string>public.data</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>safwan.odolog.auth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>odolog</string>
+			</array>
+		</dict>
+	</array>
+	<key>SUPABASE_ANON_KEY</key>
+	<string>$(SUPABASE_ANON_KEY)</string>
+	<key>SUPABASE_URL</key>
+	<string>$(SUPABASE_URL)</string>
+	<key>UIApplicationShortcutItems</key>
+	<array>
+		<dict>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>fuelpump.fill</string>
+			<key>UIApplicationShortcutItemSubtitle</key>
+			<string>Add a fill-up</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Log fuel</string>
+			<key>UIApplicationShortcutItemType</key>
+			<string>safwan.odolog.quickaction.logfuel</string>
+		</dict>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.text</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>CSV Document</string>
+			<key>UTTypeIdentifier</key>
+			<string>public.comma-separated-values-text</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>csv</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>text/csv</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
+</dict>
+</plist>

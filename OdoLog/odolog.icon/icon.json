@@ -1,0 +1,41 @@
+{
+  "fill" : {
+    "solid" : "display-p3:0.90980,0.36078,0.25490,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "image-name" : "AppIcon.png",
+          "name" : "AppIcon",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "blur" : false,
+      "hidden" : false,
+      "lighting" : "combined",
+      "name" : "Group",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.2
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

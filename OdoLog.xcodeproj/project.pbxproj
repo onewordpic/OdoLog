@@ -6,23 +6,78 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		17A68CA1304BEA44002C7801 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 17A68CA3304BEA44002C7803 /* Supabase */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		1790B81230710C0400C75A6F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 17A68C81304BEA43002C7800 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 17A68C88304BEA43002C7800;
+			remoteInfo = OdoLog;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		1790B80330710A7700C75A6F /* OdoLogTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OdoLogTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1790B80E30710C0400C75A6F /* OdoLogStoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OdoLogStoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		17A68C89304BEA43002C7800 /* OdoLog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OdoLog.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		17A68CA4304BEA44002C7804 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		17A68CA5304BEA44002C7805 /* Exceptions for "OdoLog" folder in "OdoLog" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 17A68C88304BEA43002C7800 /* OdoLog */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		1790B80430710A7700C75A6F /* OdoLogTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = OdoLogTests;
+			sourceTree = "<group>";
+		};
+		1790B80F30710C0400C75A6F /* OdoLogStoreTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = OdoLogStoreTests;
+			sourceTree = "<group>";
+		};
 		17A68C8B304BEA43002C7800 /* OdoLog */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				17A68CA5304BEA44002C7805 /* Exceptions for "OdoLog" folder in "OdoLog" target */,
+			);
 			path = OdoLog;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		1790B80030710A7700C75A6F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1790B80B30710C0400C75A6F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		17A68C86304BEA43002C7800 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				17A68CA1304BEA44002C7801 /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33,6 +88,9 @@
 			isa = PBXGroup;
 			children = (
 				17A68C8B304BEA43002C7800 /* OdoLog */,
+				17A68CA4304BEA44002C7804 /* Secrets.xcconfig */,
+				1790B80430710A7700C75A6F /* OdoLogTests */,
+				1790B80F30710C0400C75A6F /* OdoLogStoreTests */,
 				17A68C8A304BEA43002C7800 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +99,8 @@
 			isa = PBXGroup;
 			children = (
 				17A68C89304BEA43002C7800 /* OdoLog.app */,
+				1790B80330710A7700C75A6F /* OdoLogTests.xctest */,
+				1790B80E30710C0400C75A6F /* OdoLogStoreTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,6 +108,51 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		1790B80230710A7700C75A6F /* OdoLogTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1790B80730710A7700C75A6F /* Build configuration list for PBXNativeTarget "OdoLogTests" */;
+			buildPhases = (
+				1790B7FF30710A7700C75A6F /* Sources */,
+				1790B80030710A7700C75A6F /* Frameworks */,
+				1790B80130710A7700C75A6F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				1790B80430710A7700C75A6F /* OdoLogTests */,
+			);
+			name = OdoLogTests;
+			packageProductDependencies = (
+			);
+			productName = OdoLogTests;
+			productReference = 1790B80330710A7700C75A6F /* OdoLogTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		1790B80D30710C0400C75A6F /* OdoLogStoreTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1790B81430710C0400C75A6F /* Build configuration list for PBXNativeTarget "OdoLogStoreTests" */;
+			buildPhases = (
+				1790B80A30710C0400C75A6F /* Sources */,
+				1790B80B30710C0400C75A6F /* Frameworks */,
+				1790B80C30710C0400C75A6F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1790B81330710C0400C75A6F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				1790B80F30710C0400C75A6F /* OdoLogStoreTests */,
+			);
+			name = OdoLogStoreTests;
+			packageProductDependencies = (
+			);
+			productName = OdoLogStoreTests;
+			productReference = 1790B80E30710C0400C75A6F /* OdoLogStoreTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		17A68C88304BEA43002C7800 /* OdoLog */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 17A68C94304BEA44002C7800 /* Build configuration list for PBXNativeTarget "OdoLog" */;
@@ -65,6 +170,7 @@
 			);
 			name = OdoLog;
 			packageProductDependencies = (
+				17A68CA3304BEA44002C7803 /* Supabase */,
 			);
 			productName = OdoLog;
 			productReference = 17A68C89304BEA43002C7800 /* OdoLog.app */;
@@ -77,9 +183,16 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2660;
+				LastSwiftUpdateCheck = 2700;
 				LastUpgradeCheck = 2660;
 				TargetAttributes = {
+					1790B80230710A7700C75A6F = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					1790B80D30710C0400C75A6F = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = 17A68C88304BEA43002C7800;
+					};
 					17A68C88304BEA43002C7800 = {
 						CreatedOnToolsVersion = 26.6;
 					};
@@ -94,17 +207,36 @@
 			);
 			mainGroup = 17A68C80304BEA43002C7800;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				17A68CA2304BEA44002C7802 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 17A68C8A304BEA43002C7800 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				17A68C88304BEA43002C7800 /* OdoLog */,
+				1790B80230710A7700C75A6F /* OdoLogTests */,
+				1790B80D30710C0400C75A6F /* OdoLogStoreTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		1790B80130710A7700C75A6F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1790B80C30710C0400C75A6F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		17A68C87304BEA43002C7800 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -115,6 +247,20 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		1790B7FF30710A7700C75A6F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1790B80A30710C0400C75A6F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		17A68C85304BEA43002C7800 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -124,7 +270,115 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		1790B81330710C0400C75A6F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 17A68C88304BEA43002C7800 /* OdoLog */;
+			targetProxy = 1790B81230710C0400C75A6F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		1790B80830710A7700C75A6F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = safwan.OdoLogTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OdoLog.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/OdoLog";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		1790B80930710A7700C75A6F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = safwan.OdoLogTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OdoLog.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/OdoLog";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+		1790B81530710C0400C75A6F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = safwan.odolog.OdoLogStoreTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OdoLog.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/OdoLog";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		1790B81630710C0400C75A6F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = safwan.odolog.OdoLogStoreTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OdoLog.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/OdoLog";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
 		17A68C92304BEA44002C7800 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -178,7 +432,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -236,7 +490,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -248,26 +502,37 @@
 		};
 		17A68C95304BEA44002C7800 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 17A68CA4304BEA44002C7804 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 5D3U6PDV6K;
+				CODE_SIGN_ENTITLEMENTS = OdoLog/OdoLog.entitlements;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OdoLog/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = OdoLog;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "OdoLog uses your photo library so you can set a profile picture.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = onewordpic.OdoLog;
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = safwan.odolog;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -280,26 +545,37 @@
 		};
 		17A68C96304BEA44002C7800 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 17A68CA4304BEA44002C7804 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 5D3U6PDV6K;
+				CODE_SIGN_ENTITLEMENTS = OdoLog/OdoLog.entitlements;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OdoLog/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = OdoLog;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "OdoLog uses your photo library so you can set a profile picture.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = onewordpic.OdoLog;
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = safwan.odolog;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -313,6 +589,24 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		1790B80730710A7700C75A6F /* Build configuration list for PBXNativeTarget "OdoLogTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1790B80830710A7700C75A6F /* Debug */,
+				1790B80930710A7700C75A6F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1790B81430710C0400C75A6F /* Build configuration list for PBXNativeTarget "OdoLogStoreTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1790B81530710C0400C75A6F /* Debug */,
+				1790B81630710C0400C75A6F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		17A68C84304BEA43002C7800 /* Build configuration list for PBXProject "OdoLog" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -332,6 +626,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		17A68CA2304BEA44002C7802 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		17A68CA3304BEA44002C7803 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 17A68CA2304BEA44002C7802 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 17A68C81304BEA43002C7800 /* Project object */;
 }
