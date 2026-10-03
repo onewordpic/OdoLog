@@ -3,3 +3,6 @@ xcuserdata/
 DerivedData/
 .DS_Store
 *.xcuserstate
+
+build/
+*.ipa
