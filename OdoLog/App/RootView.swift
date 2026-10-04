@@ -5,6 +5,18 @@ private enum AppTab: Hashable {
     case log, analytics, garage, settings
 }
 
+private struct LogFuelButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(configuration.isPressed ? 0.7 : 1)
+            .onChange(of: configuration.isPressed) { _, isPressed in
+                if isPressed {
+                    LogFuelPerformance.touchDown()
+                }
+            }
+    }
+}
+
 struct RootView: View {
     @Environment(OdoLogStore.self) private var store
     @Environment(FuelPriceStore.self) private var fuelPrices
@@ -16,8 +28,9 @@ struct RootView: View {
     @State private var selectedTab: AppTab = .log
     @State private var showAddVehicle = false
     @State private var logFuelVehicle: Vehicle?
-    @State private var vehiclePicker: [Vehicle]?
-    @State private var logFuelLongPressed = false
+    @State private var reserveVehicle: Vehicle?
+    @State private var reserveOdoText = ""
+    @State private var reserveOdoError: String?
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -41,25 +54,45 @@ struct RootView: View {
         .toolbarBackground(.visible, for: .tabBar)
         .tabViewBottomAccessory {
             Button(action: {
-                if logFuelLongPressed {
-                    logFuelLongPressed = false
-                    return
-                }
+                LogFuelPerformance.tapFired()
                 startLogFuel()
             }) {
                 Image(systemName: "fuelpump.fill")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(LogFuelButtonStyle())
             .accessibilityLabel("Log fuel")
             .accessibilityHint("Opens the last filled vehicle. Long press to choose another.")
-            .simultaneousGesture(
-                LongPressGesture(minimumDuration: 0.45).onEnded { _ in
-                    logFuelLongPressed = true
-                    pickVehicleForFuel()
+            .contextMenu {
+                if store.fuelableVehicles.isEmpty {
+                    Button("Add vehicle", systemImage: "plus") {
+                        selectedTab = .log
+                        showAddVehicle = true
+                    }
+                } else {
+                    ForEach(store.fuelableVehicles) { vehicle in
+                        Button("Log fuel for \(vehicle.displayName)", systemImage: "fuelpump.fill") {
+                            selectedTab = .log
+                            logFuelVehicle = vehicle
+                        }
+                        if vehicle.icon.supportsReserveTap && vehicle.hasReserve {
+                            if store.reserveOdo(for: vehicle.id) != nil {
+                                Button("Clear reserve for \(vehicle.displayName)", systemImage: "fuelpump") {
+                                    store.clearReserveWithoutRefuel(
+                                        for: vehicle.id,
+                                        at: store.lastOdo(for: vehicle.id)
+                                    )
+                                }
+                            } else {
+                                Button("Set reserve for \(vehicle.displayName)", systemImage: "exclamationmark.fuelpump.fill") {
+                                    beginReservePrompt(for: vehicle)
+                                }
+                            }
+                        }
+                    }
                 }
-            )
+            }
         }
         .background { DashBackdrop() }
         .onAppear {
@@ -102,22 +135,34 @@ struct RootView: View {
         }
         .sheet(isPresented: $showAddVehicle) { NavigationStack { AddVehicleSheet() } }
         .sheet(item: $logFuelVehicle) { vehicle in NavigationStack { LogFuelSheet(vehicle: vehicle) } }
-        .confirmationDialog(
-            "Log fuel for which vehicle?",
-            isPresented: Binding(
-                get: { vehiclePicker != nil },
-                set: { if !$0 { vehiclePicker = nil } }
-            ),
-            titleVisibility: .visible
-        ) {
-            ForEach(vehiclePicker ?? []) { vehicle in
-                Button(vehicle.displayName) {
-                    selectedTab = .log
-                    logFuelVehicle = vehicle
-                    vehiclePicker = nil
+        .sheet(item: $reserveVehicle) { vehicle in
+            NavigationStack {
+                Form {
+                    Section {
+                        TextField("Odometer", text: $reserveOdoText)
+                            .keyboardType(.decimalPad)
+                    } footer: {
+                        if let last = store.lastOdo(for: vehicle.id) {
+                            Text("Last logged reading: \(Format.km(last))")
+                        }
+                    }
+                    if let reserveOdoError {
+                        Text(reserveOdoError).foregroundStyle(.red)
+                    }
+                }
+                .navigationTitle("Start reserve")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { reserveVehicle = nil }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Save") { saveReserveStart(for: vehicle) }
+                            .fontWeight(.semibold)
+                    }
                 }
             }
-            Button("Cancel", role: .cancel) { vehiclePicker = nil }
+            .presentationDetents([.medium])
         }
     }
 
@@ -132,14 +177,25 @@ struct RootView: View {
         }
     }
 
-    private func pickVehicleForFuel() {
-        selectedTab = .log
-        let fuelable = store.fuelableVehicles
-        if fuelable.isEmpty {
-            showAddVehicle = true
+    private func beginReservePrompt(for vehicle: Vehicle) {
+        reserveOdoError = nil
+        reserveOdoText = store.lastOdo(for: vehicle.id).map { String(format: "%.0f", $0) } ?? ""
+        reserveVehicle = vehicle
+    }
+
+    private func saveReserveStart(for vehicle: Vehicle) {
+        let cleaned = reserveOdoText.replacingOccurrences(of: ",", with: "")
+        guard let odo = Double(cleaned), odo > 0 else {
+            reserveOdoError = OdoLogError.odoRequired.localizedDescription
             return
         }
-        vehiclePicker = fuelable
+        do {
+            try store.validateReserveOdometer(odo, for: vehicle.id)
+            store.markReserve(for: vehicle.id, at: odo, note: "Switched to reserve from Log fuel menu")
+            reserveVehicle = nil
+        } catch {
+            reserveOdoError = error.localizedDescription
+        }
     }
 
     private func openPendingQuickActionIfNeeded() {

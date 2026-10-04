@@ -22,12 +22,15 @@ struct ChangelogView: View {
                 ChangelogGroup(title: "Home", items: [
                     "Switching to reserve now asks for your odometer reading.",
                     "Refuelling ₹100 or more—or updating your latest fill—returns your bike to the main tank automatically.",
+                    "Long-press Log fuel to set or clear reserve for a bike.",
+                    "Set or clear reserve while logging fuel.",
                 ]),
                 ChangelogGroup(title: "Mileage", items: [
                     "Mileage now uses exact distance and litres between reserve points.",
                     "Unusual entries are left out instead of skewing your km/L.",
                     "You can see why an entry was skipped.",
                     "Suspicious fuel entries now get a quick on-device check.",
+                    "Reserve stretches cleared without a refuel are skipped.",
                 ]),
                 ChangelogGroup(title: "Siri", items: [
                     "New: say “Log fuel in OdoLog” or “What’s my mileage in OdoLog”.",

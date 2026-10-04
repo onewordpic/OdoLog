@@ -20,6 +20,8 @@ enum FuelEntryChecker {
     }
 
     static func check(_ input: Input, useOnDeviceModel: Bool = true) async -> FuelEntryCheck {
+        let performanceToken = LogFuelPerformance.begin("FuelEntryChecker")
+        defer { LogFuelPerformance.end(performanceToken) }
         let fallback = ruleBasedCheck(input)
         guard useOnDeviceModel, let reason = fallback.reason else { return fallback }
 

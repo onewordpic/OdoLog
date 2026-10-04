@@ -3,6 +3,33 @@ import SwiftData
 import Testing
 @testable import OdoLog
 
+@Suite
+struct LogFuelTankDefaultsTests {
+    @Test
+    func bikeOnReserveOpensAsReserve() {
+        #expect(LogFuelTankDefaults.state(isOnReserve: true) == .reserve)
+    }
+
+    @Test
+    func bikeOnMainOpensAsMain() {
+        #expect(LogFuelTankDefaults.state(isOnReserve: false) == .main)
+    }
+
+    @Test
+    func vehicleSwitchUpdatesDefaultUnlessManuallyChanged() {
+        #expect(LogFuelTankDefaults.stateAfterVehicleChange(
+            current: .main,
+            wasManuallyChanged: false,
+            isOnReserve: true
+        ) == .reserve)
+        #expect(LogFuelTankDefaults.stateAfterVehicleChange(
+            current: .main,
+            wasManuallyChanged: true,
+            isOnReserve: true
+        ) == .main)
+    }
+}
+
 @Suite(.serialized)
 @MainActor
 struct ReserveRuleTests {
@@ -46,7 +73,7 @@ struct ReserveRuleTests {
     func `Bike not on reserve is unaffected`() async throws {
         let fixture = try await makeFixture()
 
-        try await addRefuel(amount: 500, odo: 1_050, to: fixture)
+        try await addRefuel(amount: 500, odo: 1_050, tankState: .main, to: fixture)
 
         #expect(fixture.store.reserveOdo(for: fixture.vehicle.id) == nil)
         #expect(fixture.store.reserveEvents(for: fixture.vehicle.id).isEmpty)
@@ -109,6 +136,62 @@ struct ReserveRuleTests {
         #expect(result.kmpl == 40)
     }
 
+    @Test
+    func savingReserveTankStateUpdatesCurrentReserveState() async throws {
+        let fixture = try await makeFixture()
+
+        try await addRefuel(amount: 99, rate: 50, odo: 1_050, tankState: .reserve, to: fixture)
+
+        #expect(fixture.store.reserveOdo(for: fixture.vehicle.id) == 1_050)
+    }
+
+    @Test
+    func setReserveUsesValidatedOdometer() async throws {
+        let fixture = try await makeFixture()
+
+        try fixture.store.validateReserveOdometer(1_000, for: fixture.vehicle.id)
+        fixture.store.markReserve(for: fixture.vehicle.id, at: 1_000)
+
+        #expect(fixture.store.reserveOdo(for: fixture.vehicle.id) == 1_000)
+    }
+
+    @Test
+    func clearReserveWithoutRefuelReturnsToMain() async throws {
+        let fixture = try await makeFixture()
+        fixture.store.markReserve(for: fixture.vehicle.id, at: 1_000)
+
+        fixture.store.clearReserveWithoutRefuel(for: fixture.vehicle.id, at: 1_040)
+
+        #expect(fixture.store.reserveOdo(for: fixture.vehicle.id) == nil)
+        #expect(fixture.store.reserveEvents(for: fixture.vehicle.id).contains {
+            $0.action == .cleared && $0.note == "Reserve cleared without a refuel"
+        })
+    }
+
+    @Test
+    func reserveClearWithoutRefuelDropsBrokenStretch() async throws {
+        let fixture = try await makeFixture()
+        let day1 = Date(timeIntervalSince1970: 1_700_000_000)
+        let day2 = day1.addingTimeInterval(86_400)
+        let day3 = day2.addingTimeInterval(86_400)
+        let day4 = day3.addingTimeInterval(86_400)
+        fixture.store.markReserve(for: fixture.vehicle.id, at: 1_000, date: day1)
+        try await addRefuel(amount: 99, rate: 50, odo: 1_040, date: day1.addingTimeInterval(3_600), to: fixture)
+        fixture.store.clearReserveWithoutRefuel(for: fixture.vehicle.id, at: 1_040, date: day2)
+        fixture.store.markReserve(for: fixture.vehicle.id, at: 1_080, date: day3)
+        try await addRefuel(amount: 99, rate: 50, odo: 1_120, date: day3.addingTimeInterval(3_600), to: fixture)
+        fixture.store.markReserve(for: fixture.vehicle.id, at: 1_160, date: day4)
+
+        let result = fixture.store.mileageResult(for: fixture.vehicle.id)
+
+        #expect(result.kmpl == nil)
+        #expect(result.validSegments.count == 1)
+        #expect(result.droppedSegments.contains {
+            $0.reason == .reserveClearedWithoutRefuel
+                && $0.reason.message == "reserve cleared without a refuel"
+        })
+    }
+
     private func makeFixture() async throws -> Fixture {
         let schema = Schema([
             LocalVehicle.self,
@@ -142,6 +225,7 @@ struct ReserveRuleTests {
         litres: Double? = nil,
         odo: Double,
         date: Date = .now,
+        tankState: TankState = .reserve,
         to fixture: Fixture
     ) async throws {
         try await fixture.store.addRefuel(
@@ -155,7 +239,7 @@ struct ReserveRuleTests {
             notes: nil,
             fuelSubtype: .normal,
             fuelBrand: nil,
-            tankState: .reserve
+            tankState: tankState
         )
     }
 

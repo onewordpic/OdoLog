@@ -67,12 +67,19 @@ struct MileageCalculator {
 
     struct ChainBreak: Sendable {
         let moment: Moment
+        let reason: DropReason
+
+        init(moment: Moment, reason: DropReason = .editedOrDeletedLog) {
+            self.moment = moment
+            self.reason = reason
+        }
     }
 
     enum DropReason: Equatable, Sendable {
         case nonPositiveDistance
         case missingFuel
         case editedOrDeletedLog
+        case reserveClearedWithoutRefuel
         case implausibleMileage(actual: Double, expectedLow: Double, expectedHigh: Double)
 
         var message: String {
@@ -83,6 +90,8 @@ struct MileageCalculator {
                 "Fuel quantity is missing."
             case .editedOrDeletedLog:
                 "A fill in this stretch was edited or deleted."
+            case .reserveClearedWithoutRefuel:
+                "reserve cleared without a refuel"
             case .implausibleMileage(let actual, let low, let high):
                 String(format: "%.1f km/L is outside the expected %.1f–%.1f range.", actual, low, high)
             }
@@ -146,7 +155,7 @@ struct MileageCalculator {
     }
 
     static func calculate(_ input: Input) -> Result {
-        let candidates: [(Segment, Bool)]
+        let candidates: [(Segment, DropReason?)]
         let minimum: Int
         switch input.mode {
         case .reserve:
@@ -159,13 +168,13 @@ struct MileageCalculator {
 
         var valid: [Segment] = []
         var dropped: [DroppedSegment] = []
-        for (segment, broken) in candidates.suffix(8) {
+        for (segment, dropReason) in candidates.suffix(8) {
             if segment.km <= 0 {
                 dropped.append(DroppedSegment(segment: segment, reason: .nonPositiveDistance))
             } else if segment.litres <= 0 {
                 dropped.append(DroppedSegment(segment: segment, reason: .missingFuel))
-            } else if broken {
-                dropped.append(DroppedSegment(segment: segment, reason: .editedOrDeletedLog))
+            } else if let dropReason {
+                dropped.append(DroppedSegment(segment: segment, reason: dropReason))
             } else if let claimed = input.claimedKmpl, claimed > 0,
                       segment.kmpl < claimed * 0.4 || segment.kmpl > claimed * 2 {
                 dropped.append(DroppedSegment(
@@ -190,7 +199,7 @@ struct MileageCalculator {
         return Result(kmpl: kmpl, validSegments: valid, droppedSegments: dropped)
     }
 
-    private static func reserveCandidates(_ input: Input) -> [(Segment, Bool)] {
+    private static func reserveCandidates(_ input: Input) -> [(Segment, DropReason?)] {
         let points = input.reservePoints.sorted { $0.moment < $1.moment }
         guard points.count >= 2 else { return [] }
         let fills = input.fills.sorted { $0.moment < $1.moment }
@@ -200,13 +209,15 @@ struct MileageCalculator {
             let end = points[index]
             let included = fills.filter { $0.moment > start.moment && $0.moment <= end.moment }
             let litres = included.reduce(0) { $0 + $1.resolvedLitres }
-            let broken = included.contains(where: \.wasEdited)
-                || input.chainBreaks.contains { $0.moment > start.moment && $0.moment <= end.moment }
-            return (Segment(date: end.moment.date, km: end.odoKm - start.odoKm, litres: litres), broken)
+            let chainBreak = input.chainBreaks.first { $0.moment > start.moment && $0.moment <= end.moment }
+            let reason: DropReason? = included.contains(where: \.wasEdited)
+                ? .editedOrDeletedLog
+                : chainBreak?.reason
+            return (Segment(date: end.moment.date, km: end.odoKm - start.odoKm, litres: litres), reason)
         }
     }
 
-    private static func fullFillCandidates(_ input: Input) -> [(Segment, Bool)] {
+    private static func fullFillCandidates(_ input: Input) -> [(Segment, DropReason?)] {
         let fills = input.fills.sorted { $0.moment < $1.moment }
         let endpoints = fills.filter(\.isFull)
         guard endpoints.count >= 2 else { return [] }
@@ -216,11 +227,13 @@ struct MileageCalculator {
             let end = endpoints[index]
             let included = fills.filter { $0.moment > start.moment && $0.moment <= end.moment }
             let litres = included.reduce(0) { $0 + $1.resolvedLitres }
-            let broken = included.contains(where: \.wasEdited)
-                || input.chainBreaks.contains { $0.moment > start.moment && $0.moment <= end.moment }
+            let chainBreak = input.chainBreaks.first { $0.moment > start.moment && $0.moment <= end.moment }
+            let reason: DropReason? = included.contains(where: \.wasEdited)
+                ? .editedOrDeletedLog
+                : chainBreak?.reason
             return (
                 Segment(date: end.moment.date, km: (end.odoKm ?? 0) - (start.odoKm ?? 0), litres: litres),
-                broken
+                reason
             )
         }
     }

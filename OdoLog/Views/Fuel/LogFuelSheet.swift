@@ -1,5 +1,19 @@
 import SwiftUI
 
+enum LogFuelTankDefaults {
+    static func state(isOnReserve: Bool) -> TankState {
+        isOnReserve ? .reserve : .main
+    }
+
+    static func stateAfterVehicleChange(
+        current: TankState,
+        wasManuallyChanged: Bool,
+        isOnReserve: Bool
+    ) -> TankState {
+        wasManuallyChanged ? current : state(isOnReserve: isOnReserve)
+    }
+}
+
 struct LogFuelSheet: View {
     @Environment(OdoLogStore.self) private var store
     @Environment(FuelPriceStore.self) private var fuelPrices
@@ -18,6 +32,11 @@ struct LogFuelSheet: View {
     @State private var brand: FuelBrand = .iocl
     @State private var subtype: FuelSubtype = .normal
     @State private var tankState: TankState = .main
+    @State private var selectedVehicleId: UUID
+    @State private var tankStateWasManuallyChanged = false
+    @State private var reservePromptVehicle: Vehicle?
+    @State private var reserveOdoText = ""
+    @State private var reserveOdoError: String?
     @State private var isSaving = false
     @State private var errorText: String?
     @State private var blockedByOdo = false
@@ -30,14 +49,21 @@ struct LogFuelSheet: View {
     private enum Field { case amount, rate, litres }
 
     private var isEditing: Bool { existing != nil }
-    private var usesReserveTap: Bool { vehicle.icon.supportsReserveTap && vehicle.hasReserve }
-    private var lastOdo: Double? { store.lastOdo(for: vehicle.id, excluding: existing?.id) }
-    private var previousFill: Refuel? { store.previousOdoFill(for: vehicle.id, excluding: existing?.id) }
+    init(vehicle: Vehicle, existing: Refuel? = nil) {
+        self.vehicle = vehicle
+        self.existing = existing
+        _selectedVehicleId = State(initialValue: vehicle.id)
+    }
+
+    private var selectedVehicle: Vehicle { store.vehicle(id: selectedVehicleId) ?? vehicle }
+    private var usesReserveTap: Bool { selectedVehicle.icon.supportsReserveTap && selectedVehicle.hasReserve }
+    private var lastOdo: Double? { store.lastOdo(for: selectedVehicle.id, excluding: existing?.id) }
+    private var previousFill: Refuel? { store.previousOdoFill(for: selectedVehicle.id, excluding: existing?.id) }
 
     private var liveSanityIssues: [OdoSanity.Issue] {
         guard let odo = parse(odoText) else { return [] }
         return OdoSanity.check(
-            vehicle: vehicle,
+            vehicle: selectedVehicle,
             odoKm: odo,
             litres: parse(litresText),
             date: date,
@@ -47,12 +73,13 @@ struct LogFuelSheet: View {
     }
 
     var body: some View {
+        LogFuelPerformance.measure("LogFuelSheetBody") {
         Form {
             Section {
                 HStack(spacing: 12) {
-                    VehicleAvatar(vehicle: vehicle, size: 44)
+                    VehicleAvatar(vehicle: selectedVehicle, size: 44)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(vehicle.displayName)
+                        Text(selectedVehicle.displayName)
                             .font(.headline)
                         Text(vehicleSubtitle)
                             .font(.caption)
@@ -60,7 +87,14 @@ struct LogFuelSheet: View {
                     }
                 }
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("Vehicle \(vehicle.displayName)")
+                .accessibilityLabel("Vehicle \(selectedVehicle.displayName)")
+                if !isEditing, store.fuelableVehicles.count > 1 {
+                    Picker("Vehicle", selection: $selectedVehicleId) {
+                        ForEach(store.fuelableVehicles) { candidate in
+                            Text(candidate.displayName).tag(candidate.id)
+                        }
+                    }
+                }
             }
 
             Section {
@@ -108,14 +142,14 @@ struct LogFuelSheet: View {
                 }
             }
 
-            if vehicle.fuelType.isFuelable, let cityRate = fuelPrices.price(for: vehicle.fuelType) {
+            if selectedVehicle.fuelType.isFuelable, let cityRate = fuelPrices.price(for: selectedVehicle.fuelType) {
                 Section {
                     Button {
                         fill(rate: cityRate)
                         recompute(from: .rate)
                     } label: {
                         Label(
-                            "Use \(fuelPrices.city.localizedCapitalized) \(vehicle.fuelType.title.lowercased()) rate (₹\(String(format: "%.2f", cityRate))/L)",
+                            "Use \(fuelPrices.city.localizedCapitalized) \(selectedVehicle.fuelType.title.lowercased()) rate (₹\(String(format: "%.2f", cityRate))/L)",
                             systemImage: "indianrupeesign.circle"
                         )
                     }
@@ -127,14 +161,33 @@ struct LogFuelSheet: View {
                 Picker("Brand", selection: $brand) {
                     ForEach(FuelBrand.allCases) { b in Text(b.title).tag(b) }
                 }
-                if vehicle.fuelType == .petrol {
+                if selectedVehicle.fuelType == .petrol {
                     Picker("Grade", selection: $subtype) {
                         ForEach(FuelSubtype.allCases) { s in Text(s.title).tag(s) }
                     }
                 }
-                if vehicle.icon.supportsReserveTap && vehicle.hasReserve {
-                    Picker("Tank when you pulled in", selection: $tankState) {
+                if selectedVehicle.icon.supportsReserveTap && selectedVehicle.hasReserve {
+                    Picker("Tank when you pulled in", selection: tankStateBinding) {
                         ForEach(TankState.allCases) { t in Text(t.title).tag(t) }
+                    }
+                    Button {
+                        if store.reserveOdo(for: selectedVehicle.id) != nil {
+                            store.clearReserveWithoutRefuel(
+                                for: selectedVehicle.id,
+                                at: store.lastOdo(for: selectedVehicle.id)
+                            )
+                            tankState = .main
+                            tankStateWasManuallyChanged = true
+                        } else {
+                            beginReservePrompt()
+                        }
+                    } label: {
+                        Label(
+                            store.reserveOdo(for: selectedVehicle.id) == nil ? "Set reserve" : "Clear reserve",
+                            systemImage: store.reserveOdo(for: selectedVehicle.id) == nil
+                                ? "exclamationmark.fuelpump.fill"
+                                : "fuelpump"
+                        )
                     }
                 }
                 TextField("Notes (optional)", text: $notes, axis: .vertical)
@@ -156,7 +209,7 @@ struct LogFuelSheet: View {
             }
         }
         .navigationTitle(isEditing ? "Edit fill" : "Log fuel")
-        .navigationSubtitle(vehicle.displayName)
+        .navigationSubtitle(selectedVehicle.displayName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
@@ -166,9 +219,48 @@ struct LogFuelSheet: View {
                     .fontWeight(.semibold)
             }
         }
-        .onAppear { hydrate() }
+        .onAppear {
+            hydrate()
+            LogFuelPerformance.sheetDidAppear()
+        }
+        .onChange(of: selectedVehicleId) { _, _ in
+            tankState = LogFuelTankDefaults.stateAfterVehicleChange(
+                current: tankState,
+                wasManuallyChanged: tankStateWasManuallyChanged,
+                isOnReserve: store.reserveOdo(for: selectedVehicle.id) != nil
+            )
+        }
         .sheet(item: $editPreviousFill) { fill in
-            NavigationStack { LogFuelSheet(vehicle: vehicle, existing: fill) }
+            NavigationStack { LogFuelSheet(vehicle: selectedVehicle, existing: fill) }
+        }
+        .sheet(item: $reservePromptVehicle) { promptedVehicle in
+            NavigationStack {
+                Form {
+                    Section {
+                        TextField("Odometer", text: $reserveOdoText)
+                            .keyboardType(.decimalPad)
+                    } footer: {
+                        if let last = store.lastOdo(for: promptedVehicle.id) {
+                            Text("Last logged reading: \(Format.km(last))")
+                        }
+                    }
+                    if let reserveOdoError {
+                        Text(reserveOdoError).foregroundStyle(.red)
+                    }
+                }
+                .navigationTitle("Start reserve")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { reservePromptVehicle = nil }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Save") { saveReserveStart(for: promptedVehicle) }
+                            .fontWeight(.semibold)
+                    }
+                }
+            }
+            .presentationDetents([.medium])
         }
         .alert("Delete this fill?", isPresented: $confirmDelete) {
             Button("Delete", role: .destructive) {
@@ -196,11 +288,12 @@ struct LogFuelSheet: View {
                     .joined(separator: "\n\n")
             )
         }
+        }
     }
 
     private var vehicleSubtitle: String {
-        var parts = [vehicle.fuelType.title]
-        if let reg = vehicle.regNumber, !reg.isEmpty { parts.append(reg) }
+        var parts = [selectedVehicle.fuelType.title]
+        if let reg = selectedVehicle.regNumber, !reg.isEmpty { parts.append(reg) }
         return parts.joined(separator: " · ")
     }
 
@@ -236,6 +329,16 @@ struct LogFuelSheet: View {
         Binding(get: { litresText }, set: { litresText = $0; recompute(from: .litres) })
     }
 
+    private var tankStateBinding: Binding<TankState> {
+        Binding(
+            get: { tankState },
+            set: {
+                tankState = $0
+                tankStateWasManuallyChanged = true
+            }
+        )
+    }
+
     private func parse(_ text: String) -> Double? {
         let cleaned = text.replacingOccurrences(of: ",", with: "")
         guard let value = Double(cleaned), value > 0 else { return nil }
@@ -268,10 +371,35 @@ struct LogFuelSheet: View {
             tankState = existing.tankState ?? .main
             return
         }
-        if vehicle.fuelType == .cng { fullTank = true }
-        if vehicle.icon.supportsReserveTap && vehicle.hasReserve, store.reserveOdo(for: vehicle.id) != nil { tankState = .reserve }
-        if rateText.isEmpty, let cityRate = fuelPrices.price(for: vehicle.fuelType) {
+        if selectedVehicle.fuelType == .cng { fullTank = true }
+        tankState = LogFuelTankDefaults.state(
+            isOnReserve: store.reserveOdo(for: selectedVehicle.id) != nil
+        )
+        if rateText.isEmpty, let cityRate = fuelPrices.price(for: selectedVehicle.fuelType) {
             fill(rate: cityRate)
+        }
+    }
+
+    private func beginReservePrompt() {
+        reserveOdoError = nil
+        reserveOdoText = lastOdo.map { String(format: "%.0f", $0) } ?? ""
+        reservePromptVehicle = selectedVehicle
+    }
+
+    private func saveReserveStart(for promptedVehicle: Vehicle) {
+        let cleaned = reserveOdoText.replacingOccurrences(of: ",", with: "")
+        guard let odo = Double(cleaned), odo > 0 else {
+            reserveOdoError = OdoLogError.odoRequired.localizedDescription
+            return
+        }
+        do {
+            try store.validateReserveOdometer(odo, for: promptedVehicle.id)
+            store.markReserve(for: promptedVehicle.id, at: odo, note: "Switched to reserve while logging fuel")
+            tankState = .reserve
+            tankStateWasManuallyChanged = true
+            reservePromptVehicle = nil
+        } catch {
+            reserveOdoError = error.localizedDescription
         }
     }
 
@@ -339,7 +467,7 @@ struct LogFuelSheet: View {
         if rate == nil, let amount, let litres, litres > 0 { rate = amount / litres }
         if litres == nil, let amount, let rate, rate > 0 { litres = amount / rate }
         return OdoSanity.check(
-            vehicle: vehicle,
+            vehicle: selectedVehicle,
             odoKm: odo,
             litres: litres,
             date: date,
@@ -371,7 +499,7 @@ struct LogFuelSheet: View {
             if let existing {
                 try await store.updateRefuel(
                     existing.id,
-                    vehicleId: vehicle.id,
+                    vehicleId: selectedVehicle.id,
                     date: date,
                     amount: amount,
                     rate: rate,
@@ -379,13 +507,13 @@ struct LogFuelSheet: View {
                     odoKm: parse(odoText),
                     fullTank: fullTank,
                     notes: notes,
-                    fuelSubtype: vehicle.fuelType == .petrol ? subtype : nil,
+                    fuelSubtype: selectedVehicle.fuelType == .petrol ? subtype : nil,
                     fuelBrand: brand,
-                    tankState: vehicle.icon.supportsReserveTap && vehicle.hasReserve ? tankState : nil
+                    tankState: selectedVehicle.icon.supportsReserveTap && selectedVehicle.hasReserve ? tankState : nil
                 )
             } else {
                 try await store.addRefuel(
-                    vehicleId: vehicle.id,
+                    vehicleId: selectedVehicle.id,
                     date: date,
                     amount: amount,
                     rate: rate,
@@ -393,9 +521,9 @@ struct LogFuelSheet: View {
                     odoKm: parse(odoText),
                     fullTank: fullTank,
                     notes: notes,
-                    fuelSubtype: vehicle.fuelType == .petrol ? subtype : nil,
+                    fuelSubtype: selectedVehicle.fuelType == .petrol ? subtype : nil,
                     fuelBrand: brand,
-                    tankState: vehicle.icon.supportsReserveTap && vehicle.hasReserve ? tankState : nil
+                    tankState: selectedVehicle.icon.supportsReserveTap && selectedVehicle.hasReserve ? tankState : nil
                 )
             }
             if usesReserveTap && amount >= OdoLogStore.reserveAutoClearAmountInr {

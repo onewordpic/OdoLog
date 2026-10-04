@@ -627,12 +627,17 @@ final class OdoLogStore {
         )
         try upsertLocalRefuel(refuel)
         try refreshLocal(accountId: userId)
-        await pushOrEnqueue(.upsertRefuel(refuel))
+        if tankState == .reserve,
+           vehicle(id: vehicleId)?.icon == .bike,
+           reserveOdo(for: vehicleId) == nil {
+            markReserve(for: vehicleId, at: odoKm, date: date, note: "Reserve recorded with refuel")
+        }
         if Self.shouldClearReserve(amount: amount, rate: rate, litres: litres),
            vehicle(id: vehicleId)?.icon == .bike,
            reserveOdo(for: vehicleId) != nil {
             clearReserve(for: vehicleId, at: odoKm, date: date, note: "Cleared on refuel")
         }
+        await pushOrEnqueue(.upsertRefuel(refuel))
     }
 
     func updateRefuel(
@@ -677,13 +682,13 @@ final class OdoLogStore {
             markMileageRefuelEdited(id)
         }
         try refreshLocal(accountId: userId)
-        await pushOrEnqueue(.upsertRefuel(refuel))
         if wasNewestRefuel,
            Self.shouldClearReserve(amount: amount, rate: rate, litres: litres),
            vehicle(id: vehicleId)?.icon == .bike,
            reserveOdo(for: vehicleId) != nil {
             clearReserve(for: vehicleId, at: odoKm, date: date, note: "Cleared on edited refuel")
         }
+        await pushOrEnqueue(.upsertRefuel(refuel))
     }
 
     private static func shouldClearReserve(amount: Double, rate: Double, litres: Double) -> Bool {
@@ -816,12 +821,14 @@ final class OdoLogStore {
     }
 
     func refuels(for vehicleId: UUID) -> [Refuel] {
-        allRefuels
-            .filter { $0.vehicleId == vehicleId }
-            .sorted {
-                if $0.refuelDate != $1.refuelDate { return $0.refuelDate > $1.refuelDate }
-                return $0.createdAt > $1.createdAt
-            }
+        LogFuelPerformance.measure("RefuelsForVehicle") {
+            allRefuels
+                .filter { $0.vehicleId == vehicleId }
+                .sorted {
+                    if $0.refuelDate != $1.refuelDate { return $0.refuelDate > $1.refuelDate }
+                    return $0.createdAt > $1.createdAt
+                }
+        }
     }
 
     func maintenance(for vehicleId: UUID) -> [MaintenanceLog] {
@@ -916,6 +923,17 @@ final class OdoLogStore {
         )
     }
 
+    func clearReserveWithoutRefuel(for vehicleId: UUID, at odo: Double? = nil, date: Date = .now) {
+        guard reserveOdo(for: vehicleId) != nil else { return }
+        clearReserve(for: vehicleId, at: odo, date: date, note: "Reserve cleared without a refuel")
+        recordMileageChainBreak(
+            vehicleId: vehicleId,
+            date: Format.ymd(date),
+            createdAt: .now,
+            reason: .reserveClearedWithoutRefuel
+        )
+    }
+
     private func appendReserveEvent(_ event: ReserveEvent) {
         var all = loadReserveEvents()
         all.append(event)
@@ -925,9 +943,11 @@ final class OdoLogStore {
     }
 
     private func loadReserveEvents() -> [ReserveEvent] {
-        guard let data = UserDefaults.standard.data(forKey: Self.reserveEventsKey),
-              let events = try? JSONDecoder().decode([ReserveEvent].self, from: data) else { return [] }
-        return events
+        LogFuelPerformance.measure("ReserveEventLoad") {
+            guard let data = UserDefaults.standard.data(forKey: Self.reserveEventsKey),
+                  let events = try? JSONDecoder().decode([ReserveEvent].self, from: data) else { return [] }
+            return events
+        }
     }
 
     private static let reserveEventsKey = "odolog.reserve.events"
@@ -1011,6 +1031,7 @@ final class OdoLogStore {
     }
 
     func mileageResult(for vehicleId: UUID) -> MileageCalculator.Result {
+        LogFuelPerformance.measure("MileageResult") {
         guard let vehicle = vehicle(id: vehicleId) else {
             return MileageCalculator.Result(kmpl: nil, validSegments: [], droppedSegments: [])
         }
@@ -1042,7 +1063,10 @@ final class OdoLogStore {
             .filter { $0.vehicleId == vehicleId }
             .map {
                 MileageCalculator.ChainBreak(
-                    moment: MileageCalculator.Moment(date: $0.date, createdAt: $0.createdAt)
+                    moment: MileageCalculator.Moment(date: $0.date, createdAt: $0.createdAt),
+                    reason: $0.reason == MileageChainBreakReason.reserveClearedWithoutRefuel.rawValue
+                        ? .reserveClearedWithoutRefuel
+                        : .editedOrDeletedLog
                 )
             }
         let mode: MileageCalculator.Mode =
@@ -1054,6 +1078,7 @@ final class OdoLogStore {
             reservePoints: points,
             chainBreaks: breaks
         ))
+        }
     }
 
 #if DEBUG
@@ -1674,6 +1699,7 @@ final class OdoLogStore {
     }
 
     private func refreshLocal(accountId: UUID?) throws {
+        try LogFuelPerformance.measure("SwiftDataFetches") {
         if accountId == nil {
             defaultCity = UserDefaults.standard.string(forKey: "odolog.localCity") ?? defaultCity
             if let localName = UserDefaults.standard.string(forKey: "odolog.localDisplayName"), !localName.isEmpty {
@@ -1697,6 +1723,7 @@ final class OdoLogStore {
         allMaintenance = (try? modelContext.fetch(FetchDescriptor<LocalMaintenance>()).filter { $0.accountId == accountId }.map(\.asLog)) ?? []
         allTrips = (try? modelContext.fetch(FetchDescriptor<LocalTrip>()).filter { $0.accountId == accountId }.map(\.asTrip)) ?? []
         applyLoaded(vehicles: vehicleRows.map(\.asVehicle), refuels: refuelRows.map(\.asRefuel))
+        }
     }
 
     private func replaceCloudCache(userId: UUID) throws {
@@ -1985,6 +2012,12 @@ final class OdoLogStore {
         let vehicleId: UUID
         let date: String
         let createdAt: Date
+        let reason: String?
+    }
+
+    private enum MileageChainBreakReason: String {
+        case editedOrDeletedLog
+        case reserveClearedWithoutRefuel
     }
 
     private static let mileageEditedRefuelsKey = "odolog.mileage.editedRefuels"
@@ -1998,11 +2031,26 @@ final class OdoLogStore {
     }
 
     private func recordMileageChainBreak(for refuel: Refuel) {
-        var records = mileageChainBreaks()
-        records.append(.init(
+        recordMileageChainBreak(
             vehicleId: refuel.vehicleId,
             date: refuel.refuelDate,
-            createdAt: refuel.createdAt
+            createdAt: refuel.createdAt,
+            reason: .editedOrDeletedLog
+        )
+    }
+
+    private func recordMileageChainBreak(
+        vehicleId: UUID,
+        date: String,
+        createdAt: Date,
+        reason: MileageChainBreakReason
+    ) {
+        var records = mileageChainBreaks()
+        records.append(.init(
+            vehicleId: vehicleId,
+            date: date,
+            createdAt: createdAt,
+            reason: reason.rawValue
         ))
         if let data = try? JSONEncoder().encode(records) {
             UserDefaults.standard.set(data, forKey: Self.mileageChainBreaksKey)

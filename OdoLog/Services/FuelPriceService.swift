@@ -161,11 +161,13 @@ final class FuelPriceStore {
     }
 
     func price(for fuelType: FuelType) -> Double? {
-        switch fuelType {
-        case .petrol: prices?.petrol
-        case .diesel: prices?.diesel
-        case .cng: prices?.cng
-        case .electric: nil
+        LogFuelPerformance.measure("FuelRateLookup") {
+            switch fuelType {
+            case .petrol: prices?.petrol
+            case .diesel: prices?.diesel
+            case .cng: prices?.cng
+            case .electric: nil
+            }
         }
     }
 

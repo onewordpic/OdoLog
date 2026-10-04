@@ -18,6 +18,7 @@ struct DashboardView: View {
     @State private var isRefreshing = false
 
     var body: some View {
+        LogFuelPerformance.measure("DashboardBody") {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 header
@@ -197,7 +198,10 @@ struct DashboardView: View {
                         VehicleHeroCard(
                             vehicle: hero,
                             spend: Format.rupees(store.spend(for: hero.id)),
-                            onLogFuel: hero.fuelType.isFuelable ? { logFuelVehicle = hero } : nil,
+                            onLogFuel: hero.fuelType.isFuelable ? {
+                                LogFuelPerformance.tapFired()
+                                logFuelVehicle = hero
+                            } : nil,
                             onOpen: { openVehicle = hero },
                             isOnReserve: store.reserveOdo(for: hero.id) != nil,
                             onToggleReserve: hero.icon.supportsReserveTap && hero.hasReserve ? {
@@ -390,6 +394,7 @@ struct DashboardView: View {
         }
         .navigationDestination(item: $openVehicle) { vehicle in
             VehicleDetailView(vehicle: vehicle)
+        }
         }
     }
 
